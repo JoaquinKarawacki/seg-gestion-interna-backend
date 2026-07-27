@@ -57,10 +57,30 @@ Esto incluye:
 - Comentarios en el código
 
 Excepciones donde se usa inglés (restricciones técnicas):
-- Nombres de columnas y tablas en PostgreSQL (evita problemas de encoding con tildes y ñ)
 - Clases que extienden de Passport (`JwtStrategy`, `JwtGuard`) por restricción del framework
 - Decoradores propios de NestJS (`@Module`, `@Controller`, `@Injectable`, etc.)
 - Nombres de variables de entorno (`DATABASE_URL`, `JWT_SECRET`, etc.)
+
+**Corrección (decidido en Etapa 2):** los nombres de tablas y columnas en PostgreSQL **NO** van en inglés. Van en español, igual que el resto del código. Se transliteran sin tildes ni `ñ` únicamente para evitar el caracter literal problemático (ej. `contraseña` → `contrasena_hash`, no `password_hash`). Esto se logra con `@map`/`@@map` de Prisma: el modelo y los campos en el schema quedan en español "natural" (con tildes si corresponde en el nombre del campo TypeScript), y el mapeo a la columna real usa la versión sin tildes/ñ en snake_case. Ejemplo real (`prisma/schema.prisma`):
+
+```prisma
+model Usuario {
+  id             String     @id @default(uuid())
+  nombre         String
+  email          String     @unique
+  contrasenaHash String     @map("contrasena_hash")
+  rol            RolUsuario
+  activo         Boolean    @default(true)
+  sectorId       String?    @map("sector_id")
+  sector         Sector?    @relation(fields: [sectorId], references: [id])
+  creadoEn       DateTime   @default(now()) @map("creado_en")
+  actualizadoEn  DateTime   @updatedAt @map("actualizado_en")
+
+  @@map("usuarios")
+}
+```
+
+Los valores de enums (`RolUsuario`, `EstadoOC`, etc.) se mantienen en español SCREAMING_SNAKE_CASE sin mapear, tal como se muestra en la sección de enums más abajo.
 
 ### Archivos
 ```
@@ -454,27 +474,53 @@ const hoy = new Date(
 
 ## Prisma
 
-Versión 7. Configuración específica:
+Versión 7.9.1 instalada. Configuración específica real (verificada, distinta de la documentación genérica de Prisma):
+
 - `url` va en `prisma.config.ts`, no en `schema.prisma`
-- Requiere adaptador `PrismaPg`
-- Después de cada cambio de schema: `npx prisma generate` + reiniciar TS server en VS Code
-- El número de OC se maneja con una secuencia PostgreSQL nativa, no con `autoincrement()` de Prisma
+- El generador `prisma-client` (nuevo, reemplaza a `prisma-client-js`) por defecto emite un cliente **ESM puro** (usa `import.meta.url`), incompatible con este proyecto (NestJS + Jest + ts-jest, todo CommonJS). Por eso el generator lleva `moduleFormat = "cjs"` explícito:
+
+```prisma
+// prisma/schema.prisma
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+```
+
+- `prisma.config.ts` solo configura la datasource para el CLI (migraciones/introspección). **No** lleva el adaptador ahí — el tipo `Datasource` de `@prisma/config` en esta versión solo acepta `url`/`shadowDatabaseUrl`, no `adapter`:
 
 ```typescript
 // prisma.config.ts
-import { defineConfig } from '@prisma/config';
-import { PrismaPg } from '@prisma/adapter-pg';
+import 'dotenv/config';
+import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
-  earlyAccess: true,
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL!,
-      adapter: () => new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
-    },
+  schema: 'prisma/schema.prisma',
+  migrations: {
+    path: 'prisma/migrations',
+  },
+  datasource: {
+    url: process.env.DATABASE_URL,
   },
 });
 ```
+
+- El adaptador `PrismaPg` se instancia al construir `PrismaClient`, no en `prisma.config.ts`. Esto vive en `src/prisma/prisma.service.ts`:
+
+```typescript
+const adaptador = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+super({ adapter: adaptador });
+```
+
+- Después de cada cambio de schema: `npx prisma generate` + reiniciar TS server en VS Code
+- El número de OC se maneja con una secuencia PostgreSQL nativa, no con `autoincrement()` de Prisma
+- **Estrategia de ID en todas las tablas: UUID** (`@id @default(uuid())`), no autoincrement
+- **Scripts que importan el cliente generado (ej. `prisma/seed.ts`) deben ejecutarse con `tsx`, no con `ts-node`.** El cliente generado usa imports internos con extensión `.js` explícita apuntando a archivos `.ts` (convención moderna de TypeScript para `moduleResolution: "nodenext"`). `ts-node` en modo CommonJS no resuelve esa sustitución de extensión y falla con `MODULE_NOT_FOUND`; `tsx` sí. Por eso `package.json` tiene `"seed": "tsx prisma/seed.ts"` en vez de usar `ts-node`.
 
 ---
 
@@ -578,8 +624,23 @@ PORT=3000
 npx prisma migrate deploy && node dist/main.js
 
 # Seeds (ejecutar contra DATABASE_PUBLIC_URL desde fuera de Railway):
-DATABASE_URL=<public_url> npx ts-node prisma/seed.ts
+DATABASE_URL=<public_url> npx tsx prisma/seed.ts
 ```
+
+### Base de datos local para desarrollo
+
+No se instala Postgres nativo en la máquina de desarrollo; se usa un contenedor Docker:
+
+```bash
+docker run -d --name seg-gestion-interna-postgres \
+  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=gestion_interna \
+  -p 5432:5432 postgres:16
+
+# Si el contenedor ya existe pero está parado:
+docker start seg-gestion-interna-postgres
+```
+
+Requiere Docker Desktop corriendo. El `.env` local ya apunta a `postgresql://postgres:postgres@localhost:5432/gestion_interna?schema=public`.
 
 ---
 
@@ -597,6 +658,22 @@ DATABASE_URL=<public_url> npx ts-node prisma/seed.ts
 10. **Los eventos se emiten después de que la operación fue exitosa**, nunca antes
 11. **Auditoría siempre en try/catch que no relanza** — un fallo de auditoría no debe romper la operación principal
 12. **Español en todo** — si Claude Code introduce una variable en inglés, es un error
+13. **Mostrar el código en el chat a medida que se escribe** — el usuario está aprendiendo a desarrollar con este proyecto. No alcanza con crear los archivos: hay que pegar el contenido relevante en la respuesta.
+14. **Al cerrar cada etapa, antes de pasar a la siguiente, hacer preguntas de comprensión** sobre el flujo y las decisiones tomadas en esa etapa.
+
+---
+
+## Estado actual (actualizado 2026-07-27)
+
+Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se commitea y pushea automáticamente al cerrar cada etapa verificada (tsc + lint + test OK).
+
+- ✅ **Etapa 1 — Scaffolding**: completa. NestJS + Prisma 7 (cjs) + `PrismaModulo` + filtro global + pipe global.
+- ✅ **Etapa 2 — Auth**: completa. Modelos `Usuario`, `Sector`, enum `RolUsuario` (ver nota de nombres en español arriba). `UsuariosRepositorio` mínimo (`buscarPorId`, `buscarPorEmail`) detrás de `IUsuariosRepositorio` con token de inyección `USUARIOS_REPOSITORIO`. `JwtStrategy`, `JwtGuardia`, `RolesGuardia`, decorador `@Roles`. Endpoints `POST /auth/login` y `GET /auth/perfil`. Seed (`prisma/seed.ts`, correr con `npm run seed`) crea un usuario por rol con contraseña `Cambiar123!`.
+  - Nota: el modelo `Sector` ya existe en el schema desde esta etapa (lo necesita `Usuario` para `ENCARGADO`), pero su `SectoresModulo` (controller/service/CRUD) se construye recién en Etapa 3.
+- ⏳ **Etapa 3 — Catálogos base**: en curso. Antes de implementar hay que definir:
+  - Campos de `Proveedor` y `Cliente` (nombre es obligatorio; falta definir si llevan RUT/CUIT, email, teléfono, etc.)
+  - Permisos por rol en cada catálogo (ej. ¿`Usuarios`/`Sectores` solo `ADMIN`? ¿`Proveedores`/`Clientes` cualquier autenticado, dado el alta on-the-fly desde OC?)
+  - Se va a introducir `comun/interfaces/repositorio-base.interface.ts` (`IRepositorioBase<T>`) ya que a partir de esta etapa varios módulos necesitan CRUD completo.
 
 ---
 
