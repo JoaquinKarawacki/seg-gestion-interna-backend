@@ -1,0 +1,28 @@
+# Dependencias
+node_modules
+
+# Build
+dist
+/generated/prisma
+
+# Variables de entorno
+.env
+.env.local
+
+# Tests
+coverage
+
+# Logs
+*.log
+
+# IDE / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Config local y skills de referencia para asistentes IA (generados por prisma init)
+.claude
+.agents
+.windsurf
+skills-lock.json
