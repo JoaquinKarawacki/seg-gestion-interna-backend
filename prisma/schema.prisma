@@ -7,3 +7,37 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum RolUsuario {
+  SOLICITANTE
+  ENCARGADO
+  PAGOS
+  ADMIN
+
+  @@map("rol_usuario")
+}
+
+model Sector {
+  id            String    @id @default(uuid())
+  nombre        String    @unique
+  usuarios      Usuario[]
+  creadoEn      DateTime  @default(now()) @map("creado_en")
+  actualizadoEn DateTime  @updatedAt @map("actualizado_en")
+
+  @@map("sectores")
+}
+
+model Usuario {
+  id             String     @id @default(uuid())
+  nombre         String
+  email          String     @unique
+  contrasenaHash String     @map("contrasena_hash")
+  rol            RolUsuario
+  activo         Boolean    @default(true)
+  sectorId       String?    @map("sector_id")
+  sector         Sector?    @relation(fields: [sectorId], references: [id])
+  creadoEn       DateTime   @default(now()) @map("creado_en")
+  actualizadoEn  DateTime   @updatedAt @map("actualizado_en")
+
+  @@map("usuarios")
+}
