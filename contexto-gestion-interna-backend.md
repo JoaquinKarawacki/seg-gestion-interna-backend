@@ -663,17 +663,21 @@ Requiere Docker Desktop corriendo. El `.env` local ya apunta a `postgresql://pos
 
 ---
 
-## Estado actual (actualizado 2026-07-27)
+## Estado actual (actualizado 2026-07-28)
 
 Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se commitea y pushea automáticamente al cerrar cada etapa verificada (tsc + lint + test OK).
 
 - ✅ **Etapa 1 — Scaffolding**: completa. NestJS + Prisma 7 (cjs) + `PrismaModulo` + filtro global + pipe global.
-- ✅ **Etapa 2 — Auth**: completa. Modelos `Usuario`, `Sector`, enum `RolUsuario` (ver nota de nombres en español arriba). `UsuariosRepositorio` mínimo (`buscarPorId`, `buscarPorEmail`) detrás de `IUsuariosRepositorio` con token de inyección `USUARIOS_REPOSITORIO`. `JwtStrategy`, `JwtGuardia`, `RolesGuardia`, decorador `@Roles`. Endpoints `POST /auth/login` y `GET /auth/perfil`. Seed (`prisma/seed.ts`, correr con `npm run seed`) crea un usuario por rol con contraseña `Cambiar123!`.
-  - Nota: el modelo `Sector` ya existe en el schema desde esta etapa (lo necesita `Usuario` para `ENCARGADO`), pero su `SectoresModulo` (controller/service/CRUD) se construye recién en Etapa 3.
-- ⏳ **Etapa 3 — Catálogos base**: en curso. Antes de implementar hay que definir:
-  - Campos de `Proveedor` y `Cliente` (nombre es obligatorio; falta definir si llevan RUT/CUIT, email, teléfono, etc.)
-  - Permisos por rol en cada catálogo (ej. ¿`Usuarios`/`Sectores` solo `ADMIN`? ¿`Proveedores`/`Clientes` cualquier autenticado, dado el alta on-the-fly desde OC?)
-  - Se va a introducir `comun/interfaces/repositorio-base.interface.ts` (`IRepositorioBase<T>`) ya que a partir de esta etapa varios módulos necesitan CRUD completo.
+- ✅ **Etapa 2 — Auth**: completa. Modelos `Usuario`, `Sector`, enum `RolUsuario` (ver nota de nombres en español arriba). `JwtStrategy`, `JwtGuardia`, `RolesGuardia`, decorador `@Roles`. Endpoints `POST /auth/login` y `GET /auth/perfil`. Seed (`prisma/seed.ts`, correr con `npm run seed`) crea un usuario por rol con contraseña `Cambiar123!`.
+- ✅ **Etapa 3 — Catálogos base**: completa. Decisiones tomadas:
+  - **`comun/interfaces/repositorio-base.interface.ts`**: `IRepositorioBase<T, TCrear = Record<string, unknown>, TActualizar = Record<string, unknown>>` — genérico de tres parámetros (no solo `T`) para que cada repositorio concreto tipe fuerte sus entradas de `crear`/`actualizar` en vez de recibir `object` suelto.
+  - **`UsuariosModulo`** (completado, no solo el mínimo de Etapa 2): CRUD ADMIN-only (`GET/POST/PATCH/DELETE /usuarios`) + `PATCH /usuarios/mi-contrasena` (cualquier autenticado, cambia su propia contraseña vía `CambiarContrasenaDto`). `eliminar` es **baja lógica** (`activo = false`), nunca DELETE físico — evita romper relaciones futuras (OCs, comentarios) y preserva trazabilidad. El admin fija la contraseña al crear; el propio usuario la cambia después.
+  - **`SectoresModulo`**: solo campo `nombre` (único). CRUD ADMIN-only. `eliminar` está **bloqueado explícitamente** (422, `SECTOR_CON_USUARIOS_ASIGNADOS`) si el sector tiene usuarios asignados — la FK real usa `ON DELETE SET NULL`, que dejaría huérfanos silenciosos si no se validara en el service.
+  - **Campos de `Cliente`**: `nombre`, `rut` (único, obligatorio), `email` (opcional), `telefono` (opcional).
+  - **Campos de `Proveedor`**: `nombre`, `rut` (único, obligatorio), `email` (opcional), `telefono` (opcional), `banco`, `tipoCuenta` (enum `TipoCuentaBancaria`: `CAJA_AHORRO` | `CUENTA_CORRIENTE`), `numeroCuenta` — estos tres últimos **siempre obligatorios**, incluso en el alta rápida desde el formulario de OC.
+  - **Permisos `ClientesModulo`/`ProveedoresModulo`**: `GET` y `POST` abiertos a cualquier autenticado (permite el alta on-the-fly desde cualquier rol que arme una OC). `PATCH`/`DELETE` restringidos a `ADMIN`, `PAGOS`, `ENCARGADO` (no `SOLICITANTE`).
+  - `eliminar` en `Cliente`/`Proveedor` es DELETE físico (no baja lógica, sin bloqueo por relaciones) porque hoy no tienen ninguna relación en el schema. Esto se **va a revisar en la Etapa 4/5** cuando `Proyecto`/`OrdenCompra` los referencien — ahí se decide el `onDelete` real y si corresponde un chequeo de negocio como el de `Sectores`.
+- ⏳ **Etapa 4 — Proyectos y cotizaciones**: no iniciada.
 
 ---
 
