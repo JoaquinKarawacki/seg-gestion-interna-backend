@@ -41,3 +41,37 @@ model Usuario {
 
   @@map("usuarios")
 }
+
+enum TipoCuentaBancaria {
+  CAJA_AHORRO
+  CUENTA_CORRIENTE
+
+  @@map("tipo_cuenta_bancaria")
+}
+
+model Cliente {
+  id            String   @id @default(uuid())
+  nombre        String
+  rut           String   @unique
+  email         String?
+  telefono      String?
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  @@map("clientes")
+}
+
+model Proveedor {
+  id            String             @id @default(uuid())
+  nombre        String
+  rut           String             @unique
+  email         String?
+  telefono      String?
+  banco         String
+  tipoCuenta    TipoCuentaBancaria @map("tipo_cuenta")
+  numeroCuenta  String             @map("numero_cuenta")
+  creadoEn      DateTime           @default(now()) @map("creado_en")
+  actualizadoEn DateTime           @updatedAt @map("actualizado_en")
+
+  @@map("proveedores")
+}
