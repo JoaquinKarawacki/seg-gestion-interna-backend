@@ -33,4 +33,8 @@ export class ClientesRepositorio implements IClientesRepositorio {
   async eliminar(id: string): Promise<void> {
     await this.prisma.cliente.delete({ where: { id } });
   }
+
+  async contarProyectosAsociados(clienteId: string): Promise<number> {
+    return this.prisma.proyecto.count({ where: { clienteId } });
+  }
 }

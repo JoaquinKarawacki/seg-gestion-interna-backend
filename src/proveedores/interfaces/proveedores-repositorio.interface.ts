@@ -24,8 +24,10 @@ export interface DatosActualizarProveedor {
   numeroCuenta?: string;
 }
 
-export type IProveedoresRepositorio = IRepositorioBase<
+export interface IProveedoresRepositorio extends IRepositorioBase<
   ProveedorModel,
   DatosCrearProveedor,
   DatosActualizarProveedor
->;
+> {
+  contarCotizacionesAsociadas(proveedorId: string): Promise<number>;
+}

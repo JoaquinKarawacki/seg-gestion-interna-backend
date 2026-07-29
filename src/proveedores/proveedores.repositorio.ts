@@ -33,4 +33,8 @@ export class ProveedoresRepositorio implements IProveedoresRepositorio {
   async eliminar(id: string): Promise<void> {
     await this.prisma.proveedor.delete({ where: { id } });
   }
+
+  async contarCotizacionesAsociadas(proveedorId: string): Promise<number> {
+    return this.prisma.cotizacion.count({ where: { proveedorId } });
+  }
 }

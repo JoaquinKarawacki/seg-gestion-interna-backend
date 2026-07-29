@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { ProveedorModel } from '../../generated/prisma/models';
@@ -54,6 +55,18 @@ export class ProveedoresService {
 
   async eliminar(id: string): Promise<void> {
     await this.obtenerProveedorOFallar(id);
+
+    const cotizacionesAsociadas =
+      await this.proveedoresRepositorio.contarCotizacionesAsociadas(id);
+
+    if (cotizacionesAsociadas > 0) {
+      throw new UnprocessableEntityException({
+        error: 'PROVEEDOR_CON_COTIZACIONES_ASOCIADAS',
+        mensaje:
+          'No se puede eliminar el proveedor porque tiene cotizaciones asociadas',
+      });
+    }
+
     await this.proveedoresRepositorio.eliminar(id);
   }
 

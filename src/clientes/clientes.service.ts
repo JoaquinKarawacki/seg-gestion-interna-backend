@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { ClienteModel } from '../../generated/prisma/models';
@@ -54,6 +55,18 @@ export class ClientesService {
 
   async eliminar(id: string): Promise<void> {
     await this.obtenerClienteOFallar(id);
+
+    const proyectosAsociados =
+      await this.clientesRepositorio.contarProyectosAsociados(id);
+
+    if (proyectosAsociados > 0) {
+      throw new UnprocessableEntityException({
+        error: 'CLIENTE_CON_PROYECTOS_ASOCIADOS',
+        mensaje:
+          'No se puede eliminar el cliente porque tiene proyectos asociados',
+      });
+    }
+
     await this.clientesRepositorio.eliminar(id);
   }
 

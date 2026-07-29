@@ -17,8 +17,10 @@ export interface DatosActualizarCliente {
   telefono?: string | null;
 }
 
-export type IClientesRepositorio = IRepositorioBase<
+export interface IClientesRepositorio extends IRepositorioBase<
   ClienteModel,
   DatosCrearCliente,
   DatosActualizarCliente
->;
+> {
+  contarProyectosAsociados(clienteId: string): Promise<number>;
+}

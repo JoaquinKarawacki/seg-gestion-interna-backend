@@ -10,8 +10,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { RolUsuario } from '../../generated/prisma/enums';
-import { Roles } from '../comun/decoradores/roles.decorador';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
 import {
@@ -22,12 +20,6 @@ import { ClientesService } from './clientes.service';
 import { ActualizarClienteDto } from './dtos/actualizar-cliente.dto';
 import { CrearClienteDto } from './dtos/crear-cliente.dto';
 import { RespuestaClienteDto } from './dtos/respuesta-cliente.dto';
-
-const ROLES_EDICION = [
-  RolUsuario.ADMIN,
-  RolUsuario.PAGOS,
-  RolUsuario.ENCARGADO,
-];
 
 @Controller('clientes')
 @UseGuards(JwtGuardia, RolesGuardia)
@@ -57,7 +49,6 @@ export class ClientesController {
   }
 
   @Patch(':id')
-  @Roles(...ROLES_EDICION)
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarClienteDto,
@@ -67,7 +58,6 @@ export class ClientesController {
   }
 
   @Delete(':id')
-  @Roles(...ROLES_EDICION)
   @HttpCode(HttpStatus.NO_CONTENT)
   async eliminar(@Param('id') id: string): Promise<void> {
     await this.clientesService.eliminar(id);
