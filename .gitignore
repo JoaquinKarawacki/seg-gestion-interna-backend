@@ -12,6 +12,9 @@ dist
 # Tests
 coverage
 
+# Almacenamiento local de archivos (equivalente dev del volumen de Railway)
+/almacenamiento-local
+
 # Logs
 *.log
 
