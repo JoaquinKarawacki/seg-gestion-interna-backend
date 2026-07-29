@@ -50,13 +50,14 @@ enum TipoCuentaBancaria {
 }
 
 model Cliente {
-  id            String   @id @default(uuid())
+  id            String     @id @default(uuid())
   nombre        String
-  rut           String   @unique
+  rut           String     @unique
   email         String?
   telefono      String?
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+  proyectos     Proyecto[]
+  creadoEn      DateTime   @default(now()) @map("creado_en")
+  actualizadoEn DateTime   @updatedAt @map("actualizado_en")
 
   @@map("clientes")
 }
@@ -70,8 +71,51 @@ model Proveedor {
   banco         String
   tipoCuenta    TipoCuentaBancaria @map("tipo_cuenta")
   numeroCuenta  String             @map("numero_cuenta")
+  cotizaciones  Cotizacion[]
   creadoEn      DateTime           @default(now()) @map("creado_en")
   actualizadoEn DateTime           @updatedAt @map("actualizado_en")
 
   @@map("proveedores")
+}
+
+enum Moneda {
+  UYU
+  USD
+
+  @@map("moneda")
+}
+
+enum EstadoCotizacion {
+  ACTIVA
+  REEMPLAZADA
+
+  @@map("estado_cotizacion")
+}
+
+model Proyecto {
+  id            String       @id @default(uuid())
+  nombre        String
+  clienteId     String       @map("cliente_id")
+  cliente       Cliente      @relation(fields: [clienteId], references: [id])
+  cotizaciones  Cotizacion[]
+  creadoEn      DateTime     @default(now()) @map("creado_en")
+  actualizadoEn DateTime     @updatedAt @map("actualizado_en")
+
+  @@map("proyectos")
+}
+
+model Cotizacion {
+  id             String           @id @default(uuid())
+  proyectoId     String           @map("proyecto_id")
+  proyecto       Proyecto         @relation(fields: [proyectoId], references: [id])
+  proveedorId    String           @map("proveedor_id")
+  proveedor      Proveedor        @relation(fields: [proveedorId], references: [id])
+  montoTotal     Decimal          @map("monto_total") @db.Decimal(14, 2)
+  moneda         Moneda
+  estado         EstadoCotizacion @default(ACTIVA)
+  archivoPdfRuta String?          @map("archivo_pdf_ruta")
+  creadoEn       DateTime         @default(now()) @map("creado_en")
+  actualizadoEn  DateTime         @updatedAt @map("actualizado_en")
+
+  @@map("cotizaciones")
 }
