@@ -613,7 +613,10 @@ AZURE_TENANT_ID=
 EMAIL_REMITENTE=Notificaciones@segingenieria.com
 NODE_ENV=development
 PORT=3000
+RUTA_ALMACENAMIENTO=./almacenamiento-local
 ```
+
+`RUTA_ALMACENAMIENTO` es el directorio base donde `RailwayVolumenAdaptador` (`src/almacenamiento/`) guarda archivos subidos (PDFs de cotización, y en Etapa 5 la factura de OC). En Railway apunta al path donde se monta el Volume; en desarrollo local es una carpeta del proyecto (gitignored). Si no se define, cae a `./almacenamiento-local` por defecto.
 
 ---
 
@@ -663,7 +666,7 @@ Requiere Docker Desktop corriendo. El `.env` local ya apunta a `postgresql://pos
 
 ---
 
-## Estado actual (actualizado 2026-07-28)
+## Estado actual (actualizado 2026-07-29)
 
 Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se commitea y pushea automáticamente al cerrar cada etapa verificada (tsc + lint + test OK).
 
@@ -675,9 +678,19 @@ Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se
   - **`SectoresModulo`**: solo campo `nombre` (único). CRUD ADMIN-only. `eliminar` está **bloqueado explícitamente** (422, `SECTOR_CON_USUARIOS_ASIGNADOS`) si el sector tiene usuarios asignados — la FK real usa `ON DELETE SET NULL`, que dejaría huérfanos silenciosos si no se validara en el service.
   - **Campos de `Cliente`**: `nombre`, `rut` (único, obligatorio), `email` (opcional), `telefono` (opcional).
   - **Campos de `Proveedor`**: `nombre`, `rut` (único, obligatorio), `email` (opcional), `telefono` (opcional), `banco`, `tipoCuenta` (enum `TipoCuentaBancaria`: `CAJA_AHORRO` | `CUENTA_CORRIENTE`), `numeroCuenta` — estos tres últimos **siempre obligatorios**, incluso en el alta rápida desde el formulario de OC.
-  - **Permisos `ClientesModulo`/`ProveedoresModulo`**: `GET` y `POST` abiertos a cualquier autenticado (permite el alta on-the-fly desde cualquier rol que arme una OC). `PATCH`/`DELETE` restringidos a `ADMIN`, `PAGOS`, `ENCARGADO` (no `SOLICITANTE`).
+  - **Permisos `ClientesModulo`**: todos los endpoints (`GET/POST/PATCH/DELETE`) abiertos a cualquier autenticado — decisión revisada luego de construir Etapa 4, ver nota más abajo.
+  - **Permisos `ProveedoresModulo`**: `GET` y `POST` abiertos a cualquier autenticado (alta on-the-fly). `PATCH`/`DELETE` siguen restringidos a `ADMIN`, `PAGOS`, `ENCARGADO` (no `SOLICITANTE`) — a diferencia de `Cliente`, acá no se revisó la restricción.
   - `eliminar` en `Cliente`/`Proveedor` es DELETE físico (no baja lógica, sin bloqueo por relaciones) porque hoy no tienen ninguna relación en el schema. Esto se **va a revisar en la Etapa 4/5** cuando `Proyecto`/`OrdenCompra` los referencien — ahí se decide el `onDelete` real y si corresponde un chequeo de negocio como el de `Sectores`.
-- ⏳ **Etapa 4 — Proyectos y cotizaciones**: no iniciada.
+- ✅ **Etapa 4 — Proyectos y cotizaciones**: completa. Decisiones tomadas:
+  - **`Proyecto`**: solo `nombre` + `clienteId` (relación obligatoria a `Cliente`). Permisos: **todos los endpoints abiertos a cualquier autenticado** (ver nota abajo). `crear`/`actualizar` atrapan `P2003` (FK inválida) y devuelven 404 `CLIENTE_NO_ENCONTRADO` en vez de un error crudo de Prisma. `eliminar` está **bloqueado** (422, `PROYECTO_CON_COTIZACIONES_ASOCIADAS`) si tiene cotizaciones — a diferencia de `Cliente`/`Proveedor` en Etapa 3, acá la relación con `Cotización` es inmediata, no diferible.
+  - **`Cotización` es versionada e inmutable**: no tiene `PATCH` ni `DELETE`. Un proyecto tiene una única cotización `ACTIVA` a la vez; crear una nueva (`POST /cotizaciones`, abierto a cualquier autenticado) marca automáticamente la anterior como `REEMPLAZADA` dentro de una `$transaction` (evita que queden dos `ACTIVA` simultáneas). Por eso `ICotizacionesRepositorio` **no extiende** `IRepositorioBase<T>` — el contrato genérico de CRUD no aplica a un modelo que es deliberadamente un historial, no una entidad editable.
+  - **Nota sobre permisos (revisión posterior)**: originalmente `Proyecto`/`Cotización` habían quedado restringidos a `ADMIN`/`ENCARGADO` (vía una constante `ROLES_GESTION_*` pensada para poder sumar roles fácil). Se decidió después abrirlo a cualquier autenticado — igual que `Cliente` — y se sacaron esas constantes y los `@Roles(...)` de `crear`/`actualizar`/`eliminar` en los tres controllers. `Proveedor` quedó afuera de este cambio a propósito: sigue restringido en `PATCH`/`DELETE`.
+  - **Campos de `Cotización`**: `proyectoId`, `proveedorId` (ambos obligatorios), `montoTotal` (`Decimal @db.Decimal(14,2)`, nunca `Float`, para evitar errores de redondeo binario en dinero), `moneda` (enum `Moneda`: `UYU` | `USD`), `estado` (enum `EstadoCotizacion`: `ACTIVA` | `REEMPLAZADA`), `archivoPdfRuta` (opcional — no todos los proyectos tienen PDF de respaldo, sobre todo montos chicos).
+  - **`AlmacenamientoModulo`** (`src/almacenamiento/`): puerto `IAlmacenamiento` (`guardar`/`eliminar`/`leer`) + adaptador `RailwayVolumenAdaptador` que en el fondo es solo I/O a un directorio (`RUTA_ALMACENAMIENTO`) — en Railway ese directorio es el Volume montado, en desarrollo es una carpeta local (`./almacenamiento-local`, gitignored). Se construyó en esta etapa (adelantado de la Etapa 5) porque `Cotización` ya necesita subir PDF, y lo reutiliza `OrdenesCompraModulo` para la factura.
+  - `POST /cotizaciones` recibe `multipart/form-data` (campos + archivo opcional vía `FileInterceptor('archivo')`). Validación de archivo con `ParseFilePipe` (`FileTypeValidator` solo PDF + `MaxFileSizeValidator` 10MB, `fileIsRequired: false`). Si falla la creación en la base después de guardar el archivo, el service revierte (borra) el archivo ya escrito para no dejar huérfanos en disco.
+  - **Retrofit de Etapa 3**: `ClientesService.eliminar` y `ProveedoresService.eliminar` ahora también bloquean (422) si tienen `Proyecto`/`Cotización` asociados, respectivamente — es el mismo patrón de `Sectores`, aplicado porque la relación real recién aparece en esta etapa.
+  - **Pendiente explícito para la Etapa 5**: `GET /proyectos/:id/avance-pago` (monto cotizado vs. pagado) no se implementa todavía porque depende de `OrdenesCompra` en estado `PAGADO`, que no existe hasta la próxima etapa.
+- ⏳ **Etapa 5 — Órdenes de compra (núcleo)**: no iniciada.
 
 ---
 
