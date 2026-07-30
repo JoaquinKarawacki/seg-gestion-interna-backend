@@ -18,6 +18,9 @@ coverage
 # Logs
 *.log
 
+# Planillas reales de referencia (datos reales de proveedores/montos, no se versionan)
+*.xlsm
+
 # IDE / OS
 .vscode/*
 !.vscode/extensions.json

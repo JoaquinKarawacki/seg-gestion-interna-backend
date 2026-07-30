@@ -18,11 +18,12 @@ enum RolUsuario {
 }
 
 model Sector {
-  id            String    @id @default(uuid())
-  nombre        String    @unique
+  id            String        @id @default(uuid())
+  nombre        String        @unique
   usuarios      Usuario[]
-  creadoEn      DateTime  @default(now()) @map("creado_en")
-  actualizadoEn DateTime  @updatedAt @map("actualizado_en")
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
 
   @@map("sectores")
 }
@@ -45,19 +46,21 @@ model Usuario {
 enum TipoCuentaBancaria {
   CAJA_AHORRO
   CUENTA_CORRIENTE
+  EXTERIOR
 
   @@map("tipo_cuenta_bancaria")
 }
 
 model Cliente {
-  id            String     @id @default(uuid())
+  id            String        @id @default(uuid())
   nombre        String
-  rut           String     @unique
+  rut           String        @unique
   email         String?
   telefono      String?
   proyectos     Proyecto[]
-  creadoEn      DateTime   @default(now()) @map("creado_en")
-  actualizadoEn DateTime   @updatedAt @map("actualizado_en")
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
 
   @@map("clientes")
 }
@@ -72,6 +75,7 @@ model Proveedor {
   tipoCuenta    TipoCuentaBancaria @map("tipo_cuenta")
   numeroCuenta  String             @map("numero_cuenta")
   cotizaciones  Cotizacion[]
+  ordenesCompra OrdenCompra[]
   creadoEn      DateTime           @default(now()) @map("creado_en")
   actualizadoEn DateTime           @updatedAt @map("actualizado_en")
 
@@ -81,6 +85,7 @@ model Proveedor {
 enum Moneda {
   UYU
   USD
+  EUR
 
   @@map("moneda")
 }
@@ -93,29 +98,109 @@ enum EstadoCotizacion {
 }
 
 model Proyecto {
-  id            String       @id @default(uuid())
+  id            String        @id @default(uuid())
   nombre        String
-  clienteId     String       @map("cliente_id")
-  cliente       Cliente      @relation(fields: [clienteId], references: [id])
+  clienteId     String        @map("cliente_id")
+  cliente       Cliente       @relation(fields: [clienteId], references: [id])
+  tareas        Tarea[]
   cotizaciones  Cotizacion[]
-  creadoEn      DateTime     @default(now()) @map("creado_en")
-  actualizadoEn DateTime     @updatedAt @map("actualizado_en")
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
 
   @@map("proyectos")
+}
+
+model Tarea {
+  id            String        @id @default(uuid())
+  proyectoId    String        @map("proyecto_id")
+  proyecto      Proyecto      @relation(fields: [proyectoId], references: [id])
+  nombre        String
+  cotizaciones  Cotizacion[]
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
+
+  @@map("tareas")
 }
 
 model Cotizacion {
   id             String           @id @default(uuid())
   proyectoId     String           @map("proyecto_id")
   proyecto       Proyecto         @relation(fields: [proyectoId], references: [id])
+  tareaId        String?          @map("tarea_id")
+  tarea          Tarea?           @relation(fields: [tareaId], references: [id])
   proveedorId    String           @map("proveedor_id")
   proveedor      Proveedor        @relation(fields: [proveedorId], references: [id])
   montoTotal     Decimal          @map("monto_total") @db.Decimal(14, 2)
   moneda         Moneda
   estado         EstadoCotizacion @default(ACTIVA)
   archivoPdfRuta String?          @map("archivo_pdf_ruta")
+  ordenesCompra  OrdenCompra[]
   creadoEn       DateTime         @default(now()) @map("creado_en")
   actualizadoEn  DateTime         @updatedAt @map("actualizado_en")
 
   @@map("cotizaciones")
+}
+
+enum TipoOC {
+  ARTICULO
+  SERVICIO
+
+  @@map("tipo_oc")
+}
+
+enum FormaPago {
+  CONTADO_CONTRA_ENTREGA
+  TARJETA_CREDITO
+  DIFERIDO
+  GIRO_RED_COBRANZA
+  TRANSFERENCIA_BANCARIA
+
+  @@map("forma_pago")
+}
+
+enum EstadoOC {
+  BORRADOR
+  PENDIENTE
+  EN_CONSULTA
+  APROBADO
+  RECHAZADO
+  PAGO_OBSERVADO
+  PAGADO
+  ANULADO
+
+  @@map("estado_oc")
+}
+
+model OrdenCompra {
+  id             String      @id @default(uuid())
+  numero         Int         @unique @default(dbgenerated("nextval('numero_orden_compra_seq')"))
+  tipo           TipoOC
+  fecha          DateTime
+  sectorId       String      @map("sector_id")
+  sector         Sector      @relation(fields: [sectorId], references: [id])
+  proveedorId    String      @map("proveedor_id")
+  proveedor      Proveedor   @relation(fields: [proveedorId], references: [id])
+  clienteId      String?     @map("cliente_id")
+  cliente        Cliente?    @relation(fields: [clienteId], references: [id])
+  proyectoId     String?     @map("proyecto_id")
+  proyecto       Proyecto?   @relation(fields: [proyectoId], references: [id])
+  tareaId        String?     @map("tarea_id")
+  tarea          Tarea?      @relation(fields: [tareaId], references: [id])
+  cotizacionId   String?     @map("cotizacion_id")
+  cotizacion     Cotizacion? @relation(fields: [cotizacionId], references: [id])
+  moneda         Moneda
+  monto          Decimal     @map("monto") @db.Decimal(14, 2)
+  concepto       String
+  formaPago      FormaPago   @map("forma_pago")
+  pagaIva        Boolean     @map("paga_iva")
+  ivaIncluido    Boolean     @map("iva_incluido")
+  observaciones  String?
+  facturaPdfRuta String?     @map("factura_pdf_ruta")
+  estado         EstadoOC    @default(BORRADOR)
+  creadoEn       DateTime    @default(now()) @map("creado_en")
+  actualizadoEn  DateTime    @updatedAt @map("actualizado_en")
+
+  @@map("ordenes_compra")
 }
