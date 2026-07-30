@@ -1,6 +1,14 @@
 import { Prisma } from '../../../generated/prisma/client';
-import { FormaPago, Moneda, TipoOC } from '../../../generated/prisma/enums';
-import { OrdenCompraModel } from '../../../generated/prisma/models';
+import {
+  EstadoOC,
+  FormaPago,
+  Moneda,
+  TipoOC,
+} from '../../../generated/prisma/enums';
+import {
+  HistorialEstadoOCModel,
+  OrdenCompraModel,
+} from '../../../generated/prisma/models';
 import { IRepositorioBase } from '../../comun/interfaces/repositorio-base.interface';
 
 export const ORDENES_COMPRA_REPOSITORIO = Symbol('IOrdenesCompraRepositorio');
@@ -44,4 +52,11 @@ export interface IOrdenesCompraRepositorio extends IRepositorioBase<
   DatosActualizarOrdenCompra
 > {
   sumarMontoPorCotizacion(cotizacionId: string): Promise<Prisma.Decimal>;
+  cambiarEstado(
+    id: string,
+    estadoNuevo: EstadoOC,
+    usuarioId: string,
+    motivo?: string | null,
+  ): Promise<OrdenCompraModel>;
+  buscarHistorial(ordenCompraId: string): Promise<HistorialEstadoOCModel[]>;
 }

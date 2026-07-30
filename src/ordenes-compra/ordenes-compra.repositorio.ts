@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import { EstadoOC } from '../../generated/prisma/enums';
-import { OrdenCompraModel } from '../../generated/prisma/models';
+import {
+  HistorialEstadoOCModel,
+  OrdenCompraModel,
+} from '../../generated/prisma/models';
 import {
   DatosActualizarOrdenCompra,
   DatosCrearOrdenCompra,
@@ -46,5 +49,44 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
     });
 
     return resultado._sum.monto ?? new Prisma.Decimal(0);
+  }
+
+  async cambiarEstado(
+    id: string,
+    estadoNuevo: EstadoOC,
+    usuarioId: string,
+    motivo?: string | null,
+  ): Promise<OrdenCompraModel> {
+    return this.prisma.$transaction(async (tx) => {
+      const ordenActual = await tx.ordenCompra.findUniqueOrThrow({
+        where: { id },
+      });
+
+      const ordenActualizada = await tx.ordenCompra.update({
+        where: { id },
+        data: { estado: estadoNuevo },
+      });
+
+      await tx.historialEstadoOC.create({
+        data: {
+          ordenCompraId: id,
+          estadoAnterior: ordenActual.estado,
+          estadoNuevo,
+          usuarioId,
+          motivo: motivo ?? null,
+        },
+      });
+
+      return ordenActualizada;
+    });
+  }
+
+  async buscarHistorial(
+    ordenCompraId: string,
+  ): Promise<HistorialEstadoOCModel[]> {
+    return this.prisma.historialEstadoOC.findMany({
+      where: { ordenCompraId },
+      orderBy: { creadoEn: 'asc' },
+    });
   }
 }

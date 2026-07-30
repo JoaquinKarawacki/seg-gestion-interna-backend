@@ -15,6 +15,7 @@ import { CrearOrdenCompraDto } from './dtos/crear-orden-compra.dto';
 import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
 import { ORDENES_COMPRA_REPOSITORIO } from './interfaces/ordenes-compra-repositorio.interface';
 import type { IOrdenesCompraRepositorio } from './interfaces/ordenes-compra-repositorio.interface';
+import { mapearRespuestaOrdenCompra } from './ordenes-compra.mapper';
 import { CadenaValidacionOC } from './validaciones/cadena-validacion-oc';
 import { ValidarProveedorCoincideCotizacionEslabon } from './validaciones/validar-proveedor-coincide-cotizacion.eslabon';
 
@@ -48,12 +49,12 @@ export class OrdenesCompraService {
 
   async listar(): Promise<RespuestaOrdenCompraDto[]> {
     const ordenes = await this.ordenesCompraRepositorio.buscarTodos();
-    return ordenes.map((orden) => this.mapearRespuesta(orden));
+    return ordenes.map((orden) => mapearRespuestaOrdenCompra(orden));
   }
 
   async buscarPorId(id: string): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return this.mapearRespuesta(orden);
+    return mapearRespuestaOrdenCompra(orden);
   }
 
   async crear(
@@ -97,7 +98,7 @@ export class OrdenesCompraService {
         facturaPdfRuta: facturaGuardada?.referencia ?? null,
       });
 
-      return this.mapearRespuesta(orden);
+      return mapearRespuestaOrdenCompra(orden);
     } catch (error) {
       await this.revertirArchivoGuardado(facturaGuardada);
       throw error;
@@ -131,7 +132,7 @@ export class OrdenesCompraService {
       observaciones: dto.observaciones,
     });
 
-    return this.mapearRespuesta(orden);
+    return mapearRespuestaOrdenCompra(orden);
   }
 
   async adjuntarFactura(
@@ -154,7 +155,7 @@ export class OrdenesCompraService {
         await this.almacenamiento.eliminar(ordenExistente.facturaPdfRuta);
       }
 
-      return this.mapearRespuesta(orden);
+      return mapearRespuestaOrdenCompra(orden);
     } catch (error) {
       await this.revertirArchivoGuardado(facturaGuardada);
       throw error;
@@ -231,29 +232,5 @@ export class OrdenesCompraService {
     if (archivoGuardado) {
       await this.almacenamiento.eliminar(archivoGuardado.referencia);
     }
-  }
-
-  private mapearRespuesta(orden: OrdenCompraModel): RespuestaOrdenCompraDto {
-    return {
-      id: orden.id,
-      numero: orden.numero,
-      tipo: orden.tipo,
-      fecha: orden.fecha,
-      sectorId: orden.sectorId,
-      proveedorId: orden.proveedorId,
-      clienteId: orden.clienteId,
-      proyectoId: orden.proyectoId,
-      tareaId: orden.tareaId,
-      cotizacionId: orden.cotizacionId,
-      moneda: orden.moneda,
-      monto: orden.monto.toString(),
-      concepto: orden.concepto,
-      formaPago: orden.formaPago,
-      pagaIva: orden.pagaIva,
-      ivaIncluido: orden.ivaIncluido,
-      observaciones: orden.observaciones,
-      facturaPdfRuta: orden.facturaPdfRuta,
-      estado: orden.estado,
-    };
   }
 }
