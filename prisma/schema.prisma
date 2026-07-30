@@ -29,16 +29,17 @@ model Sector {
 }
 
 model Usuario {
-  id             String     @id @default(uuid())
-  nombre         String
-  email          String     @unique
-  contrasenaHash String     @map("contrasena_hash")
-  rol            RolUsuario
-  activo         Boolean    @default(true)
-  sectorId       String?    @map("sector_id")
-  sector         Sector?    @relation(fields: [sectorId], references: [id])
-  creadoEn       DateTime   @default(now()) @map("creado_en")
-  actualizadoEn  DateTime   @updatedAt @map("actualizado_en")
+  id                 String              @id @default(uuid())
+  nombre             String
+  email              String              @unique
+  contrasenaHash     String              @map("contrasena_hash")
+  rol                RolUsuario
+  activo             Boolean             @default(true)
+  sectorId           String?             @map("sector_id")
+  sector             Sector?             @relation(fields: [sectorId], references: [id])
+  historialEstadosOC HistorialEstadoOC[]
+  creadoEn           DateTime            @default(now()) @map("creado_en")
+  actualizadoEn      DateTime            @updatedAt @map("actualizado_en")
 
   @@map("usuarios")
 }
@@ -174,33 +175,48 @@ enum EstadoOC {
 }
 
 model OrdenCompra {
-  id             String      @id @default(uuid())
-  numero         Int         @unique @default(dbgenerated("nextval('numero_orden_compra_seq')"))
-  tipo           TipoOC
-  fecha          DateTime
-  sectorId       String      @map("sector_id")
-  sector         Sector      @relation(fields: [sectorId], references: [id])
-  proveedorId    String      @map("proveedor_id")
-  proveedor      Proveedor   @relation(fields: [proveedorId], references: [id])
-  clienteId      String?     @map("cliente_id")
-  cliente        Cliente?    @relation(fields: [clienteId], references: [id])
-  proyectoId     String?     @map("proyecto_id")
-  proyecto       Proyecto?   @relation(fields: [proyectoId], references: [id])
-  tareaId        String?     @map("tarea_id")
-  tarea          Tarea?      @relation(fields: [tareaId], references: [id])
-  cotizacionId   String?     @map("cotizacion_id")
-  cotizacion     Cotizacion? @relation(fields: [cotizacionId], references: [id])
-  moneda         Moneda
-  monto          Decimal     @map("monto") @db.Decimal(14, 2)
-  concepto       String
-  formaPago      FormaPago   @map("forma_pago")
-  pagaIva        Boolean     @map("paga_iva")
-  ivaIncluido    Boolean     @map("iva_incluido")
-  observaciones  String?
-  facturaPdfRuta String?     @map("factura_pdf_ruta")
-  estado         EstadoOC    @default(BORRADOR)
-  creadoEn       DateTime    @default(now()) @map("creado_en")
-  actualizadoEn  DateTime    @updatedAt @map("actualizado_en")
+  id               String              @id @default(uuid())
+  numero           Int                 @unique @default(dbgenerated("nextval('numero_orden_compra_seq')"))
+  tipo             TipoOC
+  fecha            DateTime
+  sectorId         String              @map("sector_id")
+  sector           Sector              @relation(fields: [sectorId], references: [id])
+  proveedorId      String              @map("proveedor_id")
+  proveedor        Proveedor           @relation(fields: [proveedorId], references: [id])
+  clienteId        String?             @map("cliente_id")
+  cliente          Cliente?            @relation(fields: [clienteId], references: [id])
+  proyectoId       String?             @map("proyecto_id")
+  proyecto         Proyecto?           @relation(fields: [proyectoId], references: [id])
+  tareaId          String?             @map("tarea_id")
+  tarea            Tarea?              @relation(fields: [tareaId], references: [id])
+  cotizacionId     String?             @map("cotizacion_id")
+  cotizacion       Cotizacion?         @relation(fields: [cotizacionId], references: [id])
+  moneda           Moneda
+  monto            Decimal             @map("monto") @db.Decimal(14, 2)
+  concepto         String
+  formaPago        FormaPago           @map("forma_pago")
+  pagaIva          Boolean             @map("paga_iva")
+  ivaIncluido      Boolean             @map("iva_incluido")
+  observaciones    String?
+  facturaPdfRuta   String?             @map("factura_pdf_ruta")
+  estado           EstadoOC            @default(BORRADOR)
+  historialEstados HistorialEstadoOC[]
+  creadoEn         DateTime            @default(now()) @map("creado_en")
+  actualizadoEn    DateTime            @updatedAt @map("actualizado_en")
 
   @@map("ordenes_compra")
+}
+
+model HistorialEstadoOC {
+  id             String      @id @default(uuid())
+  ordenCompraId  String      @map("orden_compra_id")
+  ordenCompra    OrdenCompra @relation(fields: [ordenCompraId], references: [id])
+  estadoAnterior EstadoOC    @map("estado_anterior")
+  estadoNuevo    EstadoOC    @map("estado_nuevo")
+  usuarioId      String      @map("usuario_id")
+  usuario        Usuario     @relation(fields: [usuarioId], references: [id])
+  motivo         String?
+  creadoEn       DateTime    @default(now()) @map("creado_en")
+
+  @@map("historial_estado_oc")
 }
