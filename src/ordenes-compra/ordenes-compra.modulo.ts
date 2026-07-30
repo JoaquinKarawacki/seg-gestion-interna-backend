@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AlmacenamientoModulo } from '../almacenamiento/almacenamiento.modulo';
 import { CotizacionesModulo } from '../cotizaciones/cotizaciones.modulo';
 import { ProyectosModulo } from '../proyectos/proyectos.modulo';
+import { OrdenesCompraAprobacionController } from './aprobacion/ordenes-compra-aprobacion.controller';
+import { OrdenesCompraAprobacionService } from './aprobacion/ordenes-compra-aprobacion.service';
 import { ORDENES_COMPRA_REPOSITORIO } from './interfaces/ordenes-compra-repositorio.interface';
 import { OrdenesCompraController } from './ordenes-compra.controller';
 import { OrdenesCompraRepositorio } from './ordenes-compra.repositorio';
@@ -12,9 +14,10 @@ import { ValidarProveedorCoincideCotizacionEslabon } from './validaciones/valida
 
 @Module({
   imports: [AlmacenamientoModulo, CotizacionesModulo, ProyectosModulo],
-  controllers: [OrdenesCompraController],
+  controllers: [OrdenesCompraController, OrdenesCompraAprobacionController],
   providers: [
     OrdenesCompraService,
+    OrdenesCompraAprobacionService,
     {
       provide: ORDENES_COMPRA_REPOSITORIO,
       useClass: OrdenesCompraRepositorio,
