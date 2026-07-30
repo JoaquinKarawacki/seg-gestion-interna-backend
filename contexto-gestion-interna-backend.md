@@ -522,6 +522,17 @@ super({ adapter: adaptador });
 - **Estrategia de ID en todas las tablas: UUID** (`@id @default(uuid())`), no autoincrement
 - **Scripts que importan el cliente generado (ej. `prisma/seed.ts`) deben ejecutarse con `tsx`, no con `ts-node`.** El cliente generado usa imports internos con extensión `.js` explícita apuntando a archivos `.ts` (convención moderna de TypeScript para `moduleResolution: "nodenext"`). `ts-node` en modo CommonJS no resuelve esa sustitución de extensión y falla con `MODULE_NOT_FOUND`; `tsx` sí. Por eso `package.json` tiene `"seed": "tsx prisma/seed.ts"` en vez de usar `ts-node`.
 
+### Gotcha confirmado: `@default(dbgenerated(...))` y migraciones nuevas
+
+El campo `numero` de `OrdenCompra` usa `@default(dbgenerated("nextval('numero_orden_compra_seq')"))` (secuencia nativa, ver más abajo). **Cada vez** que se corre `prisma migrate dev` para generar una migración nueva — sea sobre lo que sea, no tiene que tocar `OrdenCompra` ni `numero` — Prisma vuelve a proponer "resetear" ese default (un `ALTER TABLE ... SET DEFAULT / DROP DEFAULT` seguido de `DROP SEQUENCE`), porque no rastrea bien los `dbgenerated()` entre migraciones. Esto **no es un problema que se arregla una vez**, se repite en cada migración nueva mientras ese campo exista así.
+
+**Procedimiento a seguir cada vez que se genera una migración nueva** (confirmado dos veces, Etapa 5 y Etapa 6):
+1. Generar normalmente (`prisma migrate dev --name X`). Va a fallar contra la shadow database con `cannot drop sequence numero_orden_compra_seq because other objects depend on it` — es esperado.
+2. Abrir `prisma/migrations/<timestamp>_X/migration.sql` y borrar las líneas espurias (`ALTER TABLE "ordenes_compra" ALTER COLUMN "numero" SET DEFAULT ...` / `ALTER COLUMN "numero" DROP DEFAULT` / `DROP SEQUENCE "numero_orden_compra_seq"`), dejando solo los cambios reales.
+3. Si la migración quedó marcada como fallida en `_prisma_migrations`: `prisma migrate resolve --rolled-back <nombre_migracion>`.
+4. Aplicar con `prisma migrate deploy` (no `migrate dev`, para no volver a disparar el diff que tropieza con lo mismo).
+5. `prisma generate` (deploy no lo hace solo).
+
 ---
 
 ## Auth y roles
@@ -542,6 +553,8 @@ Roles del sistema:
 - `ENCARGADO` — aprueba/rechaza/consulta OCs de su sector
 - `PAGOS` — marca OCs como pagadas (Lore en este módulo, puede ser otro en otros)
 - `ADMIN` — acceso total
+
+**Actualización Etapa 6:** el JWT ahora incluye `sectorId` (antes solo `{ sub, email, rol }`) — hacía falta para poder chequear en el motor de aprobación que un `ENCARGADO` solo apruebe/rechace/anule OCs de **su propio** sector (`usuario.sectorId === orden.sectorId`), sin ir a buscar el usuario a la base en cada request. Si un usuario cambia de sector vía `PATCH /usuarios/:id`, el cambio no se refleja hasta que vuelve a loguearse (el token viejo sigue teniendo el `sectorId` anterior hasta que expira o se pide uno nuevo).
 
 ---
 
@@ -683,7 +696,7 @@ Requiere Docker Desktop corriendo. El `.env` local ya apunta a `postgresql://pos
 
 ---
 
-## Estado actual (actualizado 2026-07-29, cierre de Etapa 5)
+## Estado actual (actualizado 2026-07-30, cierre de Etapa 6)
 
 Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se commitea y pushea automáticamente al cerrar cada etapa verificada (tsc + lint + test OK).
 
@@ -722,6 +735,21 @@ Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se
   - **Permisos**: todo abierto a cualquier autenticado (crear/editar/eliminar en `BORRADOR`), igual que `Cliente`/`Proyecto`/`Cotización`.
   - **Retrofit de eliminar() en cascada**: `Sectores`, `Clientes`, `Proveedores` y `Proyectos` ahora también bloquean (422) si tienen `OrdenCompra` asociadas. `Proyectos` además bloquea si tiene `Tarea` asociadas (relación que apareció recién en esta etapa). `Tareas` (nuevo) bloquea si tiene cotizaciones u OCs asociadas.
   - **Pendiente explícito para la Etapa 6**: `GET /proyectos/:id/avance-pago` sigue sin implementarse — aunque `OrdenCompra` ya existe, el campo `estado` recién se puede transicionar a `PAGADO` cuando se construya el motor de aprobación.
+- ✅ **Etapa 6 — Motor de aprobación**: completa. Decisiones tomadas:
+  - **Sin Strategy/Registry**: el plan original preveía un `RegistroAprobacion` para poder registrar distintos tipos de documento (OC, y a futuro rendición de gastos) con su propia estrategia de transiciones. Como rendición de gastos todavía no existe ni está diseñada, se simplificó — una tabla de transiciones (`TRANSICIONES_VALIDAS_OC: Record<EstadoOC, EstadoOC[]>`, en `src/ordenes-compra/aprobacion/transiciones-oc.ts`) definida directamente para OC, sin capa de indirección. Se agrega el Registry cuando el segundo tipo de documento exista de verdad — mismo criterio que ya se aplicó con el Factory de `TipoOC` en la Etapa 5.
+  - **`HistorialEstadoOC`**: tabla de auditoría específica de transiciones de OC (estado anterior, estado nuevo, usuario que la hizo, motivo opcional, fecha). Se escribe atómicamente junto con el cambio de `estado` de la OC, dentro de un único `$transaction` en `OrdenesCompraRepositorio.cambiarEstado()` (mismo repositorio, no uno separado — la tabla de historial está fuertemente acoplada a `OrdenCompra`, no amerita su propio módulo).
+  - **Endpoints de transición** (`OrdenesCompraAprobacionController`, comparte el prefijo `/ordenes-compra` con `OrdenesCompraController` pero es un controller separado — CRUD vs. flujo de aprobación quedan en archivos distintos):
+    - `POST /ordenes-compra/:id/enviar` (BORRADOR→PENDIENTE) — cualquier autenticado
+    - `POST /ordenes-compra/:id/aprobar` / `rechazar` (PENDIENTE→APROBADO/RECHAZADO) — `ENCARGADO`, y además debe ser del **mismo sector** que la OC (`usuario.sectorId === orden.sectorId`, chequeado en el service, no alcanza con el `@Roles` del guard). `rechazar` exige `motivo`.
+    - `POST /ordenes-compra/:id/observar-pago` (APROBADO→PAGO_OBSERVADO, motivo obligatorio) y `confirmar-pago` (→PAGADO) — `PAGOS`
+    - `POST /ordenes-compra/:id/resolver-observacion` (PAGO_OBSERVADO→APROBADO, motivo opcional) — `PAGOS`, endpoint nuevo que no estaba en el diagrama original (el diagrama no decía qué pasaba después de `PAGO_OBSERVADO`)
+    - `POST /ordenes-compra/:id/anular` (cualquier estado antes de `PAGADO`→ANULADO, motivo obligatorio) — `ADMIN` sin restricción, o `ENCARGADO` también limitado a su sector
+    - `GET /ordenes-compra/:id/historial` — cualquier autenticado
+  - **`EN_CONSULTA` ↔ `PENDIENTE` ya están en la tabla de transiciones**, pero todavía no tienen un endpoint HTTP propio — se disparan desde el módulo de Comentarios (Etapa 7: crear un comentario pasa a `EN_CONSULTA`, responder vuelve a `PENDIENTE`), que va a llamar al mismo service.
+  - **Retrofit de `AuthModulo`**: el JWT ahora lleva `sectorId` (ver nota en "Auth y roles" más arriba) — necesario para el chequeo de sector en `aprobar`/`rechazar`/`anular`.
+  - **Nota para la Etapa 8 (Notificaciones)**: en el proceso real, además de a quien corresponda aprobar, siempre hay personas en copia en el mail (coincide con lo visto en la hoja "INSTRUCCIONES DE USO" del Excel: Franco Rodríguez, Lorena Albornoz, Natalia Melonio) — pendiente para cuando se construya ese módulo.
+  - **Gotcha de migraciones con `dbgenerated()`**: se repitió el problema de la Etapa 5 con la secuencia de `numero` (ver sección "Prisma" más arriba, ahora con el procedimiento documentado paso a paso).
+- ⏳ **Etapa 7 — Comentarios**: no iniciada.
 
 ---
 
