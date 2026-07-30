@@ -14,6 +14,11 @@ import type { ICotizacionesRepositorio } from './interfaces/cotizaciones-reposit
 const CODIGO_REFERENCIA_INVALIDA = 'P2003';
 const CARPETA_ARCHIVOS = 'cotizaciones';
 
+export interface ArchivoDescargado {
+  buffer: Buffer;
+  nombreArchivo: string;
+}
+
 @Injectable()
 export class CotizacionesService {
   constructor(
@@ -36,16 +41,38 @@ export class CotizacionesService {
     return cotizaciones.map((cotizacion) => this.mapearRespuesta(cotizacion));
   }
 
-  async buscarActivaPorProyecto(
+  async listarPorTarea(tareaId: string): Promise<RespuestaCotizacionDto[]> {
+    const cotizaciones =
+      await this.cotizacionesRepositorio.buscarPorTarea(tareaId);
+    return cotizaciones.map((cotizacion) => this.mapearRespuesta(cotizacion));
+  }
+
+  async buscarActivaGeneralPorProyecto(
     proyectoId: string,
   ): Promise<RespuestaCotizacionDto> {
     const cotizacion =
-      await this.cotizacionesRepositorio.buscarActivaPorProyecto(proyectoId);
+      await this.cotizacionesRepositorio.buscarActivaGeneralPorProyecto(
+        proyectoId,
+      );
 
     if (!cotizacion) {
       throw new NotFoundException({
         error: 'COTIZACION_ACTIVA_NO_ENCONTRADA',
-        mensaje: 'El proyecto no tiene ninguna cotización activa',
+        mensaje: 'El proyecto no tiene una cotización general activa',
+      });
+    }
+
+    return this.mapearRespuesta(cotizacion);
+  }
+
+  async buscarActivaPorTarea(tareaId: string): Promise<RespuestaCotizacionDto> {
+    const cotizacion =
+      await this.cotizacionesRepositorio.buscarActivaPorTarea(tareaId);
+
+    if (!cotizacion) {
+      throw new NotFoundException({
+        error: 'COTIZACION_ACTIVA_NO_ENCONTRADA',
+        mensaje: 'La tarea no tiene una cotización activa',
       });
     }
 
@@ -68,6 +95,7 @@ export class CotizacionesService {
       const cotizacion = await this.ejecutarOMapearReferenciaInvalida(() =>
         this.cotizacionesRepositorio.crearNuevaVersion({
           proyectoId: dto.proyectoId,
+          tareaId: dto.tareaId ?? null,
           proveedorId: dto.proveedorId,
           montoTotal: new Prisma.Decimal(dto.montoTotal),
           moneda: dto.moneda,
@@ -80,6 +108,20 @@ export class CotizacionesService {
       await this.revertirArchivoGuardado(archivoGuardado);
       throw error;
     }
+  }
+
+  async descargarArchivo(id: string): Promise<ArchivoDescargado> {
+    const cotizacion = await this.obtenerCotizacionOFallar(id);
+
+    if (!cotizacion.archivoPdfRuta) {
+      throw new NotFoundException({
+        error: 'COTIZACION_SIN_ARCHIVO',
+        mensaje: 'Esta cotización no tiene un archivo PDF adjunto',
+      });
+    }
+
+    const buffer = await this.almacenamiento.leer(cotizacion.archivoPdfRuta);
+    return { buffer, nombreArchivo: `cotizacion-${cotizacion.id}.pdf` };
   }
 
   private async obtenerCotizacionOFallar(id: string): Promise<CotizacionModel> {
@@ -127,6 +169,7 @@ export class CotizacionesService {
     return {
       id: cotizacion.id,
       proyectoId: cotizacion.proyectoId,
+      tareaId: cotizacion.tareaId,
       proveedorId: cotizacion.proveedorId,
       montoTotal: cotizacion.montoTotal.toString(),
       moneda: cotizacion.moneda,

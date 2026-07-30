@@ -1,10 +1,20 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsPositive, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsUUID,
+} from 'class-validator';
 import { Moneda } from '../../../generated/prisma/enums';
 
 export class CrearCotizacionDto {
   @IsUUID()
   proyectoId!: string;
+
+  @IsOptional()
+  @IsUUID()
+  tareaId?: string;
 
   @IsUUID()
   proveedorId!: string;

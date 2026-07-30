@@ -6,6 +6,7 @@ export const COTIZACIONES_REPOSITORIO = Symbol('ICotizacionesRepositorio');
 
 export interface DatosCrearCotizacion {
   proyectoId: string;
+  tareaId: string | null;
   proveedorId: string;
   montoTotal: Prisma.Decimal;
   moneda: Moneda;
@@ -19,6 +20,10 @@ export interface DatosCrearCotizacion {
 export interface ICotizacionesRepositorio {
   buscarPorId(id: string): Promise<CotizacionModel | null>;
   buscarPorProyecto(proyectoId: string): Promise<CotizacionModel[]>;
-  buscarActivaPorProyecto(proyectoId: string): Promise<CotizacionModel | null>;
+  buscarPorTarea(tareaId: string): Promise<CotizacionModel[]>;
+  buscarActivaGeneralPorProyecto(
+    proyectoId: string,
+  ): Promise<CotizacionModel | null>;
+  buscarActivaPorTarea(tareaId: string): Promise<CotizacionModel | null>;
   crearNuevaVersion(datos: DatosCrearCotizacion): Promise<CotizacionModel>;
 }

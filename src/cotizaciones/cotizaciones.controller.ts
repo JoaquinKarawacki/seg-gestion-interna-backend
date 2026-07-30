@@ -7,6 +7,7 @@ import {
   Param,
   ParseFilePipe,
   Post,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -25,9 +26,9 @@ import { RespuestaCotizacionDto } from './dtos/respuesta-cotizacion.dto';
 const TAMANIO_MAXIMO_ARCHIVO_BYTES = 10 * 1024 * 1024;
 
 // Sin prefijo de clase a proposito: las rutas de Cotizacion se reparten
-// entre /cotizaciones y /proyectos/:proyectoId/cotizaciones porque el
-// recurso se lee "anidado" bajo Proyecto pero conceptualmente le
-// pertenece a este modulo, no a ProyectosModulo.
+// entre /cotizaciones, /proyectos/:proyectoId/cotizaciones y
+// /tareas/:tareaId/cotizaciones porque el recurso se lee "anidado" bajo
+// Proyecto/Tarea pero conceptualmente le pertenece a este modulo.
 @Controller()
 @UseGuards(JwtGuardia, RolesGuardia)
 export class CotizacionesController {
@@ -41,6 +42,16 @@ export class CotizacionesController {
     return { datos, mensaje: 'Cotización obtenida correctamente' };
   }
 
+  @Get('cotizaciones/:id/archivo')
+  async descargarArchivo(@Param('id') id: string): Promise<StreamableFile> {
+    const { buffer, nombreArchivo } =
+      await this.cotizacionesService.descargarArchivo(id);
+    return new StreamableFile(buffer, {
+      type: 'application/pdf',
+      disposition: `inline; filename="${nombreArchivo}"`,
+    });
+  }
+
   @Get('proyectos/:proyectoId/cotizaciones')
   async listarPorProyecto(
     @Param('proyectoId') proyectoId: string,
@@ -50,11 +61,27 @@ export class CotizacionesController {
   }
 
   @Get('proyectos/:proyectoId/cotizaciones/activa')
-  async buscarActivaPorProyecto(
+  async buscarActivaGeneralPorProyecto(
     @Param('proyectoId') proyectoId: string,
   ): Promise<RespuestaExitosa<RespuestaCotizacionDto>> {
     const datos =
-      await this.cotizacionesService.buscarActivaPorProyecto(proyectoId);
+      await this.cotizacionesService.buscarActivaGeneralPorProyecto(proyectoId);
+    return { datos, mensaje: 'Cotización activa obtenida correctamente' };
+  }
+
+  @Get('tareas/:tareaId/cotizaciones')
+  async listarPorTarea(
+    @Param('tareaId') tareaId: string,
+  ): Promise<RespuestaLista<RespuestaCotizacionDto>> {
+    const datos = await this.cotizacionesService.listarPorTarea(tareaId);
+    return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
+  }
+
+  @Get('tareas/:tareaId/cotizaciones/activa')
+  async buscarActivaPorTarea(
+    @Param('tareaId') tareaId: string,
+  ): Promise<RespuestaExitosa<RespuestaCotizacionDto>> {
+    const datos = await this.cotizacionesService.buscarActivaPorTarea(tareaId);
     return { datos, mensaje: 'Cotización activa obtenida correctamente' };
   }
 

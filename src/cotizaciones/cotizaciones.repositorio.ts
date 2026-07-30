@@ -22,11 +22,24 @@ export class CotizacionesRepositorio implements ICotizacionesRepositorio {
     });
   }
 
-  async buscarActivaPorProyecto(
+  async buscarPorTarea(tareaId: string): Promise<CotizacionModel[]> {
+    return this.prisma.cotizacion.findMany({
+      where: { tareaId },
+      orderBy: { creadoEn: 'desc' },
+    });
+  }
+
+  async buscarActivaGeneralPorProyecto(
     proyectoId: string,
   ): Promise<CotizacionModel | null> {
     return this.prisma.cotizacion.findFirst({
-      where: { proyectoId, estado: EstadoCotizacion.ACTIVA },
+      where: { proyectoId, tareaId: null, estado: EstadoCotizacion.ACTIVA },
+    });
+  }
+
+  async buscarActivaPorTarea(tareaId: string): Promise<CotizacionModel | null> {
+    return this.prisma.cotizacion.findFirst({
+      where: { tareaId, estado: EstadoCotizacion.ACTIVA },
     });
   }
 
@@ -37,6 +50,7 @@ export class CotizacionesRepositorio implements ICotizacionesRepositorio {
       await tx.cotizacion.updateMany({
         where: {
           proyectoId: datos.proyectoId,
+          tareaId: datos.tareaId,
           estado: EstadoCotizacion.ACTIVA,
         },
         data: { estado: EstadoCotizacion.REEMPLAZADA },
