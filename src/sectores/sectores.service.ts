@@ -56,14 +56,24 @@ export class SectoresService {
   async eliminar(id: string): Promise<void> {
     await this.obtenerSectorOFallar(id);
 
-    const usuariosAsignados =
-      await this.sectoresRepositorio.contarUsuariosAsignados(id);
+    const [usuariosAsignados, ordenesCompraAsociadas] = await Promise.all([
+      this.sectoresRepositorio.contarUsuariosAsignados(id),
+      this.sectoresRepositorio.contarOrdenesCompraAsociadas(id),
+    ]);
 
     if (usuariosAsignados > 0) {
       throw new UnprocessableEntityException({
         error: 'SECTOR_CON_USUARIOS_ASIGNADOS',
         mensaje:
           'No se puede eliminar el sector porque tiene usuarios asignados',
+      });
+    }
+
+    if (ordenesCompraAsociadas > 0) {
+      throw new UnprocessableEntityException({
+        error: 'SECTOR_CON_ORDENES_COMPRA_ASOCIADAS',
+        mensaje:
+          'No se puede eliminar el sector porque tiene órdenes de compra asociadas',
       });
     }
 

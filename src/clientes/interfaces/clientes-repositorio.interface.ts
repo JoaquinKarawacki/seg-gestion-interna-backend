@@ -23,4 +23,5 @@ export interface IClientesRepositorio extends IRepositorioBase<
   DatosActualizarCliente
 > {
   contarProyectosAsociados(clienteId: string): Promise<number>;
+  contarOrdenesCompraAsociadas(clienteId: string): Promise<number>;
 }

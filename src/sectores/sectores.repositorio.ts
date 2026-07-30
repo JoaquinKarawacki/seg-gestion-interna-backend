@@ -37,4 +37,8 @@ export class SectoresRepositorio implements ISectoresRepositorio {
   async contarUsuariosAsignados(sectorId: string): Promise<number> {
     return this.prisma.usuario.count({ where: { sectorId } });
   }
+
+  async contarOrdenesCompraAsociadas(sectorId: string): Promise<number> {
+    return this.prisma.ordenCompra.count({ where: { sectorId } });
+  }
 }

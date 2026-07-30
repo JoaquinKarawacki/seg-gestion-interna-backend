@@ -19,4 +19,6 @@ export interface IProyectosRepositorio extends IRepositorioBase<
   DatosActualizarProyecto
 > {
   contarCotizacionesAsociadas(proyectoId: string): Promise<number>;
+  contarTareasAsociadas(proyectoId: string): Promise<number>;
+  contarOrdenesCompraAsociadas(proyectoId: string): Promise<number>;
 }

@@ -37,4 +37,8 @@ export class ClientesRepositorio implements IClientesRepositorio {
   async contarProyectosAsociados(clienteId: string): Promise<number> {
     return this.prisma.proyecto.count({ where: { clienteId } });
   }
+
+  async contarOrdenesCompraAsociadas(clienteId: string): Promise<number> {
+    return this.prisma.ordenCompra.count({ where: { clienteId } });
+  }
 }

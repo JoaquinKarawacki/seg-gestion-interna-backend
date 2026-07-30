@@ -55,14 +55,34 @@ export class ProyectosService {
   async eliminar(id: string): Promise<void> {
     await this.obtenerProyectoOFallar(id);
 
-    const cotizacionesAsociadas =
-      await this.proyectosRepositorio.contarCotizacionesAsociadas(id);
+    const [cotizacionesAsociadas, tareasAsociadas, ordenesCompraAsociadas] =
+      await Promise.all([
+        this.proyectosRepositorio.contarCotizacionesAsociadas(id),
+        this.proyectosRepositorio.contarTareasAsociadas(id),
+        this.proyectosRepositorio.contarOrdenesCompraAsociadas(id),
+      ]);
 
     if (cotizacionesAsociadas > 0) {
       throw new UnprocessableEntityException({
         error: 'PROYECTO_CON_COTIZACIONES_ASOCIADAS',
         mensaje:
           'No se puede eliminar el proyecto porque tiene cotizaciones cargadas',
+      });
+    }
+
+    if (tareasAsociadas > 0) {
+      throw new UnprocessableEntityException({
+        error: 'PROYECTO_CON_TAREAS_ASOCIADAS',
+        mensaje:
+          'No se puede eliminar el proyecto porque tiene tareas cargadas',
+      });
+    }
+
+    if (ordenesCompraAsociadas > 0) {
+      throw new UnprocessableEntityException({
+        error: 'PROYECTO_CON_ORDENES_COMPRA_ASOCIADAS',
+        mensaje:
+          'No se puede eliminar el proyecto porque tiene órdenes de compra asociadas',
       });
     }
 

@@ -56,14 +56,24 @@ export class ProveedoresService {
   async eliminar(id: string): Promise<void> {
     await this.obtenerProveedorOFallar(id);
 
-    const cotizacionesAsociadas =
-      await this.proveedoresRepositorio.contarCotizacionesAsociadas(id);
+    const [cotizacionesAsociadas, ordenesCompraAsociadas] = await Promise.all([
+      this.proveedoresRepositorio.contarCotizacionesAsociadas(id),
+      this.proveedoresRepositorio.contarOrdenesCompraAsociadas(id),
+    ]);
 
     if (cotizacionesAsociadas > 0) {
       throw new UnprocessableEntityException({
         error: 'PROVEEDOR_CON_COTIZACIONES_ASOCIADAS',
         mensaje:
           'No se puede eliminar el proveedor porque tiene cotizaciones asociadas',
+      });
+    }
+
+    if (ordenesCompraAsociadas > 0) {
+      throw new UnprocessableEntityException({
+        error: 'PROVEEDOR_CON_ORDENES_COMPRA_ASOCIADAS',
+        mensaje:
+          'No se puede eliminar el proveedor porque tiene órdenes de compra asociadas',
       });
     }
 

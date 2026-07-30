@@ -37,4 +37,8 @@ export class ProveedoresRepositorio implements IProveedoresRepositorio {
   async contarCotizacionesAsociadas(proveedorId: string): Promise<number> {
     return this.prisma.cotizacion.count({ where: { proveedorId } });
   }
+
+  async contarOrdenesCompraAsociadas(proveedorId: string): Promise<number> {
+    return this.prisma.ordenCompra.count({ where: { proveedorId } });
+  }
 }

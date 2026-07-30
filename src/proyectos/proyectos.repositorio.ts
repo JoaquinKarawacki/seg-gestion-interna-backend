@@ -37,4 +37,12 @@ export class ProyectosRepositorio implements IProyectosRepositorio {
   async contarCotizacionesAsociadas(proyectoId: string): Promise<number> {
     return this.prisma.cotizacion.count({ where: { proyectoId } });
   }
+
+  async contarTareasAsociadas(proyectoId: string): Promise<number> {
+    return this.prisma.tarea.count({ where: { proyectoId } });
+  }
+
+  async contarOrdenesCompraAsociadas(proyectoId: string): Promise<number> {
+    return this.prisma.ordenCompra.count({ where: { proyectoId } });
+  }
 }

@@ -30,4 +30,5 @@ export interface IProveedoresRepositorio extends IRepositorioBase<
   DatosActualizarProveedor
 > {
   contarCotizacionesAsociadas(proveedorId: string): Promise<number>;
+  contarOrdenesCompraAsociadas(proveedorId: string): Promise<number>;
 }
