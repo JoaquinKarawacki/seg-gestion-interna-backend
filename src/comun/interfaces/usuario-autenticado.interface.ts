@@ -4,4 +4,5 @@ export interface UsuarioAutenticado {
   id: string;
   email: string;
   rol: RolUsuario;
+  sectorId: string | null;
 }
