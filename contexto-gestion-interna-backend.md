@@ -547,23 +547,40 @@ Roles del sistema:
 
 ## Modelo de dominio
 
+**Corrección (decidido en Etapa 5, tras revisar `OC Articulos.xlsm` y `OC Servicios.xlsm` reales):** el modelo original de este documento (Ítems detallados con cantidad/precio unitario, Cotización única por Proyecto) no coincide con el proceso real. El modelo vigente:
+
 ```
 Cliente
   └── Proyecto (uno o varios)
-        └── Cotización (una o varias, pueden cambiar)
-              ├── Proveedor
-              ├── Monto total + moneda
-              └── OC (uno o varios pagos parciales)
-                    ├── Ítems (uno o varios)
-                    ├── Factura PDF adjunta
-                    └── Estado → flujo de aprobación
+        ├── Cotización GENERAL (tareaId = null, una ACTIVA a la vez, versionada)
+        │     ├── Proveedor
+        │     └── Monto total + moneda
+        └── Tarea (una o varias, ej. "Electricidad", "Construcción")
+              └── Cotización DE LA TAREA (una ACTIVA a la vez, versionada
+                    independientemente de la general y de otras tareas)
+                    ├── Proveedor (el que hace esa tarea puntual)
+                    └── Monto total + moneda
 
-OC suelta (sin proyecto ni cotización)
-  ├── Proveedor
-  ├── Ítems
-  ├── Factura PDF adjunta
+OC (Orden de Compra)
+  ├── Proveedor (siempre obligatorio)
+  ├── Sector comprador (siempre obligatorio)
+  ├── Cliente / Proyecto / Tarea (opcionales, DERIVADOS automáticamente
+  │     de la Cotización vinculada — nunca los manda el cliente HTTP)
+  ├── Cotización vinculada (opcional)
+  ├── Concepto (texto libre, NO items detallados) + Monto total + Moneda (UYU/USD/EUR)
+  ├── Forma de pago, ¿paga IVA?, ¿IVA incluido?
+  ├── Factura PDF adjunta (opcional)
+  └── Estado → flujo de aprobación
+
+OC suelta (sin Cliente/Proyecto/Tarea/Cotización — ej. artículos de oficina,
+el "cliente" conceptual es SEG mismo, no se completa ningún Cliente)
+  ├── Proveedor + Sector
+  ├── Concepto + Monto + Moneda
+  ├── Factura PDF adjunta (opcional)
   └── Estado → flujo de aprobación
 ```
+
+Una Cotización general y las Cotizaciones de cada Tarea del mismo proyecto pueden estar todas `ACTIVA` al mismo tiempo — el versionado (marcar `REEMPLAZADA`) es independiente por cada combinación proyecto+tarea (`tareaId = null` identifica a la general).
 
 ### Avance de pago por proyecto
 El sistema calcula automáticamente para cada proyecto:
@@ -591,8 +608,8 @@ APROBADO
 ```
 
 ### Factura adjunta
-- Cada OC tiene exactamente un PDF de factura adjunto
-- Se sube al momento de crear o antes de enviar a aprobación
+- El PDF de factura es **opcional** (decidido en Etapa 5: no todos los proyectos/OCs tienen archivo, sobre todo montos chicos)
+- Se sube al momento de crear o después, vía `PATCH /ordenes-compra/:id/factura`
 - Lore lo abre y controla visualmente contra el monto de la OC
 - Si no coincide, cambia el estado a PAGO_OBSERVADO con una nota
 - El PDF se almacena en Railway Volumes (mismo patrón que `mvp-control-de-equipos-seg`)
@@ -666,7 +683,7 @@ Requiere Docker Desktop corriendo. El `.env` local ya apunta a `postgresql://pos
 
 ---
 
-## Estado actual (actualizado 2026-07-29)
+## Estado actual (actualizado 2026-07-29, cierre de Etapa 5)
 
 Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se commitea y pushea automáticamente al cerrar cada etapa verificada (tsc + lint + test OK).
 
@@ -690,7 +707,21 @@ Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se
   - `POST /cotizaciones` recibe `multipart/form-data` (campos + archivo opcional vía `FileInterceptor('archivo')`). Validación de archivo con `ParseFilePipe` (`FileTypeValidator` solo PDF + `MaxFileSizeValidator` 10MB, `fileIsRequired: false`). Si falla la creación en la base después de guardar el archivo, el service revierte (borra) el archivo ya escrito para no dejar huérfanos en disco.
   - **Retrofit de Etapa 3**: `ClientesService.eliminar` y `ProveedoresService.eliminar` ahora también bloquean (422) si tienen `Proyecto`/`Cotización` asociados, respectivamente — es el mismo patrón de `Sectores`, aplicado porque la relación real recién aparece en esta etapa.
   - **Pendiente explícito para la Etapa 5**: `GET /proyectos/:id/avance-pago` (monto cotizado vs. pagado) no se implementa todavía porque depende de `OrdenesCompra` en estado `PAGADO`, que no existe hasta la próxima etapa.
-- ⏳ **Etapa 5 — Órdenes de compra (núcleo)**: no iniciada.
+- ✅ **Etapa 5 — Órdenes de compra (núcleo)**: completa. Se revisaron `OC Articulos.xlsm` y `OC Servicios.xlsm` (las planillas reales) antes de diseñar el schema — cambió varios supuestos del plan original:
+  - **Sin Factory**: los dos Excel resultaron ser estructuralmente idénticos (mismas columnas, mismo formulario) — no hay variación real entre "servicio" y "artículo" que amerite un Factory con variantes. `tipo` (`TipoOC`: `ARTICULO` | `SERVICIO`) quedó como un campo descriptivo simple en `OrdenCompra`, igual que `rol` en `Usuario` — no cambia comportamiento ni estructura.
+  - **Sin ítems detallados**: la planilla real usa un solo campo `concepto` (texto libre) y un `monto` total único por OC, no una tabla de líneas con cantidad/precio unitario como decía el plan original.
+  - **Modelo `Tarea` nuevo** (no estaba planeado): un Proyecto tiene una cotización **general** (`tareaId = null`) y además puede dividirse en Tareas (Electricidad, Construcción, etc.), cada una con su propia cotización versionada independientemente — pueden convivir varias `ACTIVA` a la vez dentro del mismo proyecto, una por tarea. Ver "Modelo de dominio" más arriba.
+  - **Campos nuevos descubiertos en el Excel real, agregados a `OrdenCompra`**: `formaPago` (enum `FormaPago`: `CONTADO_CONTRA_ENTREGA` | `TARJETA_CREDITO` | `DIFERIDO` | `GIRO_RED_COBRANZA` | `TRANSFERENCIA_BANCARIA`), `pagaIva`/`ivaIncluido` (booleanos independientes), `sectorId` (obligatorio — el sector que compra, determina a quién se le manda el mail de aprobación en el proceso manual actual).
+  - **Retrofit de enums compartidos**: `Moneda` pasa a tener `EUR` además de `UYU`/`USD` (afecta también a `Cotización`, ya creada en Etapa 4). `TipoCuentaBancaria` (en `Proveedor`, Etapa 3) suma `EXTERIOR`.
+  - **Diseño "derivar en vez de confiar"**: `OrdenCompra` guarda `clienteId`/`proyectoId`/`tareaId` para poder filtrar/reportar sin joins, pero **el cliente HTTP nunca los manda** — el service los deriva automáticamente navegando desde `cotizacionId` (si viene) hacia `Cotización.proyectoId`/`tareaId` y `Proyecto.clienteId`. Evita la clase entera de bugs de "IDs redundantes que no coinciden entre sí".
+  - **Chain of Responsibility real** (`src/ordenes-compra/validaciones/`): dos eslabones con reglas de negocio genuinas (no solo "campo no vacío", eso ya lo hace el DTO):
+    1. `ValidarProveedorCoincideCotizacionEslabon`: si hay `cotizacionId`, el `proveedorId` de la OC debe coincidir con el de esa cotización.
+    2. `ValidarMontoNoExcedeCotizacionEslabon`: si hay `cotizacionId`, la suma de OCs ya cargadas contra ella (excluyendo `ANULADO`, y excluyéndose a sí misma en un `PATCH`) más el monto nuevo no puede superar `Cotizacion.montoTotal`.
+  - **Número correlativo**: secuencia nativa de Postgres (`numero_orden_compra_seq`), no `autoincrement()` de Prisma. Como Prisma no puede generar el `CREATE SEQUENCE` desde el schema, la migración se generó con `--create-only` y se editó a mano para insertar esa línea antes del `CREATE TABLE`. Campo `numero` con `@default(dbgenerated("nextval('numero_orden_compra_seq')"))`.
+  - **Factura opcional**: `POST /ordenes-compra` acepta `multipart/form-data` con factura opcional (mismo patrón que `Cotización`). Además hay `PATCH /ordenes-compra/:id/factura` para adjuntar/reemplazar después (borra el archivo viejo del disco si había uno), y `GET /ordenes-compra/:id/factura` / `GET /cotizaciones/:id/archivo` para descargar (usan `StreamableFile` de Nest). Si la creación falla después de guardar el archivo, se revierte (se borra) para no dejar huérfanos.
+  - **Permisos**: todo abierto a cualquier autenticado (crear/editar/eliminar en `BORRADOR`), igual que `Cliente`/`Proyecto`/`Cotización`.
+  - **Retrofit de eliminar() en cascada**: `Sectores`, `Clientes`, `Proveedores` y `Proyectos` ahora también bloquean (422) si tienen `OrdenCompra` asociadas. `Proyectos` además bloquea si tiene `Tarea` asociadas (relación que apareció recién en esta etapa). `Tareas` (nuevo) bloquea si tiene cotizaciones u OCs asociadas.
+  - **Pendiente explícito para la Etapa 6**: `GET /proyectos/:id/avance-pago` sigue sin implementarse — aunque `OrdenCompra` ya existe, el campo `estado` recién se puede transicionar a `PAGADO` cuando se construya el motor de aprobación.
 
 ---
 
