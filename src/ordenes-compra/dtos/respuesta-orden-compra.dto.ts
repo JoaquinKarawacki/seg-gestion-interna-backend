@@ -10,6 +10,7 @@ export class RespuestaOrdenCompraDto {
   numero!: number;
   tipo!: TipoOC;
   fecha!: Date;
+  solicitanteId!: string;
   sectorId!: string;
   proveedorId!: string;
   clienteId!: string | null;

@@ -11,14 +11,17 @@ import {
   ParseFilePipe,
   Patch,
   Post,
+  Req,
   StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Request } from 'express';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import {
   RespuestaExitosa,
   RespuestaLista,
@@ -29,6 +32,8 @@ import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
 import { OrdenesCompraService } from './ordenes-compra.service';
 
 const TAMANIO_MAXIMO_ARCHIVO_BYTES = 10 * 1024 * 1024;
+
+type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
 @Controller('ordenes-compra')
 @UseGuards(JwtGuardia, RolesGuardia)
@@ -63,6 +68,7 @@ export class OrdenesCompraController {
   @UseInterceptors(FileInterceptor('factura'))
   async crear(
     @Body() dto: CrearOrdenCompraDto,
+    @Req() solicitud: SolicitudAutenticada,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -74,7 +80,11 @@ export class OrdenesCompraController {
     )
     factura?: Express.Multer.File,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraService.crear(dto, factura);
+    const datos = await this.ordenesCompraService.crear(
+      dto,
+      solicitud.user,
+      factura,
+    );
     return { datos, mensaje: 'Orden de compra creada correctamente' };
   }
 

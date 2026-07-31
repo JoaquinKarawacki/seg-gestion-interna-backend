@@ -16,6 +16,7 @@ export const ORDENES_COMPRA_REPOSITORIO = Symbol('IOrdenesCompraRepositorio');
 export interface DatosCrearOrdenCompra {
   tipo: TipoOC;
   fecha: Date;
+  solicitanteId: string;
   sectorId: string;
   proveedorId: string;
   clienteId: string | null;

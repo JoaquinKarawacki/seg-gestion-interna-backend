@@ -9,6 +9,7 @@ export function mapearRespuestaOrdenCompra(
     numero: orden.numero,
     tipo: orden.tipo,
     fecha: orden.fecha,
+    solicitanteId: orden.solicitanteId,
     sectorId: orden.sectorId,
     proveedorId: orden.proveedorId,
     clienteId: orden.clienteId,

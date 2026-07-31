@@ -10,6 +10,7 @@ import { COTIZACIONES_REPOSITORIO } from '../cotizaciones/interfaces/cotizacione
 import type { ICotizacionesRepositorio } from '../cotizaciones/interfaces/cotizaciones-repositorio.interface';
 import { PROYECTOS_REPOSITORIO } from '../proyectos/interfaces/proyectos-repositorio.interface';
 import type { IProyectosRepositorio } from '../proyectos/interfaces/proyectos-repositorio.interface';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { ActualizarOrdenCompraDto } from './dtos/actualizar-orden-compra.dto';
 import { CrearOrdenCompraDto } from './dtos/crear-orden-compra.dto';
 import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
@@ -59,6 +60,7 @@ export class OrdenesCompraService {
 
   async crear(
     dto: CrearOrdenCompraDto,
+    usuario: UsuarioAutenticado,
     factura?: Express.Multer.File,
   ): Promise<RespuestaOrdenCompraDto> {
     const jerarquia = await this.derivarJerarquia(dto.cotizacionId);
@@ -82,6 +84,7 @@ export class OrdenesCompraService {
       const orden = await this.ordenesCompraRepositorio.crear({
         tipo: dto.tipo,
         fecha: new Date(dto.fecha),
+        solicitanteId: usuario.id,
         sectorId: dto.sectorId,
         proveedorId: dto.proveedorId,
         clienteId: jerarquia.clienteId,
