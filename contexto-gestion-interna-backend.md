@@ -696,7 +696,7 @@ Requiere Docker Desktop corriendo. El `.env` local ya apunta a `postgresql://pos
 
 ---
 
-## Estado actual (actualizado 2026-07-30, cierre de Etapa 6)
+## Estado actual (actualizado 2026-07-31, cierre de Etapa 7)
 
 Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se commitea y pushea automáticamente al cerrar cada etapa verificada (tsc + lint + test OK).
 
@@ -749,7 +749,18 @@ Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se
   - **Retrofit de `AuthModulo`**: el JWT ahora lleva `sectorId` (ver nota en "Auth y roles" más arriba) — necesario para el chequeo de sector en `aprobar`/`rechazar`/`anular`.
   - **Nota para la Etapa 8 (Notificaciones)**: en el proceso real, además de a quien corresponda aprobar, siempre hay personas en copia en el mail (coincide con lo visto en la hoja "INSTRUCCIONES DE USO" del Excel: Franco Rodríguez, Lorena Albornoz, Natalia Melonio) — pendiente para cuando se construya ese módulo.
   - **Gotcha de migraciones con `dbgenerated()`**: se repitió el problema de la Etapa 5 con la secuencia de `numero` (ver sección "Prisma" más arriba, ahora con el procedimiento documentado paso a paso).
-- ⏳ **Etapa 7 — Comentarios**: no iniciada.
+- ✅ **Etapa 7 — Comentarios**: completa. Decisiones tomadas:
+  - **Retrofit necesario, descubierto al diseñar la etapa**: `OrdenCompra` no tenía ningún campo que identificara a quien la creó. Se agregó `solicitanteId` (obligatorio, `@relation` a `Usuario`), derivado automáticamente del usuario autenticado en `OrdenesCompraService.crear()` — igual criterio "derivar en vez de confiar" que ya se usaba para `clienteId`/`proyectoId`/`tareaId` en la Etapa 5. El cliente HTTP nunca lo manda. Esto obligó a que `OrdenesCompraController.crear()` empiece a leer `@Req()` (antes no lo necesitaba).
+  - **`Comentario` es inmutable**: sin `PATCH`/`DELETE`, mismo criterio que `Cotización`/`HistorialEstadoOC` — es un hilo de conversación (historial), no una entidad editable. `IComentariosRepositorio` **no extiende** `IRepositorioBase<T>` por la misma razón que `ICotizacionesRepositorio` no lo hace.
+  - **La transición automática de estado NO es "cualquier comentario cambia el estado"**: se dispara solo por combinación rol+estado, decidida explícitamente para evitar transiciones no deseadas (ej. un ADMIN opinando no debería mover el flujo de aprobación):
+    - OC en `PENDIENTE` + comenta el `ENCARGADO` **del mismo sector** que la OC (`usuario.sectorId === orden.sectorId`, mismo chequeo que en `aprobar`/`rechazar` de la Etapa 6) → pasa a `EN_CONSULTA`.
+    - OC en `EN_CONSULTA` + comenta **el solicitante** (por identidad: `usuario.id === orden.solicitanteId`, no por rol) → vuelve a `PENDIENTE`.
+    - Cualquier otro comentario (un ADMIN, una segunda pregunta del mismo encargado antes de que respondan, etc.) queda en el hilo sin alterar el estado de la OC.
+  - **Se puede comentar en cualquier estado de la OC** (útil para dudas post-aprobación, ej. Lore preguntando algo estando en `PAGO_OBSERVADO`). Solo los dos casos de arriba disparan la transición automática; el resto de los comentarios simplemente se guardan.
+  - **Límite de módulo respetado**: `ComentariosModulo` importa `OrdenesCompraModulo` y usa únicamente el token exportado `ORDENES_COMPRA_REPOSITORIO` para llamar `cambiarEstado()` — no importa nada del `aprobacion/` interno de `OrdenesCompraModulo` (esa carpeta no está exportada). Por eso `ComentariosService` compara `orden.estado` directamente contra `EstadoOC.PENDIENTE`/`EstadoOC.EN_CONSULTA` en vez de reusar `TRANSICIONES_VALIDAS_OC` (que es un archivo interno de `ordenes-compra/aprobacion/`, no parte de la interfaz pública del módulo).
+  - **Endpoints**: `POST /ordenes-compra/:id/comentarios` y `GET /ordenes-compra/:id/comentarios`, ambos abiertos a cualquier autenticado (igual criterio que el resto del sistema desde la Etapa 4). `ComentariosController` comparte el prefijo `/ordenes-compra` con `OrdenesCompraController` y `OrdenesCompraAprobacionController`, como controller separado (mismo patrón que la Etapa 6).
+  - **Probado end-to-end manualmente** (login real + Postgres local): comentario de `ADMIN` en `PENDIENTE` no cambia el estado; comentario del `ENCARGADO` del sector correcto en `PENDIENTE` pasa a `EN_CONSULTA`; comentario del solicitante en `EN_CONSULTA` vuelve a `PENDIENTE`; el hilo lista los 3 comentarios en orden cronológico.
+  - **Pendiente explícito para la Etapa 8 (Notificaciones)**: cada comentario nuevo debería notificar a la otra parte (mismo patrón "notifica a X" ya anotado para las transiciones de la Etapa 6) — no se implementó en esta etapa porque el módulo de notificaciones todavía no existe.
 
 ---
 
