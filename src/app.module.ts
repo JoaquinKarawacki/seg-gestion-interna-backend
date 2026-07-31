@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModulo } from './auth/auth.modulo';
 import { ClientesModulo } from './clientes/clientes.modulo';
+import { ComentariosModulo } from './comentarios/comentarios.modulo';
 import { CotizacionesModulo } from './cotizaciones/cotizaciones.modulo';
 import { OrdenesCompraModulo } from './ordenes-compra/ordenes-compra.modulo';
 import { PrismaModulo } from './prisma/prisma.modulo';
@@ -26,6 +27,7 @@ import { TareasModulo } from './tareas/tareas.modulo';
     TareasModulo,
     CotizacionesModulo,
     OrdenesCompraModulo,
+    ComentariosModulo,
   ],
   controllers: [AppController],
   providers: [AppService],
