@@ -8,10 +8,13 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import {
   RespuestaExitosa,
   RespuestaLista,
@@ -20,6 +23,8 @@ import { ClientesService } from './clientes.service';
 import { ActualizarClienteDto } from './dtos/actualizar-cliente.dto';
 import { CrearClienteDto } from './dtos/crear-cliente.dto';
 import { RespuestaClienteDto } from './dtos/respuesta-cliente.dto';
+
+type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
 @Controller('clientes')
 @UseGuards(JwtGuardia, RolesGuardia)
@@ -43,8 +48,9 @@ export class ClientesController {
   @Post()
   async crear(
     @Body() dto: CrearClienteDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaClienteDto>> {
-    const datos = await this.clientesService.crear(dto);
+    const datos = await this.clientesService.crear(dto, solicitud.user);
     return { datos, mensaje: 'Cliente creado correctamente' };
   }
 
@@ -52,14 +58,22 @@ export class ClientesController {
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarClienteDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaClienteDto>> {
-    const datos = await this.clientesService.actualizar(id, dto);
+    const datos = await this.clientesService.actualizar(
+      id,
+      dto,
+      solicitud.user,
+    );
     return { datos, mensaje: 'Cliente actualizado correctamente' };
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async eliminar(@Param('id') id: string): Promise<void> {
-    await this.clientesService.eliminar(id);
+  async eliminar(
+    @Param('id') id: string,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<void> {
+    await this.clientesService.eliminar(id, solicitud.user);
   }
 }

@@ -7,6 +7,9 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { ProveedorModel } from '../../generated/prisma/models';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { ActualizarProveedorDto } from './dtos/actualizar-proveedor.dto';
 import { CrearProveedorDto } from './dtos/crear-proveedor.dto';
 import { RespuestaProveedorDto } from './dtos/respuesta-proveedor.dto';
@@ -20,6 +23,7 @@ export class ProveedoresService {
   constructor(
     @Inject(PROVEEDORES_REPOSITORIO)
     private readonly proveedoresRepositorio: IProveedoresRepositorio,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async listar(): Promise<RespuestaProveedorDto[]> {
@@ -32,10 +36,22 @@ export class ProveedoresService {
     return this.mapearRespuesta(proveedor);
   }
 
-  async crear(dto: CrearProveedorDto): Promise<RespuestaProveedorDto> {
+  async crear(
+    dto: CrearProveedorDto,
+    usuarioActual: UsuarioAutenticado,
+  ): Promise<RespuestaProveedorDto> {
     const proveedor = await this.ejecutarOMapearConflicto(() =>
       this.proveedoresRepositorio.crear(dto),
     );
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.CREAR_PROVEEDOR,
+      descripcion: `Creó el proveedor "${proveedor.nombre}" (${proveedor.rut})`,
+      entidad: 'Proveedor',
+      entidadId: proveedor.id,
+    });
 
     return this.mapearRespuesta(proveedor);
   }
@@ -43,6 +59,7 @@ export class ProveedoresService {
   async actualizar(
     id: string,
     dto: ActualizarProveedorDto,
+    usuarioActual: UsuarioAutenticado,
   ): Promise<RespuestaProveedorDto> {
     await this.obtenerProveedorOFallar(id);
 
@@ -50,11 +67,20 @@ export class ProveedoresService {
       this.proveedoresRepositorio.actualizar(id, dto),
     );
 
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_PROVEEDOR,
+      descripcion: `Actualizó el proveedor "${proveedor.nombre}" (${proveedor.rut})`,
+      entidad: 'Proveedor',
+      entidadId: proveedor.id,
+    });
+
     return this.mapearRespuesta(proveedor);
   }
 
-  async eliminar(id: string): Promise<void> {
-    await this.obtenerProveedorOFallar(id);
+  async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
+    const proveedor = await this.obtenerProveedorOFallar(id);
 
     const [cotizacionesAsociadas, ordenesCompraAsociadas] = await Promise.all([
       this.proveedoresRepositorio.contarCotizacionesAsociadas(id),
@@ -78,6 +104,15 @@ export class ProveedoresService {
     }
 
     await this.proveedoresRepositorio.eliminar(id);
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ELIMINAR_PROVEEDOR,
+      descripcion: `Eliminó el proveedor "${proveedor.nombre}" (${proveedor.rut})`,
+      entidad: 'Proveedor',
+      entidadId: proveedor.id,
+    });
   }
 
   private async obtenerProveedorOFallar(id: string): Promise<ProveedorModel> {

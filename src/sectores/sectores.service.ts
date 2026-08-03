@@ -7,6 +7,9 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { SectorModel } from '../../generated/prisma/models';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { ActualizarSectorDto } from './dtos/actualizar-sector.dto';
 import { CrearSectorDto } from './dtos/crear-sector.dto';
 import { RespuestaSectorDto } from './dtos/respuesta-sector.dto';
@@ -20,6 +23,7 @@ export class SectoresService {
   constructor(
     @Inject(SECTORES_REPOSITORIO)
     private readonly sectoresRepositorio: ISectoresRepositorio,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async listar(): Promise<RespuestaSectorDto[]> {
@@ -32,10 +36,22 @@ export class SectoresService {
     return this.mapearRespuesta(sector);
   }
 
-  async crear(dto: CrearSectorDto): Promise<RespuestaSectorDto> {
+  async crear(
+    dto: CrearSectorDto,
+    usuarioActual: UsuarioAutenticado,
+  ): Promise<RespuestaSectorDto> {
     const sector = await this.ejecutarOMapearConflicto(() =>
       this.sectoresRepositorio.crear(dto),
     );
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.CREAR_SECTOR,
+      descripcion: `Creó el sector "${sector.nombre}"`,
+      entidad: 'Sector',
+      entidadId: sector.id,
+    });
 
     return this.mapearRespuesta(sector);
   }
@@ -43,6 +59,7 @@ export class SectoresService {
   async actualizar(
     id: string,
     dto: ActualizarSectorDto,
+    usuarioActual: UsuarioAutenticado,
   ): Promise<RespuestaSectorDto> {
     await this.obtenerSectorOFallar(id);
 
@@ -50,11 +67,20 @@ export class SectoresService {
       this.sectoresRepositorio.actualizar(id, dto),
     );
 
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_SECTOR,
+      descripcion: `Actualizó el sector "${sector.nombre}"`,
+      entidad: 'Sector',
+      entidadId: sector.id,
+    });
+
     return this.mapearRespuesta(sector);
   }
 
-  async eliminar(id: string): Promise<void> {
-    await this.obtenerSectorOFallar(id);
+  async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
+    const sector = await this.obtenerSectorOFallar(id);
 
     const [usuariosAsignados, ordenesCompraAsociadas] = await Promise.all([
       this.sectoresRepositorio.contarUsuariosAsignados(id),
@@ -78,6 +104,15 @@ export class SectoresService {
     }
 
     await this.sectoresRepositorio.eliminar(id);
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ELIMINAR_SECTOR,
+      descripcion: `Eliminó el sector "${sector.nombre}"`,
+      entidad: 'Sector',
+      entidadId: sector.id,
+    });
   }
 
   private async obtenerSectorOFallar(id: string): Promise<SectorModel> {

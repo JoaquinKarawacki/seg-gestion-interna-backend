@@ -8,6 +8,9 @@ import {
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '../../generated/prisma/client';
 import type { UsuarioModel } from '../../generated/prisma/models';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { ActualizarUsuarioDto } from './dtos/actualizar-usuario.dto';
 import { CambiarContrasenaDto } from './dtos/cambiar-contrasena.dto';
 import { CrearUsuarioDto } from './dtos/crear-usuario.dto';
@@ -23,6 +26,7 @@ export class UsuariosService {
   constructor(
     @Inject(USUARIOS_REPOSITORIO)
     private readonly usuariosRepositorio: IUsuariosRepositorio,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async listar(): Promise<RespuestaUsuarioDto[]> {
@@ -35,7 +39,10 @@ export class UsuariosService {
     return this.mapearRespuesta(usuario);
   }
 
-  async crear(dto: CrearUsuarioDto): Promise<RespuestaUsuarioDto> {
+  async crear(
+    dto: CrearUsuarioDto,
+    usuarioActual: UsuarioAutenticado,
+  ): Promise<RespuestaUsuarioDto> {
     const contrasenaHash = await bcrypt.hash(dto.contrasena, RONDAS_HASH);
 
     const usuario = await this.ejecutarOMapearConflicto(() =>
@@ -48,12 +55,22 @@ export class UsuariosService {
       }),
     );
 
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.CREAR_USUARIO,
+      descripcion: `Creó el usuario "${usuario.nombre}" (${usuario.email})`,
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+    });
+
     return this.mapearRespuesta(usuario);
   }
 
   async actualizar(
     id: string,
     dto: ActualizarUsuarioDto,
+    usuarioActual: UsuarioAutenticado,
   ): Promise<RespuestaUsuarioDto> {
     await this.obtenerUsuarioOFallar(id);
 
@@ -61,19 +78,37 @@ export class UsuariosService {
       this.usuariosRepositorio.actualizar(id, dto),
     );
 
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_USUARIO,
+      descripcion: `Actualizó el usuario "${usuario.nombre}" (${usuario.email})`,
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+    });
+
     return this.mapearRespuesta(usuario);
   }
 
-  async eliminar(id: string): Promise<void> {
-    await this.obtenerUsuarioOFallar(id);
+  async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
+    const usuario = await this.obtenerUsuarioOFallar(id);
     await this.usuariosRepositorio.eliminar(id);
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ELIMINAR_USUARIO,
+      descripcion: `Dio de baja al usuario "${usuario.nombre}" (${usuario.email})`,
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+    });
   }
 
   async cambiarContrasena(
-    usuarioId: string,
+    usuarioActual: UsuarioAutenticado,
     dto: CambiarContrasenaDto,
   ): Promise<void> {
-    const usuario = await this.obtenerUsuarioOFallar(usuarioId);
+    const usuario = await this.obtenerUsuarioOFallar(usuarioActual.id);
     const contrasenaActualValida = await bcrypt.compare(
       dto.contrasenaActual,
       usuario.contrasenaHash,
@@ -87,7 +122,18 @@ export class UsuariosService {
     }
 
     const contrasenaHash = await bcrypt.hash(dto.contrasenaNueva, RONDAS_HASH);
-    await this.usuariosRepositorio.actualizar(usuarioId, { contrasenaHash });
+    await this.usuariosRepositorio.actualizar(usuarioActual.id, {
+      contrasenaHash,
+    });
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.CAMBIAR_CONTRASENA_PROPIA,
+      descripcion: `Cambió su propia contraseña`,
+      entidad: 'Usuario',
+      entidadId: usuarioActual.id,
+    });
   }
 
   private async obtenerUsuarioOFallar(id: string): Promise<UsuarioModel> {

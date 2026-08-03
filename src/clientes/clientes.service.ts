@@ -7,6 +7,9 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { ClienteModel } from '../../generated/prisma/models';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { ActualizarClienteDto } from './dtos/actualizar-cliente.dto';
 import { CrearClienteDto } from './dtos/crear-cliente.dto';
 import { RespuestaClienteDto } from './dtos/respuesta-cliente.dto';
@@ -20,6 +23,7 @@ export class ClientesService {
   constructor(
     @Inject(CLIENTES_REPOSITORIO)
     private readonly clientesRepositorio: IClientesRepositorio,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async listar(): Promise<RespuestaClienteDto[]> {
@@ -32,10 +36,22 @@ export class ClientesService {
     return this.mapearRespuesta(cliente);
   }
 
-  async crear(dto: CrearClienteDto): Promise<RespuestaClienteDto> {
+  async crear(
+    dto: CrearClienteDto,
+    usuarioActual: UsuarioAutenticado,
+  ): Promise<RespuestaClienteDto> {
     const cliente = await this.ejecutarOMapearConflicto(() =>
       this.clientesRepositorio.crear(dto),
     );
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.CREAR_CLIENTE,
+      descripcion: `Creó el cliente "${cliente.nombre}" (${cliente.rut})`,
+      entidad: 'Cliente',
+      entidadId: cliente.id,
+    });
 
     return this.mapearRespuesta(cliente);
   }
@@ -43,6 +59,7 @@ export class ClientesService {
   async actualizar(
     id: string,
     dto: ActualizarClienteDto,
+    usuarioActual: UsuarioAutenticado,
   ): Promise<RespuestaClienteDto> {
     await this.obtenerClienteOFallar(id);
 
@@ -50,11 +67,20 @@ export class ClientesService {
       this.clientesRepositorio.actualizar(id, dto),
     );
 
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_CLIENTE,
+      descripcion: `Actualizó el cliente "${cliente.nombre}" (${cliente.rut})`,
+      entidad: 'Cliente',
+      entidadId: cliente.id,
+    });
+
     return this.mapearRespuesta(cliente);
   }
 
-  async eliminar(id: string): Promise<void> {
-    await this.obtenerClienteOFallar(id);
+  async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
+    const cliente = await this.obtenerClienteOFallar(id);
 
     const [proyectosAsociados, ordenesCompraAsociadas] = await Promise.all([
       this.clientesRepositorio.contarProyectosAsociados(id),
@@ -78,6 +104,15 @@ export class ClientesService {
     }
 
     await this.clientesRepositorio.eliminar(id);
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ELIMINAR_CLIENTE,
+      descripcion: `Eliminó el cliente "${cliente.nombre}" (${cliente.rut})`,
+      entidad: 'Cliente',
+      entidadId: cliente.id,
+    });
   }
 
   private async obtenerClienteOFallar(id: string): Promise<ClienteModel> {

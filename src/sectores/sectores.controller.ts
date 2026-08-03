@@ -8,12 +8,15 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { RolUsuario } from '../../generated/prisma/enums';
 import { Roles } from '../comun/decoradores/roles.decorador';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import {
   RespuestaExitosa,
   RespuestaLista,
@@ -22,6 +25,8 @@ import { ActualizarSectorDto } from './dtos/actualizar-sector.dto';
 import { CrearSectorDto } from './dtos/crear-sector.dto';
 import { RespuestaSectorDto } from './dtos/respuesta-sector.dto';
 import { SectoresService } from './sectores.service';
+
+type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
 @Controller('sectores')
 @UseGuards(JwtGuardia, RolesGuardia)
@@ -46,8 +51,9 @@ export class SectoresController {
   @Post()
   async crear(
     @Body() dto: CrearSectorDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaSectorDto>> {
-    const datos = await this.sectoresService.crear(dto);
+    const datos = await this.sectoresService.crear(dto, solicitud.user);
     return { datos, mensaje: 'Sector creado correctamente' };
   }
 
@@ -55,14 +61,22 @@ export class SectoresController {
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarSectorDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaSectorDto>> {
-    const datos = await this.sectoresService.actualizar(id, dto);
+    const datos = await this.sectoresService.actualizar(
+      id,
+      dto,
+      solicitud.user,
+    );
     return { datos, mensaje: 'Sector actualizado correctamente' };
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async eliminar(@Param('id') id: string): Promise<void> {
-    await this.sectoresService.eliminar(id);
+  async eliminar(
+    @Param('id') id: string,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<void> {
+    await this.sectoresService.eliminar(id, solicitud.user);
   }
 }

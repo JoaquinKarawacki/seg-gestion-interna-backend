@@ -39,7 +39,7 @@ export class UsuariosController {
     @Req() solicitud: SolicitudAutenticada,
     @Body() dto: CambiarContrasenaDto,
   ): Promise<RespuestaExitosa<null>> {
-    await this.usuariosService.cambiarContrasena(solicitud.user.id, dto);
+    await this.usuariosService.cambiarContrasena(solicitud.user, dto);
     return { datos: null, mensaje: 'Contraseña actualizada correctamente' };
   }
 
@@ -63,8 +63,9 @@ export class UsuariosController {
   @Roles(RolUsuario.ADMIN)
   async crear(
     @Body() dto: CrearUsuarioDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaUsuarioDto>> {
-    const datos = await this.usuariosService.crear(dto);
+    const datos = await this.usuariosService.crear(dto, solicitud.user);
     return { datos, mensaje: 'Usuario creado correctamente' };
   }
 
@@ -73,15 +74,23 @@ export class UsuariosController {
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarUsuarioDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaUsuarioDto>> {
-    const datos = await this.usuariosService.actualizar(id, dto);
+    const datos = await this.usuariosService.actualizar(
+      id,
+      dto,
+      solicitud.user,
+    );
     return { datos, mensaje: 'Usuario actualizado correctamente' };
   }
 
   @Delete(':id')
   @Roles(RolUsuario.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async eliminar(@Param('id') id: string): Promise<void> {
-    await this.usuariosService.eliminar(id);
+  async eliminar(
+    @Param('id') id: string,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<void> {
+    await this.usuariosService.eliminar(id, solicitud.user);
   }
 }

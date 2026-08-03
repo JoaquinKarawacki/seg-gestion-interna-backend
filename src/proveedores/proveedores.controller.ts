@@ -8,12 +8,15 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { RolUsuario } from '../../generated/prisma/enums';
 import { Roles } from '../comun/decoradores/roles.decorador';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import {
   RespuestaExitosa,
   RespuestaLista,
@@ -28,6 +31,8 @@ const ROLES_EDICION = [
   RolUsuario.PAGOS,
   RolUsuario.ENCARGADO,
 ];
+
+type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
 @Controller('proveedores')
 @UseGuards(JwtGuardia, RolesGuardia)
@@ -51,8 +56,9 @@ export class ProveedoresController {
   @Post()
   async crear(
     @Body() dto: CrearProveedorDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaProveedorDto>> {
-    const datos = await this.proveedoresService.crear(dto);
+    const datos = await this.proveedoresService.crear(dto, solicitud.user);
     return { datos, mensaje: 'Proveedor creado correctamente' };
   }
 
@@ -61,15 +67,23 @@ export class ProveedoresController {
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarProveedorDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaProveedorDto>> {
-    const datos = await this.proveedoresService.actualizar(id, dto);
+    const datos = await this.proveedoresService.actualizar(
+      id,
+      dto,
+      solicitud.user,
+    );
     return { datos, mensaje: 'Proveedor actualizado correctamente' };
   }
 
   @Delete(':id')
   @Roles(...ROLES_EDICION)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async eliminar(@Param('id') id: string): Promise<void> {
-    await this.proveedoresService.eliminar(id);
+  async eliminar(
+    @Param('id') id: string,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<void> {
+    await this.proveedoresService.eliminar(id, solicitud.user);
   }
 }
