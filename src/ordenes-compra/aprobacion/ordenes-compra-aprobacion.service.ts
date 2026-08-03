@@ -8,6 +8,8 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EstadoOC, RolUsuario } from '../../../generated/prisma/enums';
 import type { OrdenCompraModel } from '../../../generated/prisma/models';
+import { ACCIONES_AUDITORIA } from '../../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../../comun/interfaces/usuario-autenticado.interface';
 import { RespuestaOrdenCompraDto } from '../dtos/respuesta-orden-compra.dto';
 import { EVENTOS } from '../eventos/eventos.constantes';
@@ -24,6 +26,7 @@ export class OrdenesCompraAprobacionService {
     @Inject(ORDENES_COMPRA_REPOSITORIO)
     private readonly ordenesCompraRepositorio: IOrdenesCompraRepositorio,
     private readonly emisorEventos: EventEmitter2,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async enviar(
@@ -31,7 +34,20 @@ export class OrdenesCompraAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return this.ejecutarTransicion(orden, EstadoOC.PENDIENTE, usuario);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.PENDIENTE,
+      usuario,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.ENVIAR_ORDEN_COMPRA,
+      'Envió a aprobación',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async aprobar(
@@ -40,7 +56,20 @@ export class OrdenesCompraAprobacionService {
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
     this.validarEncargadoDelSector(orden, usuario);
-    return this.ejecutarTransicion(orden, EstadoOC.APROBADO, usuario);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.APROBADO,
+      usuario,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.APROBAR_ORDEN_COMPRA,
+      'Aprobó',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async rechazar(
@@ -50,7 +79,21 @@ export class OrdenesCompraAprobacionService {
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
     this.validarEncargadoDelSector(orden, usuario);
-    return this.ejecutarTransicion(orden, EstadoOC.RECHAZADO, usuario, motivo);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.RECHAZADO,
+      usuario,
+      motivo,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.RECHAZAR_ORDEN_COMPRA,
+      'Rechazó',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async observarPago(
@@ -59,12 +102,21 @@ export class OrdenesCompraAprobacionService {
     motivo: string,
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return this.ejecutarTransicion(
+    const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOC.PAGO_OBSERVADO,
       usuario,
       motivo,
     );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.OBSERVAR_PAGO_ORDEN_COMPRA,
+      'Observó el pago de',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async resolverObservacion(
@@ -73,7 +125,21 @@ export class OrdenesCompraAprobacionService {
     motivo?: string,
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return this.ejecutarTransicion(orden, EstadoOC.APROBADO, usuario, motivo);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.APROBADO,
+      usuario,
+      motivo,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.RESOLVER_OBSERVACION_ORDEN_COMPRA,
+      'Resolvió la observación de pago de',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async confirmarPago(
@@ -81,7 +147,20 @@ export class OrdenesCompraAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return this.ejecutarTransicion(orden, EstadoOC.PAGADO, usuario);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.PAGADO,
+      usuario,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.CONFIRMAR_PAGO_ORDEN_COMPRA,
+      'Confirmó el pago de',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async anular(
@@ -95,7 +174,21 @@ export class OrdenesCompraAprobacionService {
       this.validarEncargadoDelSector(orden, usuario);
     }
 
-    return this.ejecutarTransicion(orden, EstadoOC.ANULADO, usuario, motivo);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.ANULADO,
+      usuario,
+      motivo,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.ANULAR_ORDEN_COMPRA,
+      'Anuló',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async marcarEnConsulta(
@@ -103,7 +196,20 @@ export class OrdenesCompraAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return this.ejecutarTransicion(orden, EstadoOC.EN_CONSULTA, usuario);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.EN_CONSULTA,
+      usuario,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.MARCAR_EN_CONSULTA_ORDEN_COMPRA,
+      'Marcó en consulta',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async responderConsulta(
@@ -111,7 +217,20 @@ export class OrdenesCompraAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return this.ejecutarTransicion(orden, EstadoOC.PENDIENTE, usuario);
+    const resultado = await this.ejecutarTransicion(
+      orden,
+      EstadoOC.PENDIENTE,
+      usuario,
+    );
+
+    await this.registrarAuditoriaTransicion(
+      ACCIONES_AUDITORIA.RESPONDER_CONSULTA_ORDEN_COMPRA,
+      'Respondió la consulta de',
+      resultado,
+      usuario,
+    );
+
+    return resultado;
   }
 
   async listarHistorial(id: string): Promise<RespuestaHistorialEstadoOCDto[]> {
@@ -192,6 +311,22 @@ export class OrdenesCompraAprobacionService {
     };
 
     this.emisorEventos.emit(EVENTOS.ORDEN_COMPRA_ESTADO_CAMBIADO, evento);
+  }
+
+  private async registrarAuditoriaTransicion(
+    accion: string,
+    verbo: string,
+    resultado: RespuestaOrdenCompraDto,
+    usuario: UsuarioAutenticado,
+  ): Promise<void> {
+    await this.auditoriaService.registrar({
+      usuarioId: usuario.id,
+      usuarioEmail: usuario.email,
+      accion,
+      descripcion: `${verbo} la orden de compra #${resultado.numero}`,
+      entidad: 'OrdenCompra',
+      entidadId: resultado.id,
+    });
   }
 
   private async obtenerOrdenOFallar(id: string): Promise<OrdenCompraModel> {
