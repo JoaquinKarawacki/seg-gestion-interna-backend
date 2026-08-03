@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModulo } from './auth/auth.modulo';
 import { ClientesModulo } from './clientes/clientes.modulo';
 import { ComentariosModulo } from './comentarios/comentarios.modulo';
 import { CotizacionesModulo } from './cotizaciones/cotizaciones.modulo';
+import { NotificacionesModulo } from './notificaciones/notificaciones.modulo';
 import { OrdenesCompraModulo } from './ordenes-compra/ordenes-compra.modulo';
 import { PrismaModulo } from './prisma/prisma.modulo';
 import { ProveedoresModulo } from './proveedores/proveedores.modulo';
@@ -18,6 +20,7 @@ import { TareasModulo } from './tareas/tareas.modulo';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    EventEmitterModule.forRoot(),
     PrismaModulo,
     AuthModulo,
     SectoresModulo,
@@ -28,6 +31,7 @@ import { TareasModulo } from './tareas/tareas.modulo';
     CotizacionesModulo,
     OrdenesCompraModulo,
     ComentariosModulo,
+    NotificacionesModulo,
   ],
   controllers: [AppController],
   providers: [AppService],
