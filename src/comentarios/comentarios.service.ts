@@ -4,6 +4,8 @@ import type {
   ComentarioModel,
   OrdenCompraModel,
 } from '../../generated/prisma/models';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { OrdenesCompraAprobacionService } from '../ordenes-compra/aprobacion/ordenes-compra-aprobacion.service';
 import { ORDENES_COMPRA_REPOSITORIO } from '../ordenes-compra/interfaces/ordenes-compra-repositorio.interface';
@@ -21,6 +23,7 @@ export class ComentariosService {
     @Inject(ORDENES_COMPRA_REPOSITORIO)
     private readonly ordenesCompraRepositorio: IOrdenesCompraRepositorio,
     private readonly ordenesCompraAprobacionService: OrdenesCompraAprobacionService,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async crear(
@@ -37,6 +40,15 @@ export class ComentariosService {
     });
 
     await this.dispararTransicionSiCorresponde(orden, usuario);
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuario.id,
+      usuarioEmail: usuario.email,
+      accion: ACCIONES_AUDITORIA.CREAR_COMENTARIO,
+      descripcion: `Comentó en la orden de compra #${orden.numero}`,
+      entidad: 'OrdenCompra',
+      entidadId: orden.id,
+    });
 
     return this.mapearRespuesta(comentario);
   }
