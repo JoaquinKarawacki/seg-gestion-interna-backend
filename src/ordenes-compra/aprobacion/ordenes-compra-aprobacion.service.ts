@@ -5,10 +5,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EstadoOC, RolUsuario } from '../../../generated/prisma/enums';
 import type { OrdenCompraModel } from '../../../generated/prisma/models';
 import { UsuarioAutenticado } from '../../comun/interfaces/usuario-autenticado.interface';
 import { RespuestaOrdenCompraDto } from '../dtos/respuesta-orden-compra.dto';
+import { EVENTOS } from '../eventos/eventos.constantes';
+import type { EventoOrdenCompraEstadoCambiado } from '../eventos/orden-compra-estado-cambiado.evento';
 import { ORDENES_COMPRA_REPOSITORIO } from '../interfaces/ordenes-compra-repositorio.interface';
 import type { IOrdenesCompraRepositorio } from '../interfaces/ordenes-compra-repositorio.interface';
 import { mapearRespuestaOrdenCompra } from '../ordenes-compra.mapper';
@@ -20,6 +23,7 @@ export class OrdenesCompraAprobacionService {
   constructor(
     @Inject(ORDENES_COMPRA_REPOSITORIO)
     private readonly ordenesCompraRepositorio: IOrdenesCompraRepositorio,
+    private readonly emisorEventos: EventEmitter2,
   ) {}
 
   async enviar(
@@ -94,6 +98,22 @@ export class OrdenesCompraAprobacionService {
     return this.ejecutarTransicion(orden, EstadoOC.ANULADO, usuario, motivo);
   }
 
+  async marcarEnConsulta(
+    id: string,
+    usuario: UsuarioAutenticado,
+  ): Promise<RespuestaOrdenCompraDto> {
+    const orden = await this.obtenerOrdenOFallar(id);
+    return this.ejecutarTransicion(orden, EstadoOC.EN_CONSULTA, usuario);
+  }
+
+  async responderConsulta(
+    id: string,
+    usuario: UsuarioAutenticado,
+  ): Promise<RespuestaOrdenCompraDto> {
+    const orden = await this.obtenerOrdenOFallar(id);
+    return this.ejecutarTransicion(orden, EstadoOC.PENDIENTE, usuario);
+  }
+
   async listarHistorial(id: string): Promise<RespuestaHistorialEstadoOCDto[]> {
     await this.obtenerOrdenOFallar(id);
     const historial = await this.ordenesCompraRepositorio.buscarHistorial(id);
@@ -135,6 +155,8 @@ export class OrdenesCompraAprobacionService {
       });
     }
 
+    const estadoAnterior = orden.estado;
+
     const ordenActualizada = await this.ordenesCompraRepositorio.cambiarEstado(
       orden.id,
       estadoNuevo,
@@ -142,7 +164,34 @@ export class OrdenesCompraAprobacionService {
       motivo,
     );
 
+    this.emitirCambioDeEstado(
+      ordenActualizada,
+      estadoAnterior,
+      usuario.id,
+      motivo,
+    );
+
     return mapearRespuestaOrdenCompra(ordenActualizada);
+  }
+
+  private emitirCambioDeEstado(
+    orden: OrdenCompraModel,
+    estadoAnterior: EstadoOC,
+    usuarioId: string,
+    motivo?: string,
+  ): void {
+    const evento: EventoOrdenCompraEstadoCambiado = {
+      ordenCompraId: orden.id,
+      numero: orden.numero,
+      estadoAnterior,
+      estadoNuevo: orden.estado,
+      sectorId: orden.sectorId,
+      solicitanteId: orden.solicitanteId,
+      usuarioId,
+      motivo: motivo ?? null,
+    };
+
+    this.emisorEventos.emit(EVENTOS.ORDEN_COMPRA_ESTADO_CAMBIADO, evento);
   }
 
   private async obtenerOrdenOFallar(id: string): Promise<OrdenCompraModel> {

@@ -5,6 +5,7 @@ import type {
   OrdenCompraModel,
 } from '../../generated/prisma/models';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
+import { OrdenesCompraAprobacionService } from '../ordenes-compra/aprobacion/ordenes-compra-aprobacion.service';
 import { ORDENES_COMPRA_REPOSITORIO } from '../ordenes-compra/interfaces/ordenes-compra-repositorio.interface';
 import type { IOrdenesCompraRepositorio } from '../ordenes-compra/interfaces/ordenes-compra-repositorio.interface';
 import { CrearComentarioDto } from './dtos/crear-comentario.dto';
@@ -19,6 +20,7 @@ export class ComentariosService {
     private readonly comentariosRepositorio: IComentariosRepositorio,
     @Inject(ORDENES_COMPRA_REPOSITORIO)
     private readonly ordenesCompraRepositorio: IOrdenesCompraRepositorio,
+    private readonly ordenesCompraAprobacionService: OrdenesCompraAprobacionService,
   ) {}
 
   async crear(
@@ -57,19 +59,17 @@ export class ComentariosService {
     const esElSolicitante = usuario.id === orden.solicitanteId;
 
     if (orden.estado === EstadoOC.PENDIENTE && esEncargadoDelSector) {
-      await this.ordenesCompraRepositorio.cambiarEstado(
+      await this.ordenesCompraAprobacionService.marcarEnConsulta(
         orden.id,
-        EstadoOC.EN_CONSULTA,
-        usuario.id,
+        usuario,
       );
       return;
     }
 
     if (orden.estado === EstadoOC.EN_CONSULTA && esElSolicitante) {
-      await this.ordenesCompraRepositorio.cambiarEstado(
+      await this.ordenesCompraAprobacionService.responderConsulta(
         orden.id,
-        EstadoOC.PENDIENTE,
-        usuario.id,
+        usuario,
       );
     }
   }

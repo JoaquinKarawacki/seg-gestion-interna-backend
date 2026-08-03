@@ -26,6 +26,6 @@ import { ValidarProveedorCoincideCotizacionEslabon } from './validaciones/valida
     ValidarMontoNoExcedeCotizacionEslabon,
     CadenaValidacionOC,
   ],
-  exports: [ORDENES_COMPRA_REPOSITORIO],
+  exports: [ORDENES_COMPRA_REPOSITORIO, OrdenesCompraAprobacionService],
 })
 export class OrdenesCompraModulo {}
