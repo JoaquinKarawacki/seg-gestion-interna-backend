@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { RolUsuario } from '../../generated/prisma/enums';
 import { UsuarioModel } from '../../generated/prisma/models';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   DatosActualizarUsuario,
   DatosCrearUsuario,
@@ -21,6 +22,19 @@ export class UsuariosRepositorio implements IUsuariosRepositorio {
 
   async buscarTodos(): Promise<UsuarioModel[]> {
     return this.prisma.usuario.findMany({ orderBy: { nombre: 'asc' } });
+  }
+
+  async buscarActivosPorRol(
+    rol: RolUsuario,
+    sectorId?: string,
+  ): Promise<UsuarioModel[]> {
+    return this.prisma.usuario.findMany({
+      where: {
+        rol,
+        activo: true,
+        ...(sectorId ? { sectorId } : {}),
+      },
+    });
   }
 
   async crear(datos: DatosCrearUsuario): Promise<UsuarioModel> {

@@ -27,4 +27,8 @@ export interface IUsuariosRepositorio extends IRepositorioBase<
   DatosActualizarUsuario
 > {
   buscarPorEmail(email: string): Promise<UsuarioModel | null>;
+  buscarActivosPorRol(
+    rol: RolUsuario,
+    sectorId?: string,
+  ): Promise<UsuarioModel[]>;
 }
