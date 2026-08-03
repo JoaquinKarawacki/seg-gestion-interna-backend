@@ -641,10 +641,13 @@ AZURE_CLIENT_ID=
 AZURE_CLIENT_SECRET=
 AZURE_TENANT_ID=
 EMAIL_REMITENTE=Notificaciones@segingenieria.com
+EMAILS_EN_COPIA=
 NODE_ENV=development
 PORT=3000
 RUTA_ALMACENAMIENTO=./almacenamiento-local
 ```
+
+`EMAILS_EN_COPIA` (Etapa 8): lista de emails separados por coma que van en copia en **todas** las notificaciones de OC (Franco Rodríguez, Lorena Albornoz, Natalia Melonio, según la nota de cierre de la Etapa 6). Opcional — si queda vacío, no se agrega ninguna copia.
 
 `RUTA_ALMACENAMIENTO` es el directorio base donde `RailwayVolumenAdaptador` (`src/almacenamiento/`) guarda archivos subidos (PDFs de cotización, y en Etapa 5 la factura de OC). En Railway apunta al path donde se monta el Volume; en desarrollo local es una carpeta del proyecto (gitignored). Si no se define, cae a `./almacenamiento-local` por defecto.
 
@@ -696,7 +699,7 @@ Requiere Docker Desktop corriendo. El `.env` local ya apunta a `postgresql://pos
 
 ---
 
-## Estado actual (actualizado 2026-07-31, cierre de Etapa 7)
+## Estado actual (actualizado 2026-08-03, cierre de Etapa 8)
 
 Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se commitea y pushea automáticamente al cerrar cada etapa verificada (tsc + lint + test OK).
 
@@ -757,10 +760,20 @@ Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se
     - OC en `EN_CONSULTA` + comenta **el solicitante** (por identidad: `usuario.id === orden.solicitanteId`, no por rol) → vuelve a `PENDIENTE`.
     - Cualquier otro comentario (un ADMIN, una segunda pregunta del mismo encargado antes de que respondan, etc.) queda en el hilo sin alterar el estado de la OC.
   - **Se puede comentar en cualquier estado de la OC** (útil para dudas post-aprobación, ej. Lore preguntando algo estando en `PAGO_OBSERVADO`). Solo los dos casos de arriba disparan la transición automática; el resto de los comentarios simplemente se guardan.
-  - **Límite de módulo respetado**: `ComentariosModulo` importa `OrdenesCompraModulo` y usa únicamente el token exportado `ORDENES_COMPRA_REPOSITORIO` para llamar `cambiarEstado()` — no importa nada del `aprobacion/` interno de `OrdenesCompraModulo` (esa carpeta no está exportada). Por eso `ComentariosService` compara `orden.estado` directamente contra `EstadoOC.PENDIENTE`/`EstadoOC.EN_CONSULTA` en vez de reusar `TRANSICIONES_VALIDAS_OC` (que es un archivo interno de `ordenes-compra/aprobacion/`, no parte de la interfaz pública del módulo).
+  - **Límite de módulo respetado**: `ComentariosModulo` importa `OrdenesCompraModulo` y usa únicamente lo que ese módulo exporta — no importa nada del `aprobacion/` interno directamente (esa carpeta no está exportada como archivos sueltos). Por eso `ComentariosService` compara `orden.estado` directamente contra `EstadoOC.PENDIENTE`/`EstadoOC.EN_CONSULTA` en vez de reusar `TRANSICIONES_VALIDAS_OC` (archivo interno de `ordenes-compra/aprobacion/`, nunca exportado). **Actualizado en la Etapa 8**: para escribir el cambio de estado, `ComentariosService` ya no llama a `cambiarEstado()` del repositorio directamente — ahora `OrdenesCompraModulo` también exporta la clase `OrdenesCompraAprobacionService`, y `ComentariosService` llama a sus métodos públicos `marcarEnConsulta()`/`responderConsulta()`. Sigue siendo comunicación solo por lo que el módulo exporta, ahora son dos cosas exportadas (el token del repositorio + ese service) en vez de una.
   - **Endpoints**: `POST /ordenes-compra/:id/comentarios` y `GET /ordenes-compra/:id/comentarios`, ambos abiertos a cualquier autenticado (igual criterio que el resto del sistema desde la Etapa 4). `ComentariosController` comparte el prefijo `/ordenes-compra` con `OrdenesCompraController` y `OrdenesCompraAprobacionController`, como controller separado (mismo patrón que la Etapa 6).
   - **Probado end-to-end manualmente** (login real + Postgres local): comentario de `ADMIN` en `PENDIENTE` no cambia el estado; comentario del `ENCARGADO` del sector correcto en `PENDIENTE` pasa a `EN_CONSULTA`; comentario del solicitante en `EN_CONSULTA` vuelve a `PENDIENTE`; el hilo lista los 3 comentarios en orden cronológico.
   - **Pendiente explícito para la Etapa 8 (Notificaciones)**: cada comentario nuevo debería notificar a la otra parte (mismo patrón "notifica a X" ya anotado para las transiciones de la Etapa 6) — no se implementó en esta etapa porque el módulo de notificaciones todavía no existe.
+- ✅ **Etapa 8 — Notificaciones**: completa. Se revisó primero el repo hermano `mvp-control-de-equipos-seg` para no inventar el patrón (cliente Microsoft Graph vía client-credentials flow, fail-soft; un solo evento genérico emitido desde el service). Decisiones tomadas:
+  - **Un solo punto de emisión del evento**: se agregaron los métodos públicos `marcarEnConsulta(id, usuario)` y `responderConsulta(id, usuario)` en `OrdenesCompraAprobacionService` (mismo shape que `enviar()`), y `ComentariosService` los usa en vez de llamar directo a `ordenesCompraRepositorio.cambiarEstado()`. Así **todas** las transiciones —tanto las de los endpoints de aprobación como las disparadas por comentarios— pasan por el mismo `ejecutarTransicion()` privado, que es el único lugar que emite el evento `EVENTOS.ORDEN_COMPRA_ESTADO_CAMBIADO` (`src/ordenes-compra/eventos/`). `OrdenesCompraModulo` ahora exporta también la clase `OrdenesCompraAprobacionService` (antes solo el token del repositorio).
+  - **Un solo evento genérico, no uno por transición**: desviación deliberada del plan original de este documento (que preveía 5 archivos `.oyente.ts`, uno por tipo de transición) — se siguió el patrón real y ya probado del repo hermano (`equipo.estado.cambiado`): un evento con `estadoAnterior`/`estadoNuevo` en el payload, y un único oyente que ramifica internamente.
+  - **`OrdenCompraEstadoCambiadoOyente`** (`src/notificaciones/oyentes/`): escucha el evento, resuelve destinatarios reales por tipo (`SOLICITANTE`, `ENCARGADO_SECTOR`, `ROL_PAGOS`) usando el nuevo `IUsuariosRepositorio.buscarActivosPorRol(rol, sectorId?)`, les suma la copia fija de `EMAILS_EN_COPIA` (variable de entorno, lista separada por comas — se aplica a **todas** las notificaciones de OC, no solo a las que van al encargado), deduplica y llama a `CorreoService.enviar(...)`.
+  - **`plantillas-orden-compra.ts`**: mapea `estadoNuevo` (con un caso especial en `APROBADO`, que además mira `estadoAnterior` porque se llega desde `PENDIENTE` — notifica a `PAGOS` — o desde `PAGO_OBSERVADO` vía `resolverObservacion` — notifica a solicitante+encargado, mismo destinatario que el resto de transiciones sin destinatario definido en el diagrama original, `→PAGADO`/`→ANULADO`, decidido por consistencia) a destinatarios + asunto/cuerpo del mail.
+  - **`CorreoService`** (`src/notificaciones/correo.service.ts`): mismo client-credentials flow que el repo hermano, pero usando `ConfigService` inyectado (no `process.env` directo, siguiendo la convención ya usada en `RailwayVolumenAdaptador`) para `AZURE_TENANT_ID`/`AZURE_CLIENT_ID`/`AZURE_CLIENT_SECRET`/`EMAIL_REMITENTE`. Si falla el envío, **loguea con `Logger.error` y no relanza** — un mail caído nunca rompe la operación que lo disparó.
+  - **`NotificacionesModulo`** sin controllers ni exports: se conecta con el resto del sistema únicamente a través del evento (Observer), desacoplado a propósito — ningún otro módulo lo importa.
+  - **"Notificación de próximo pago de compromiso"** (mencionada en el plan original, con `@nestjs/schedule`): **dejada explícitamente afuera de esta etapa**. No existe ningún campo de fecha de vencimiento en `OrdenCompra` ni `Cotización` que la respalde — construirla habría sido inventar un dato sin proceso real confirmado. `@nestjs/schedule` no se instaló. Si se retoma en el futuro, primero hay que definir y agregar ese campo (candidato: `fechaVencimientoPago` opcional en `OrdenCompra`) confirmando el proceso real con el usuario.
+  - **Probado end-to-end manualmente** (login real + Postgres local, sin credenciales reales de Azure AD): se repitió el flujo de comentarios de la Etapa 7 y se confirmó en los logs que el oyente se disparó las 3 veces esperadas (enviar→PENDIENTE, comentario del encargado→EN_CONSULTA, respuesta del solicitante→PENDIENTE), intentó pedir el token de Azure, falló (esperado, `AZURE_TENANT_ID` vacío) y quedó logueado como error **sin romper ninguna respuesta HTTP** — confirma el comportamiento fail-soft.
+  - **Pendiente para más adelante (no es de esta etapa)**: cargar `AZURE_CLIENT_ID`/`AZURE_CLIENT_SECRET`/`AZURE_TENANT_ID` reales (permiso `Mail.Send` en Azure AD) y `EMAILS_EN_COPIA` con los emails reales de Franco Rodríguez, Lorena Albornoz y Natalia Melonio, para poder probar el envío real.
 
 ---
 
