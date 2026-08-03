@@ -8,10 +8,13 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import {
   RespuestaExitosa,
   RespuestaLista,
@@ -20,6 +23,8 @@ import { ActualizarProyectoDto } from './dtos/actualizar-proyecto.dto';
 import { CrearProyectoDto } from './dtos/crear-proyecto.dto';
 import { RespuestaProyectoDto } from './dtos/respuesta-proyecto.dto';
 import { ProyectosService } from './proyectos.service';
+
+type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
 @Controller('proyectos')
 @UseGuards(JwtGuardia, RolesGuardia)
@@ -43,8 +48,9 @@ export class ProyectosController {
   @Post()
   async crear(
     @Body() dto: CrearProyectoDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaProyectoDto>> {
-    const datos = await this.proyectosService.crear(dto);
+    const datos = await this.proyectosService.crear(dto, solicitud.user);
     return { datos, mensaje: 'Proyecto creado correctamente' };
   }
 
@@ -52,14 +58,22 @@ export class ProyectosController {
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarProyectoDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaProyectoDto>> {
-    const datos = await this.proyectosService.actualizar(id, dto);
+    const datos = await this.proyectosService.actualizar(
+      id,
+      dto,
+      solicitud.user,
+    );
     return { datos, mensaje: 'Proyecto actualizado correctamente' };
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async eliminar(@Param('id') id: string): Promise<void> {
-    await this.proyectosService.eliminar(id);
+  async eliminar(
+    @Param('id') id: string,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<void> {
+    await this.proyectosService.eliminar(id, solicitud.user);
   }
 }

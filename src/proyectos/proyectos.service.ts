@@ -6,6 +6,9 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { ProyectoModel } from '../../generated/prisma/models';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { ActualizarProyectoDto } from './dtos/actualizar-proyecto.dto';
 import { CrearProyectoDto } from './dtos/crear-proyecto.dto';
 import { RespuestaProyectoDto } from './dtos/respuesta-proyecto.dto';
@@ -19,6 +22,7 @@ export class ProyectosService {
   constructor(
     @Inject(PROYECTOS_REPOSITORIO)
     private readonly proyectosRepositorio: IProyectosRepositorio,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async listar(): Promise<RespuestaProyectoDto[]> {
@@ -31,10 +35,22 @@ export class ProyectosService {
     return this.mapearRespuesta(proyecto);
   }
 
-  async crear(dto: CrearProyectoDto): Promise<RespuestaProyectoDto> {
+  async crear(
+    dto: CrearProyectoDto,
+    usuarioActual: UsuarioAutenticado,
+  ): Promise<RespuestaProyectoDto> {
     const proyecto = await this.ejecutarOMapearReferenciaInvalida(() =>
       this.proyectosRepositorio.crear(dto),
     );
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.CREAR_PROYECTO,
+      descripcion: `Creó el proyecto "${proyecto.nombre}"`,
+      entidad: 'Proyecto',
+      entidadId: proyecto.id,
+    });
 
     return this.mapearRespuesta(proyecto);
   }
@@ -42,6 +58,7 @@ export class ProyectosService {
   async actualizar(
     id: string,
     dto: ActualizarProyectoDto,
+    usuarioActual: UsuarioAutenticado,
   ): Promise<RespuestaProyectoDto> {
     await this.obtenerProyectoOFallar(id);
 
@@ -49,11 +66,20 @@ export class ProyectosService {
       this.proyectosRepositorio.actualizar(id, dto),
     );
 
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_PROYECTO,
+      descripcion: `Actualizó el proyecto "${proyecto.nombre}"`,
+      entidad: 'Proyecto',
+      entidadId: proyecto.id,
+    });
+
     return this.mapearRespuesta(proyecto);
   }
 
-  async eliminar(id: string): Promise<void> {
-    await this.obtenerProyectoOFallar(id);
+  async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
+    const proyecto = await this.obtenerProyectoOFallar(id);
 
     const [cotizacionesAsociadas, tareasAsociadas, ordenesCompraAsociadas] =
       await Promise.all([
@@ -87,6 +113,15 @@ export class ProyectosService {
     }
 
     await this.proyectosRepositorio.eliminar(id);
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.ELIMINAR_PROYECTO,
+      descripcion: `Eliminó el proyecto "${proyecto.nombre}"`,
+      entidad: 'Proyecto',
+      entidadId: proyecto.id,
+    });
   }
 
   private async obtenerProyectoOFallar(id: string): Promise<ProyectoModel> {

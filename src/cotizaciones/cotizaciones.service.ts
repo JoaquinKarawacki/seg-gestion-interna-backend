@@ -6,6 +6,9 @@ import type {
   ArchivoAlmacenado,
   IAlmacenamiento,
 } from '../almacenamiento/puertos/almacenamiento.puerto';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { CrearCotizacionDto } from './dtos/crear-cotizacion.dto';
 import { RespuestaCotizacionDto } from './dtos/respuesta-cotizacion.dto';
 import { COTIZACIONES_REPOSITORIO } from './interfaces/cotizaciones-repositorio.interface';
@@ -26,6 +29,7 @@ export class CotizacionesService {
     private readonly cotizacionesRepositorio: ICotizacionesRepositorio,
     @Inject(ALMACENAMIENTO)
     private readonly almacenamiento: IAlmacenamiento,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async buscarPorId(id: string): Promise<RespuestaCotizacionDto> {
@@ -81,6 +85,7 @@ export class CotizacionesService {
 
   async crear(
     dto: CrearCotizacionDto,
+    usuarioActual: UsuarioAutenticado,
     archivo?: Express.Multer.File,
   ): Promise<RespuestaCotizacionDto> {
     const archivoGuardado = archivo
@@ -102,6 +107,15 @@ export class CotizacionesService {
           archivoPdfRuta: archivoGuardado?.referencia ?? null,
         }),
       );
+
+      await this.auditoriaService.registrar({
+        usuarioId: usuarioActual.id,
+        usuarioEmail: usuarioActual.email,
+        accion: ACCIONES_AUDITORIA.CREAR_COTIZACION,
+        descripcion: `Creó una cotización de ${cotizacion.montoTotal.toString()} ${cotizacion.moneda} para el proyecto ${cotizacion.proyectoId}`,
+        entidad: 'Cotizacion',
+        entidadId: cotizacion.id,
+      });
 
       return this.mapearRespuesta(cotizacion);
     } catch (error) {

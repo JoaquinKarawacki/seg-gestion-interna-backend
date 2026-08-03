@@ -7,14 +7,17 @@ import {
   Param,
   ParseFilePipe,
   Post,
+  Req,
   StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Request } from 'express';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
+import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import {
   RespuestaExitosa,
   RespuestaLista,
@@ -24,6 +27,8 @@ import { CrearCotizacionDto } from './dtos/crear-cotizacion.dto';
 import { RespuestaCotizacionDto } from './dtos/respuesta-cotizacion.dto';
 
 const TAMANIO_MAXIMO_ARCHIVO_BYTES = 10 * 1024 * 1024;
+
+type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
 // Sin prefijo de clase a proposito: las rutas de Cotizacion se reparten
 // entre /cotizaciones, /proyectos/:proyectoId/cotizaciones y
@@ -98,9 +103,14 @@ export class CotizacionesController {
         fileIsRequired: false,
       }),
     )
-    archivo?: Express.Multer.File,
+    archivo: Express.Multer.File | undefined,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaCotizacionDto>> {
-    const datos = await this.cotizacionesService.crear(dto, archivo);
+    const datos = await this.cotizacionesService.crear(
+      dto,
+      solicitud.user,
+      archivo,
+    );
     return { datos, mensaje: 'Cotización creada correctamente' };
   }
 }
