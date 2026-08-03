@@ -10,6 +10,8 @@ import { COTIZACIONES_REPOSITORIO } from '../cotizaciones/interfaces/cotizacione
 import type { ICotizacionesRepositorio } from '../cotizaciones/interfaces/cotizaciones-repositorio.interface';
 import { PROYECTOS_REPOSITORIO } from '../proyectos/interfaces/proyectos-repositorio.interface';
 import type { IProyectosRepositorio } from '../proyectos/interfaces/proyectos-repositorio.interface';
+import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import { ActualizarOrdenCompraDto } from './dtos/actualizar-orden-compra.dto';
 import { CrearOrdenCompraDto } from './dtos/crear-orden-compra.dto';
@@ -46,6 +48,7 @@ export class OrdenesCompraService {
     private readonly almacenamiento: IAlmacenamiento,
     private readonly cadenaValidacionOC: CadenaValidacionOC,
     private readonly validarProveedorEslabon: ValidarProveedorCoincideCotizacionEslabon,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async listar(): Promise<RespuestaOrdenCompraDto[]> {
@@ -101,6 +104,15 @@ export class OrdenesCompraService {
         facturaPdfRuta: facturaGuardada?.referencia ?? null,
       });
 
+      await this.auditoriaService.registrar({
+        usuarioId: usuario.id,
+        usuarioEmail: usuario.email,
+        accion: ACCIONES_AUDITORIA.CREAR_ORDEN_COMPRA,
+        descripcion: `Creó la orden de compra #${orden.numero}`,
+        entidad: 'OrdenCompra',
+        entidadId: orden.id,
+      });
+
       return mapearRespuestaOrdenCompra(orden);
     } catch (error) {
       await this.revertirArchivoGuardado(facturaGuardada);
@@ -111,6 +123,7 @@ export class OrdenesCompraService {
   async actualizar(
     id: string,
     dto: ActualizarOrdenCompraDto,
+    usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const ordenExistente = await this.obtenerOrdenOFallar(id);
 
@@ -135,12 +148,22 @@ export class OrdenesCompraService {
       observaciones: dto.observaciones,
     });
 
+    await this.auditoriaService.registrar({
+      usuarioId: usuario.id,
+      usuarioEmail: usuario.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_ORDEN_COMPRA,
+      descripcion: `Actualizó la orden de compra #${orden.numero}`,
+      entidad: 'OrdenCompra',
+      entidadId: orden.id,
+    });
+
     return mapearRespuestaOrdenCompra(orden);
   }
 
   async adjuntarFactura(
     id: string,
     factura: Express.Multer.File,
+    usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const ordenExistente = await this.obtenerOrdenOFallar(id);
     const facturaGuardada = await this.almacenamiento.guardar(
@@ -157,6 +180,15 @@ export class OrdenesCompraService {
       if (ordenExistente.facturaPdfRuta) {
         await this.almacenamiento.eliminar(ordenExistente.facturaPdfRuta);
       }
+
+      await this.auditoriaService.registrar({
+        usuarioId: usuario.id,
+        usuarioEmail: usuario.email,
+        accion: ACCIONES_AUDITORIA.ADJUNTAR_FACTURA_ORDEN_COMPRA,
+        descripcion: `Adjuntó la factura de la orden de compra #${orden.numero}`,
+        entidad: 'OrdenCompra',
+        entidadId: orden.id,
+      });
 
       return mapearRespuestaOrdenCompra(orden);
     } catch (error) {
@@ -179,13 +211,22 @@ export class OrdenesCompraService {
     return { buffer, nombreArchivo: `orden-compra-${orden.numero}.pdf` };
   }
 
-  async eliminar(id: string): Promise<void> {
+  async eliminar(id: string, usuario: UsuarioAutenticado): Promise<void> {
     const orden = await this.obtenerOrdenOFallar(id);
     await this.ordenesCompraRepositorio.eliminar(id);
 
     if (orden.facturaPdfRuta) {
       await this.almacenamiento.eliminar(orden.facturaPdfRuta);
     }
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuario.id,
+      usuarioEmail: usuario.email,
+      accion: ACCIONES_AUDITORIA.ELIMINAR_ORDEN_COMPRA,
+      descripcion: `Eliminó la orden de compra #${orden.numero}`,
+      entidad: 'OrdenCompra',
+      entidadId: orden.id,
+    });
   }
 
   private async derivarJerarquia(

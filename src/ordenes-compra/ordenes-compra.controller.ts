@@ -92,8 +92,13 @@ export class OrdenesCompraController {
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarOrdenCompraDto,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraService.actualizar(id, dto);
+    const datos = await this.ordenesCompraService.actualizar(
+      id,
+      dto,
+      solicitud.user,
+    );
     return { datos, mensaje: 'Orden de compra actualizada correctamente' };
   }
 
@@ -111,14 +116,22 @@ export class OrdenesCompraController {
       }),
     )
     factura: Express.Multer.File,
+    @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraService.adjuntarFactura(id, factura);
+    const datos = await this.ordenesCompraService.adjuntarFactura(
+      id,
+      factura,
+      solicitud.user,
+    );
     return { datos, mensaje: 'Factura adjuntada correctamente' };
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async eliminar(@Param('id') id: string): Promise<void> {
-    await this.ordenesCompraService.eliminar(id);
+  async eliminar(
+    @Param('id') id: string,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<void> {
+    await this.ordenesCompraService.eliminar(id, solicitud.user);
   }
 }
