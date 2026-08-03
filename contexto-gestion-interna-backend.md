@@ -787,6 +787,47 @@ Repo: `github.com/JoaquinKarawacki/seg-gestion-interna-backend`, rama `main`. Se
 
 ---
 
+## Auditoría de QA y arquitectura (post-Etapa 9, 2026-08-03)
+
+Pase de revisión independiente (no una etapa nueva de funcionalidad) hecho con dos agentes en paralelo: uno de QA haciendo pruebas dinámicas contra el servidor real + revisión estática, otro haciendo una revisión de arquitectura senior sobre todo el código y este documento. Los hallazgos críticos e importantes fueron verificados manualmente en el código antes de quedar acá — no son solo la palabra del agente. Instalado también el paquete de skills `superpowers` (`github.com/obra/superpowers`) como referencia de proceso de QA/revisión, clonado en `.agents/vendor/superpowers/` y enlazado en `.claude/skills/`.
+
+### Bugs confirmados — pendientes de arreglo
+
+**Crítico:**
+1. **Un usuario dado de baja lógica conserva acceso completo con su JWT viejo hasta que expire (hasta 7 días, `JWT_EXPIRACION`).** `JwtStrategy.validate()` (`src/auth/jwt.estrategia.ts:18`) solo decodifica el payload del token, nunca consulta la base para chequear `activo`. Confirmado en vivo: usuario dado de baja (`DELETE /usuarios/:id`) no puede loguearse de nuevo (401 correcto), pero su token emitido antes de la baja sigue funcionando en `GET /auth/perfil` y en escrituras reales (`POST /clientes` devolvió 201). Es la misma clase de problema que el `sectorId` desactualizado en el JWT (ya documentado como limitación aceptada en "Auth y roles"), pero mucho más grave: acá es la cuenta entera la que debería quedar sin acceso, no solo un dato del token. **Arreglo sugerido**: en `JwtStrategy.validate()` (o un guard aparte), consultar `UsuariosRepositorio.buscarPorId` y rechazar si `!usuario.activo`.
+
+**Importante:**
+2. **`OrdenesCompraService.actualizar()`/`eliminar()` no verifican `orden.estado === BORRADOR`**, contradiciendo lo ya documentado en Etapa 5 ("editar/eliminar en BORRADOR"). Confirmado en vivo: se pudo `PATCH` el `concepto` de una OC ya `PAGADA` sin ningún bloqueo. Sumado al punto siguiente, esto significa que hoy el control de quién puede tocar una OC depende del frontend, no del backend.
+3. **`OrdenesCompraController` no tiene ningún chequeo de pertenencia** (el solicitante dueño, o un rol que justifique ver/editar todas) en `GET`/`PATCH`/`DELETE` — cualquier autenticado ve y puede intentar modificar OCs de cualquier sector. Mismo patrón que ya usa `validarEncargadoDelSector` en el service de aprobación, pero nunca se replicó en el CRUD normal de OC.
+4. **`crear`/`actualizar`/`eliminar` de `OrdenCompra` no atrapan `P2003`** (FK inválida) como sí lo hacen `ProyectosService`/`CotizacionesService` — dan 500 `ERROR_INTERNO` en vez de 404, en un camino de uso normal (ej. `sectorId` con formato válido pero inexistente). Peor: `DELETE` sobre cualquier OC que ya tenga una fila en `HistorialEstadoOC` (o sea, cualquiera que salió de `BORRADOR`) falla con 500 por la FK `ON DELETE RESTRICT` en vez de un 409/422 limpio.
+5. **`POST /cotizaciones` no valida que `tareaId` pertenezca al `proyectoId` enviado** — se puede crear una cotización con `proyectoId` de un proyecto y `tareaId` de una tarea de otro proyecto distinto, corrompiendo la jerarquía Cliente→Proyecto→Tarea documentada en "Modelo de dominio".
+6. **`OrdenCompraEstadoCambiadoOyente.cuandoCambiaEstadoOrdenCompra`** (`src/notificaciones/oyentes/`) solo es fail-soft en el envío del mail (`CorreoService.enviar()`) — la resolución de destinatarios (consultas a `UsuariosRepositorio`) no tiene su propio `try/catch`. Como el evento se emite con `emit()` (no `emitAsync()`) y no hay handler global de `unhandledRejection` en `main.ts`, un fallo ahí podría tumbar el proceso completo, no solo esa notificación — contradice el criterio fail-soft que el resto del sistema sí respeta.
+
+**Menor/cosmético:**
+7. `ParseFilePipe` (subida de factura/PDF) devuelve el mensaje de `FileTypeValidator` aunque el fallo real sea de tamaño (`MaxFileSizeValidator`) — confuso para debugging, es comportamiento del propio Nest al combinar validators.
+8. `GET /proyectos/:id/avance-pago`, descrito en presente en la sección "Modelo de dominio" de este documento, **nunca se implementó** — quedó anotado como "pendiente" en Etapa 4/5/6 y después no se volvió a mencionar. No es un bug de comportamiento, es un gap de tracking: hay que decidir si sigue en el plan o se descarta explícitamente.
+
+### Confirmado como correcto (cobertura exhaustiva, sin hallazgos)
+
+Probado en vivo con casos límite reales (no solo happy path): derivación server-side de `solicitanteId`/`clienteId`/`proyectoId`/`tareaId` (rechaza con 400 si el cliente intenta mandarlos, gracias a `whitelist`/`forbidNonWhitelisted` del `ValidacionPipe` global), la tabla completa de transiciones válidas/inválidas de OC, las validaciones de monto/proveedor contra cotización (incluidos límites exactos con decimales, sin errores de redondeo binario), autorización por sector en aprobar/rechazar/anular, la transición automática de Comentarios (las combinaciones exactas rol+estado y solo esas), toda la auditoría de la Etapa 9 (registros correctos, nada se audita en operaciones fallidas, `GET /auditoria` es ADMIN-only), baja lógica de `Usuario` vs. baja física de `Cliente`/`Proveedor`, y ausencia total de `toISOString()` en construcción de fechas (la regla de UTC-3 de este mismo documento se respeta).
+
+### Revisión de arquitectura senior — fortalezas señaladas
+
+"Derivar en vez de confiar" bien resuelto; repositorios que no extienden `IRepositorioBase<T>` para entidades inmutables (`Cotizacion`/`Comentario`/`HistorialEstadoOC`/`Auditoria`) es la decisión correcta, no algo a "unificar"; un único punto de emisión de eventos (`ejecutarTransicion()`); las tres desviaciones deliberadas del plan (sin Strategy/Registry en Etapa 6, un evento genérico en vez de 5 oyentes en Etapa 8, sin decorator `@Auditable` en Etapa 9) fueron la decisión madura, no un atajo; cero Prisma fuera de repositorios en todo el proyecto; `ValidacionPipe` global bloquea mass assignment por diseño; dinero manejado con `Decimal(14,2)` en todo lado, nunca `Float`.
+
+### Riesgos operacionales/de producción señalados (no son bugs de comportamiento, son huecos)
+
+- **Sin CORS configurado** (`main.ts` no llama `enableCors()`) — va a bloquear al frontend Next.js separado.
+- **Sin rate limiting en `/auth/login`** — vulnerable a fuerza bruta.
+- **El parche de migraciones de esta etapa (`migrate diff` + `migrate deploy` a mano) es deuda, no solución permanente** — `migrate dev` sigue bloqueado indefinidamente por el checksum de la migración de Etapa 7. Antes de la Etapa 10 (antes de datos reales), conviene resetear la baseline de migraciones y considerar pasar `numero` de OC a `GENERATED ALWAYS AS IDENTITY` de Postgres para sacar a Prisma del problema de raíz.
+- **Cero tests automatizados** sobre el motor de aprobación — si hay que priorizar con tiempo limitado: (1) tabla de transiciones válidas/inválidas, (2) `validarEncargadoDelSector`/guards de rol, (3) los eslabones de validación de monto/proveedor, (4) un e2e del flujo completo enviar→consulta→responder→aprobar→pagar.
+- Condición de carrera de baja probabilidad en `ValidarMontoNoExcedeCotizacionEslabon` (lee-calcula-compara sin transacción/lock — dos OCs creadas casi simultáneamente contra la misma cotización podrían ambas pasar la validación).
+- Sin health check real que verifique conexión a la base, sin índices en `Auditoria` (agregar cuando el volumen lo justifique), sin CI, sin `enableShutdownHooks()`, sin estrategia de backup de la base documentada.
+
+**Antes de arrancar la Etapa 10 (seed real + deploy), priorizar arreglar los puntos 1-4 de "Bugs confirmados"** — son los que definen si el control de acceso real está en el backend o depende de que el frontend no muestre ciertos botones.
+
+---
+
 ## Plan de etapas
 
 ### Etapa 1 — Scaffolding y configuración base
