@@ -826,6 +826,18 @@ Probado en vivo con casos límite reales (no solo happy path): derivación serve
 
 **Antes de arrancar la Etapa 10 (seed real + deploy), priorizar arreglar los puntos 1-4 de "Bugs confirmados"** — son los que definen si el control de acceso real está en el backend o depende de que el frontend no muestre ciertos botones.
 
+### Fixes aplicados post-auditoría (2026-08-17)
+
+Se arreglaron los puntos 2, 3 y 4 de "Bugs confirmados". El punto 1 (JWT de usuario dado de baja sigue vigente hasta que expira) se decidió **no arreglarlo**: es una empresa chica donde todos se conocen, el escenario de un ex-usuario abusando de un token viejo durante hasta 7 días no se considera un riesgo real a mitigar ahora.
+
+- **Punto 2 (editar/eliminar fuera de `BORRADOR`)**: `OrdenesCompraService.actualizar()`/`eliminar()` ahora llaman a `validarEsBorrador()`, que tira `ConflictException` (409, `ORDEN_COMPRA_NO_ES_BORRADOR`) si `orden.estado !== BORRADOR`.
+- **Punto 3 (pertenencia)**: se agregó `validarPertenencia()` en `OrdenesCompraService`, usada en `actualizar()`/`eliminar()` (no en `GET`, que se decidió dejar abierto a cualquier autenticado, mismo criterio ya documentado para `Cliente`/`Proyecto`/`Cotización`). Puede editar/eliminar una OC en `BORRADOR`: el solicitante que la creó, cualquier usuario de su mismo sector (`usuario.sectorId === orden.sectorId`), o `ADMIN`. Decisión tomada con el usuario: se prefirió "mismo sector" en vez de "solo el dueño" para permitir que un compañero del sector complete un borrador cargado por otro. Tira `ForbiddenException` (403, `SIN_PERMISO_SOBRE_ORDEN_COMPRA`) si no se cumple ninguna condición.
+- **Punto 4 (FK inválida y `DELETE` roto por historial)**:
+  - `crear()`/`actualizar()` ahora envuelven la escritura en `ejecutarOMapearReferenciaInvalida()` (mismo patrón que `ProyectosService`/`CotizacionesService`), que atrapa `P2003` y devuelve 404 `PROVEEDOR_O_SECTOR_NO_ENCONTRADO` en vez de 500 — cubre `sectorId`/`proveedorId`, los únicos FKs de `OrdenCompra` que llegan directo del cliente sin haber sido ya validados (`cotizacionId` ya se valida en `derivarJerarquia`, y `solicitanteId`/`clienteId`/`proyectoId`/`tareaId` se derivan server-side).
+  - El `DELETE` roto por la FK `ON DELETE RESTRICT` de `HistorialEstadoOC` quedó resuelto como efecto secundario del punto 2: como toda fila de `HistorialEstadoOC` se crea al salir de `BORRADOR` (`cambiarEstado()`), y ahora `eliminar()` exige `estado === BORRADOR`, nunca puede existir una fila de historial para una OC eliminable.
+  - Se encontró un segundo camino de 500 no listado explícitamente en la auditoría: `Comentario` sí se puede crear en cualquier estado, incluido `BORRADOR` (`ComentariosService` no restringe por estado), así que una OC en `BORRADOR` con comentarios también rompía el `DELETE` por la misma razón (`ON DELETE RESTRICT`). Se agregó `contarComentariosAsociados()` a `IOrdenesCompraRepositorio`/`OrdenesCompraRepositorio` (mismo patrón de conteo cross-módulo que ya usa `ProyectosRepositorio` contra `Cotizacion`/`Tarea`/`OrdenCompra`), y `eliminar()` bloquea con `UnprocessableEntityException` (422, `ORDEN_COMPRA_CON_COMENTARIOS_ASOCIADOS`) si hay comentarios cargados.
+- Verificado: `tsc --noEmit`, `eslint` y `jest` sin errores sobre los archivos tocados (`ordenes-compra.service.ts`, `ordenes-compra.repositorio.ts`, `interfaces/ordenes-compra-repositorio.interface.ts`). No se agregaron tests nuevos — sigue pendiente la deuda de "cero tests automatizados" ya señalada en la auditoría.
+
 ---
 
 ## Plan de etapas

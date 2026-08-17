@@ -60,4 +60,5 @@ export interface IOrdenesCompraRepositorio extends IRepositorioBase<
     motivo?: string | null,
   ): Promise<OrdenCompraModel>;
   buscarHistorial(ordenCompraId: string): Promise<HistorialEstadoOCModel[]>;
+  contarComentariosAsociados(ordenCompraId: string): Promise<number>;
 }

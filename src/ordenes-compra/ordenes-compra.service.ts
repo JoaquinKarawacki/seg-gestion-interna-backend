@@ -1,5 +1,13 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
+import { EstadoOC, RolUsuario } from '../../generated/prisma/enums';
 import type { OrdenCompraModel } from '../../generated/prisma/models';
 import { ALMACENAMIENTO } from '../almacenamiento/puertos/almacenamiento.puerto';
 import type {
@@ -23,6 +31,7 @@ import { CadenaValidacionOC } from './validaciones/cadena-validacion-oc';
 import { ValidarProveedorCoincideCotizacionEslabon } from './validaciones/validar-proveedor-coincide-cotizacion.eslabon';
 
 const CARPETA_ARCHIVOS = 'ordenes-compra';
+const CODIGO_REFERENCIA_INVALIDA = 'P2003';
 
 export interface ArchivoDescargado {
   buffer: Buffer;
@@ -84,25 +93,27 @@ export class OrdenesCompraService {
       : null;
 
     try {
-      const orden = await this.ordenesCompraRepositorio.crear({
-        tipo: dto.tipo,
-        fecha: new Date(dto.fecha),
-        solicitanteId: usuario.id,
-        sectorId: dto.sectorId,
-        proveedorId: dto.proveedorId,
-        clienteId: jerarquia.clienteId,
-        proyectoId: jerarquia.proyectoId,
-        tareaId: jerarquia.tareaId,
-        cotizacionId: dto.cotizacionId ?? null,
-        moneda: dto.moneda,
-        monto,
-        concepto: dto.concepto,
-        formaPago: dto.formaPago,
-        pagaIva: dto.pagaIva,
-        ivaIncluido: dto.ivaIncluido,
-        observaciones: dto.observaciones ?? null,
-        facturaPdfRuta: facturaGuardada?.referencia ?? null,
-      });
+      const orden = await this.ejecutarOMapearReferenciaInvalida(() =>
+        this.ordenesCompraRepositorio.crear({
+          tipo: dto.tipo,
+          fecha: new Date(dto.fecha),
+          solicitanteId: usuario.id,
+          sectorId: dto.sectorId,
+          proveedorId: dto.proveedorId,
+          clienteId: jerarquia.clienteId,
+          proyectoId: jerarquia.proyectoId,
+          tareaId: jerarquia.tareaId,
+          cotizacionId: dto.cotizacionId ?? null,
+          moneda: dto.moneda,
+          monto,
+          concepto: dto.concepto,
+          formaPago: dto.formaPago,
+          pagaIva: dto.pagaIva,
+          ivaIncluido: dto.ivaIncluido,
+          observaciones: dto.observaciones ?? null,
+          facturaPdfRuta: facturaGuardada?.referencia ?? null,
+        }),
+      );
 
       await this.auditoriaService.registrar({
         usuarioId: usuario.id,
@@ -126,6 +137,8 @@ export class OrdenesCompraService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const ordenExistente = await this.obtenerOrdenOFallar(id);
+    this.validarPertenencia(ordenExistente, usuario);
+    this.validarEsBorrador(ordenExistente);
 
     if (dto.proveedorId && ordenExistente.cotizacionId) {
       await this.validarProveedorEslabon.ejecutarValidacion({
@@ -135,18 +148,20 @@ export class OrdenesCompraService {
       });
     }
 
-    const orden = await this.ordenesCompraRepositorio.actualizar(id, {
-      tipo: dto.tipo,
-      fecha: dto.fecha ? new Date(dto.fecha) : undefined,
-      sectorId: dto.sectorId,
-      proveedorId: dto.proveedorId,
-      moneda: dto.moneda,
-      concepto: dto.concepto,
-      formaPago: dto.formaPago,
-      pagaIva: dto.pagaIva,
-      ivaIncluido: dto.ivaIncluido,
-      observaciones: dto.observaciones,
-    });
+    const orden = await this.ejecutarOMapearReferenciaInvalida(() =>
+      this.ordenesCompraRepositorio.actualizar(id, {
+        tipo: dto.tipo,
+        fecha: dto.fecha ? new Date(dto.fecha) : undefined,
+        sectorId: dto.sectorId,
+        proveedorId: dto.proveedorId,
+        moneda: dto.moneda,
+        concepto: dto.concepto,
+        formaPago: dto.formaPago,
+        pagaIva: dto.pagaIva,
+        ivaIncluido: dto.ivaIncluido,
+        observaciones: dto.observaciones,
+      }),
+    );
 
     await this.auditoriaService.registrar({
       usuarioId: usuario.id,
@@ -213,6 +228,20 @@ export class OrdenesCompraService {
 
   async eliminar(id: string, usuario: UsuarioAutenticado): Promise<void> {
     const orden = await this.obtenerOrdenOFallar(id);
+    this.validarPertenencia(orden, usuario);
+    this.validarEsBorrador(orden);
+
+    const comentariosAsociados =
+      await this.ordenesCompraRepositorio.contarComentariosAsociados(id);
+
+    if (comentariosAsociados > 0) {
+      throw new UnprocessableEntityException({
+        error: 'ORDEN_COMPRA_CON_COMENTARIOS_ASOCIADOS',
+        mensaje:
+          'No se puede eliminar la orden de compra porque tiene comentarios cargados',
+      });
+    }
+
     await this.ordenesCompraRepositorio.eliminar(id);
 
     if (orden.facturaPdfRuta) {
@@ -275,6 +304,52 @@ export class OrdenesCompraService {
   ): Promise<void> {
     if (archivoGuardado) {
       await this.almacenamiento.eliminar(archivoGuardado.referencia);
+    }
+  }
+
+  private validarPertenencia(
+    orden: OrdenCompraModel,
+    usuario: UsuarioAutenticado,
+  ): void {
+    const esElSolicitante = usuario.id === orden.solicitanteId;
+    const esDelMismoSector = usuario.sectorId === orden.sectorId;
+    const esAdmin = usuario.rol === RolUsuario.ADMIN;
+
+    if (!esElSolicitante && !esDelMismoSector && !esAdmin) {
+      throw new ForbiddenException({
+        error: 'SIN_PERMISO_SOBRE_ORDEN_COMPRA',
+        mensaje: 'No tenés permiso sobre esta orden de compra',
+      });
+    }
+  }
+
+  private validarEsBorrador(orden: OrdenCompraModel): void {
+    if (orden.estado !== EstadoOC.BORRADOR) {
+      throw new ConflictException({
+        error: 'ORDEN_COMPRA_NO_ES_BORRADOR',
+        mensaje:
+          'Solo se puede editar o eliminar una orden de compra en estado BORRADOR',
+      });
+    }
+  }
+
+  private async ejecutarOMapearReferenciaInvalida(
+    operacion: () => Promise<OrdenCompraModel>,
+  ): Promise<OrdenCompraModel> {
+    try {
+      return await operacion();
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === CODIGO_REFERENCIA_INVALIDA
+      ) {
+        throw new NotFoundException({
+          error: 'PROVEEDOR_O_SECTOR_NO_ENCONTRADO',
+          mensaje: 'El proveedor o el sector indicado no existen',
+        });
+      }
+
+      throw error;
     }
   }
 }

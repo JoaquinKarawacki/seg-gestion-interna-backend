@@ -89,4 +89,8 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
       orderBy: { creadoEn: 'asc' },
     });
   }
+
+  async contarComentariosAsociados(ordenCompraId: string): Promise<number> {
+    return this.prisma.comentario.count({ where: { ordenCompraId } });
+  }
 }
