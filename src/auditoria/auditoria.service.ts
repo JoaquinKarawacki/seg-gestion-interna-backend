@@ -5,8 +5,14 @@ import {
   AUDITORIA_REPOSITORIO,
   DatosCrearAuditoria,
   FiltrosAuditoria,
+  PaginacionAuditoria,
 } from './interfaces/auditoria-repositorio.interface';
 import type { IAuditoriaRepositorio } from './interfaces/auditoria-repositorio.interface';
+
+export interface ResultadoListarAuditoria {
+  datos: RespuestaAuditoriaDto[];
+  total: number;
+}
 
 @Injectable()
 export class AuditoriaService {
@@ -28,10 +34,19 @@ export class AuditoriaService {
     }
   }
 
-  async listar(filtros: FiltrosAuditoria): Promise<RespuestaAuditoriaDto[]> {
-    const registros = await this.auditoriaRepositorio.buscarConFiltros(filtros);
+  async listar(
+    filtros: FiltrosAuditoria,
+    paginacion: PaginacionAuditoria,
+  ): Promise<ResultadoListarAuditoria> {
+    const [registros, total] = await Promise.all([
+      this.auditoriaRepositorio.buscarConFiltros(filtros, paginacion),
+      this.auditoriaRepositorio.contarConFiltros(filtros),
+    ]);
 
-    return registros.map((registro) => this.mapearRespuesta(registro));
+    return {
+      datos: registros.map((registro) => this.mapearRespuesta(registro)),
+      total,
+    };
   }
 
   private mapearRespuesta(registro: AuditoriaModel): RespuestaAuditoriaDto {

@@ -11,6 +11,7 @@ import {
   ParseFilePipe,
   Patch,
   Post,
+  Query,
   Req,
   StreamableFile,
   UploadedFile,
@@ -19,6 +20,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
+import { EstadoOC } from '../../generated/prisma/enums';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
@@ -32,6 +34,9 @@ import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
 import { OrdenesCompraService } from './ordenes-compra.service';
 
 const TAMANIO_MAXIMO_ARCHIVO_BYTES = 10 * 1024 * 1024;
+const PAGINA_DEFECTO = 1;
+const POR_PAGINA_DEFECTO = 50;
+const POR_PAGINA_MAXIMO = 200;
 
 type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
@@ -41,9 +46,27 @@ export class OrdenesCompraController {
   constructor(private readonly ordenesCompraService: OrdenesCompraService) {}
 
   @Get()
-  async listar(): Promise<RespuestaLista<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraService.listar();
-    return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
+  async listar(
+    @Query('proyectoId') proyectoId?: string,
+    @Query('cotizacionId') cotizacionId?: string,
+    @Query('estado') estado?: EstadoOC,
+    @Query('sectorId') sectorId?: string,
+    @Query('solicitanteId') solicitanteId?: string,
+    @Query('pagina') paginaQuery?: string,
+    @Query('porPagina') porPaginaQuery?: string,
+  ): Promise<RespuestaLista<RespuestaOrdenCompraDto>> {
+    const pagina = Math.max(1, Number.parseInt(paginaQuery ?? '', 10) || PAGINA_DEFECTO);
+    const porPagina = Math.min(
+      POR_PAGINA_MAXIMO,
+      Math.max(1, Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO),
+    );
+
+    const { datos, total } = await this.ordenesCompraService.listar(
+      { proyectoId, cotizacionId, estado, sectorId, solicitanteId },
+      { pagina, porPagina },
+    );
+
+    return { datos, total, pagina, porPagina };
   }
 
   @Get(':id')

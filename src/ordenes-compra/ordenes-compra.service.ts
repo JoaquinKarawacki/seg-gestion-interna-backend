@@ -24,7 +24,11 @@ import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.inte
 import { ActualizarOrdenCompraDto } from './dtos/actualizar-orden-compra.dto';
 import { CrearOrdenCompraDto } from './dtos/crear-orden-compra.dto';
 import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
-import { ORDENES_COMPRA_REPOSITORIO } from './interfaces/ordenes-compra-repositorio.interface';
+import {
+  ORDENES_COMPRA_REPOSITORIO,
+  FiltrosOrdenCompra,
+  PaginacionOrdenCompra,
+} from './interfaces/ordenes-compra-repositorio.interface';
 import type { IOrdenesCompraRepositorio } from './interfaces/ordenes-compra-repositorio.interface';
 import { mapearRespuestaOrdenCompra } from './ordenes-compra.mapper';
 import { CadenaValidacionOC } from './validaciones/cadena-validacion-oc';
@@ -60,9 +64,19 @@ export class OrdenesCompraService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
-  async listar(): Promise<RespuestaOrdenCompraDto[]> {
-    const ordenes = await this.ordenesCompraRepositorio.buscarTodos();
-    return ordenes.map((orden) => mapearRespuestaOrdenCompra(orden));
+  async listar(
+    filtros: FiltrosOrdenCompra,
+    paginacion: PaginacionOrdenCompra,
+  ): Promise<{ datos: RespuestaOrdenCompraDto[]; total: number }> {
+    const [ordenes, total] = await Promise.all([
+      this.ordenesCompraRepositorio.buscarConFiltros(filtros, paginacion),
+      this.ordenesCompraRepositorio.contarConFiltros(filtros),
+    ]);
+
+    return {
+      datos: ordenes.map((orden) => mapearRespuestaOrdenCompra(orden)),
+      total,
+    };
   }
 
   async buscarPorId(id: string): Promise<RespuestaOrdenCompraDto> {

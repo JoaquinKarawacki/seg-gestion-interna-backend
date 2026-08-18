@@ -47,6 +47,19 @@ export interface DatosActualizarOrdenCompra {
   facturaPdfRuta?: string | null;
 }
 
+export interface FiltrosOrdenCompra {
+  proyectoId?: string;
+  cotizacionId?: string;
+  estado?: EstadoOC;
+  sectorId?: string;
+  solicitanteId?: string;
+}
+
+export interface PaginacionOrdenCompra {
+  pagina: number;
+  porPagina: number;
+}
+
 export interface IOrdenesCompraRepositorio extends IRepositorioBase<
   OrdenCompraModel,
   DatosCrearOrdenCompra,
@@ -61,4 +74,9 @@ export interface IOrdenesCompraRepositorio extends IRepositorioBase<
   ): Promise<OrdenCompraModel>;
   buscarHistorial(ordenCompraId: string): Promise<HistorialEstadoOCModel[]>;
   contarComentariosAsociados(ordenCompraId: string): Promise<number>;
+  buscarConFiltros(
+    filtros: FiltrosOrdenCompra,
+    paginacion: PaginacionOrdenCompra,
+  ): Promise<OrdenCompraModel[]>;
+  contarConFiltros(filtros: FiltrosOrdenCompra): Promise<number>;
 }

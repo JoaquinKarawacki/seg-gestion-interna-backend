@@ -17,7 +17,16 @@ export interface FiltrosAuditoria {
   usuarioEmail?: string;
 }
 
+export interface PaginacionAuditoria {
+  pagina: number;
+  porPagina: number;
+}
+
 export interface IAuditoriaRepositorio {
   crear(datos: DatosCrearAuditoria): Promise<AuditoriaModel>;
-  buscarConFiltros(filtros: FiltrosAuditoria): Promise<AuditoriaModel[]>;
+  buscarConFiltros(
+    filtros: FiltrosAuditoria,
+    paginacion: PaginacionAuditoria,
+  ): Promise<AuditoriaModel[]>;
+  contarConFiltros(filtros: FiltrosAuditoria): Promise<number>;
 }

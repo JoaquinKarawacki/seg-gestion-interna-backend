@@ -9,7 +9,9 @@ import {
 import {
   DatosActualizarOrdenCompra,
   DatosCrearOrdenCompra,
+  FiltrosOrdenCompra,
   IOrdenesCompraRepositorio,
+  PaginacionOrdenCompra,
 } from './interfaces/ordenes-compra-repositorio.interface';
 
 @Injectable()
@@ -92,5 +94,35 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
 
   async contarComentariosAsociados(ordenCompraId: string): Promise<number> {
     return this.prisma.comentario.count({ where: { ordenCompraId } });
+  }
+
+  async buscarConFiltros(
+    filtros: FiltrosOrdenCompra,
+    paginacion: PaginacionOrdenCompra,
+  ): Promise<OrdenCompraModel[]> {
+    return this.prisma.ordenCompra.findMany({
+      where: {
+        proyectoId: filtros.proyectoId,
+        cotizacionId: filtros.cotizacionId,
+        estado: filtros.estado,
+        sectorId: filtros.sectorId,
+        solicitanteId: filtros.solicitanteId,
+      },
+      orderBy: { numero: 'desc' },
+      skip: (paginacion.pagina - 1) * paginacion.porPagina,
+      take: paginacion.porPagina,
+    });
+  }
+
+  async contarConFiltros(filtros: FiltrosOrdenCompra): Promise<number> {
+    return this.prisma.ordenCompra.count({
+      where: {
+        proyectoId: filtros.proyectoId,
+        cotizacionId: filtros.cotizacionId,
+        estado: filtros.estado,
+        sectorId: filtros.sectorId,
+        solicitanteId: filtros.solicitanteId,
+      },
+    });
   }
 }

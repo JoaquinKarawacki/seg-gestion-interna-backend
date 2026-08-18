@@ -5,6 +5,7 @@ import {
   DatosCrearAuditoria,
   FiltrosAuditoria,
   IAuditoriaRepositorio,
+  PaginacionAuditoria,
 } from './interfaces/auditoria-repositorio.interface';
 
 @Injectable()
@@ -15,7 +16,10 @@ export class AuditoriaRepositorio implements IAuditoriaRepositorio {
     return this.prisma.auditoria.create({ data: datos });
   }
 
-  async buscarConFiltros(filtros: FiltrosAuditoria): Promise<AuditoriaModel[]> {
+  async buscarConFiltros(
+    filtros: FiltrosAuditoria,
+    paginacion: PaginacionAuditoria,
+  ): Promise<AuditoriaModel[]> {
     return this.prisma.auditoria.findMany({
       where: {
         accion: filtros.accion,
@@ -23,6 +27,18 @@ export class AuditoriaRepositorio implements IAuditoriaRepositorio {
         usuarioEmail: filtros.usuarioEmail,
       },
       orderBy: { creadoEn: 'desc' },
+      skip: (paginacion.pagina - 1) * paginacion.porPagina,
+      take: paginacion.porPagina,
+    });
+  }
+
+  async contarConFiltros(filtros: FiltrosAuditoria): Promise<number> {
+    return this.prisma.auditoria.count({
+      where: {
+        accion: filtros.accion,
+        entidad: filtros.entidad,
+        usuarioEmail: filtros.usuarioEmail,
+      },
     });
   }
 }

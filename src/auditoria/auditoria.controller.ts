@@ -7,6 +7,10 @@ import { RespuestaLista } from '../comun/tipos/respuesta-api.tipo';
 import { AuditoriaService } from './auditoria.service';
 import { RespuestaAuditoriaDto } from './dtos/respuesta-auditoria.dto';
 
+const PAGINA_DEFECTO = 1;
+const POR_PAGINA_DEFECTO = 50;
+const POR_PAGINA_MAXIMO = 200;
+
 @Controller('auditoria')
 @UseGuards(JwtGuardia, RolesGuardia)
 @Roles(RolUsuario.ADMIN)
@@ -18,13 +22,20 @@ export class AuditoriaController {
     @Query('accion') accion?: string,
     @Query('entidad') entidad?: string,
     @Query('usuarioEmail') usuarioEmail?: string,
+    @Query('pagina') paginaQuery?: string,
+    @Query('porPagina') porPaginaQuery?: string,
   ): Promise<RespuestaLista<RespuestaAuditoriaDto>> {
-    const datos = await this.auditoriaService.listar({
-      accion,
-      entidad,
-      usuarioEmail,
-    });
+    const pagina = Math.max(1, Number.parseInt(paginaQuery ?? '', 10) || PAGINA_DEFECTO);
+    const porPagina = Math.min(
+      POR_PAGINA_MAXIMO,
+      Math.max(1, Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO),
+    );
 
-    return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
+    const { datos, total } = await this.auditoriaService.listar(
+      { accion, entidad, usuarioEmail },
+      { pagina, porPagina },
+    );
+
+    return { datos, total, pagina, porPagina };
   }
 }
