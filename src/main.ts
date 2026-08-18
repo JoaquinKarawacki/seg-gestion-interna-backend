@@ -23,4 +23,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidacionPipe());
   await app.listen(process.env.PORT ?? 3000);
 }
-void bootstrap();
+bootstrap().catch((error) => {
+  console.error('Error fatal al iniciar la aplicación:', error);
+  process.exit(1);
+});
