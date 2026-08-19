@@ -68,6 +68,19 @@ export class ProyectosController {
     return { datos, mensaje: 'Proyecto actualizado correctamente' };
   }
 
+  @Post(':id/recalcular-costo-seg')
+  @HttpCode(HttpStatus.OK)
+  async recalcularCostoSeg(
+    @Param('id') id: string,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<RespuestaExitosa<RespuestaProyectoDto>> {
+    const datos = await this.proyectosService.recalcularCostoSeg(
+      id,
+      solicitud.user,
+    );
+    return { datos, mensaje: 'Costo SEG recalculado correctamente' };
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async eliminar(

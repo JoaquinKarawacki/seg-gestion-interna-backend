@@ -78,6 +78,28 @@ export class ProyectosService {
     return this.mapearRespuesta(proyecto);
   }
 
+  async recalcularCostoSeg(
+    id: string,
+    usuarioActual: UsuarioAutenticado,
+  ): Promise<RespuestaProyectoDto> {
+    await this.obtenerProyectoOFallar(id);
+
+    const proyecto = await this.proyectosRepositorio.actualizar(id, {
+      costoSegManual: null,
+    });
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuarioActual.id,
+      usuarioEmail: usuarioActual.email,
+      accion: ACCIONES_AUDITORIA.RECALCULAR_COSTO_SEG_PROYECTO,
+      descripcion: `Volvió a calcular el costo SEG del proyecto "${proyecto.nombre}"`,
+      entidad: 'Proyecto',
+      entidadId: proyecto.id,
+    });
+
+    return this.mapearRespuesta(proyecto);
+  }
+
   async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
     const proyecto = await this.obtenerProyectoOFallar(id);
 
@@ -196,6 +218,7 @@ export class ProyectosService {
       nombre: proyecto.nombre,
       clienteId: proyecto.clienteId,
       sectorId: proyecto.sectorId,
+      costoSegManual: proyecto.costoSegManual?.toString() ?? null,
     };
   }
 }

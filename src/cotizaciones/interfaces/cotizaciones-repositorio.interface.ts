@@ -9,6 +9,7 @@ export interface DatosCrearCotizacion {
   tareaId: string | null;
   proveedorId: string;
   montoTotal: Prisma.Decimal;
+  honorarios?: Prisma.Decimal | null;
   moneda: Moneda;
   archivoPdfRuta?: string | null;
 }

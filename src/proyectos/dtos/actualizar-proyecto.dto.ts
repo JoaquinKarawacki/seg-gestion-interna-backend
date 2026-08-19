@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class ActualizarProyectoDto {
   @IsOptional()
@@ -13,4 +21,10 @@ export class ActualizarProyectoDto {
   @IsOptional()
   @IsUUID()
   sectorId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  costoSegManual?: number;
 }

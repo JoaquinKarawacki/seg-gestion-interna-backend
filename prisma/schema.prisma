@@ -103,17 +103,18 @@ enum EstadoCotizacion {
 }
 
 model Proyecto {
-  id            String        @id @default(uuid())
-  nombre        String
-  clienteId     String        @map("cliente_id")
-  cliente       Cliente       @relation(fields: [clienteId], references: [id])
-  sectorId      String?       @map("sector_id")
-  sector        Sector?       @relation(fields: [sectorId], references: [id])
-  tareas        Tarea[]
-  cotizaciones  Cotizacion[]
-  ordenesCompra OrdenCompra[]
-  creadoEn      DateTime      @default(now()) @map("creado_en")
-  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
+  id             String        @id @default(uuid())
+  nombre         String
+  clienteId      String        @map("cliente_id")
+  cliente        Cliente       @relation(fields: [clienteId], references: [id])
+  sectorId       String?       @map("sector_id")
+  sector         Sector?       @relation(fields: [sectorId], references: [id])
+  costoSegManual Decimal?      @map("costo_seg_manual") @db.Decimal(14, 2)
+  tareas         Tarea[]
+  cotizaciones   Cotizacion[]
+  ordenesCompra  OrdenCompra[]
+  creadoEn       DateTime      @default(now()) @map("creado_en")
+  actualizadoEn  DateTime      @updatedAt @map("actualizado_en")
 
   @@map("proyectos")
 }
@@ -140,6 +141,7 @@ model Cotizacion {
   proveedorId    String           @map("proveedor_id")
   proveedor      Proveedor        @relation(fields: [proveedorId], references: [id])
   montoTotal     Decimal          @map("monto_total") @db.Decimal(14, 2)
+  honorarios     Decimal?         @map("honorarios") @db.Decimal(14, 2)
   moneda         Moneda
   estado         EstadoCotizacion @default(ACTIVA)
   archivoPdfRuta String?          @map("archivo_pdf_ruta")
