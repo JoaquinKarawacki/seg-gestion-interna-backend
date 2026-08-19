@@ -30,7 +30,6 @@ type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
 @Controller('sectores')
 @UseGuards(JwtGuardia, RolesGuardia)
-@Roles(RolUsuario.ADMIN)
 export class SectoresController {
   constructor(private readonly sectoresService: SectoresService) {}
 
@@ -49,6 +48,7 @@ export class SectoresController {
   }
 
   @Post()
+  @Roles(RolUsuario.ADMIN)
   async crear(
     @Body() dto: CrearSectorDto,
     @Req() solicitud: SolicitudAutenticada,
@@ -58,6 +58,7 @@ export class SectoresController {
   }
 
   @Patch(':id')
+  @Roles(RolUsuario.ADMIN)
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarSectorDto,
@@ -72,6 +73,7 @@ export class SectoresController {
   }
 
   @Delete(':id')
+  @Roles(RolUsuario.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async eliminar(
     @Param('id') id: string,
