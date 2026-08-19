@@ -609,6 +609,8 @@ Este cálculo se expone en `GET /proyectos/:id/avance-pago`.
 - `Proyecto.costoSegManual` (`Decimal?`) — override manual de "costo SEG" (por defecto se calcula como la suma de cotizaciones de tarea activas). Se setea vía `PATCH /proyectos/:id`, se limpia (vuelve a `null`, o sea "recalcular") vía `POST /proyectos/:id/recalcular-costo-seg`.
 - Todo el modelo asume **una sola moneda de referencia por proyecto** (la de la cotización general activa) — cotizaciones de tarea u OC pagadas en otra moneda se excluyen del cálculo, no se mezclan montos de distinta moneda.
 
+**Actualización 2026-08-19 (mismo día, ajuste posterior)**: se agregó conversión real de moneda — el ítem "Tipo de cambio / conversión de moneda" que estaba pendiente en `contexto-gestion-interna-frontend.md` desde la Fase 2 (con el enfoque ya decidido ahí: lo administra un ADMIN dentro de la app) quedó implementado. Modelo nuevo `TipoCambio { moneda: Moneda @unique, valorEnUyu: Decimal }` — solo tiene filas para `USD`/`EUR` (UYU es la base, tasa 1 implícita, sin fila propia); se seedean en 1 (`prisma/seed.ts`) para que `GET /tipos-cambio` nunca truene antes de que un ADMIN las actualice. Módulo nuevo `src/tipos-cambio/` (mismo patrón que `sectores/`): `GET /tipos-cambio` (cualquier rol autenticado), `PATCH /tipos-cambio/:moneda` (`@Roles(ADMIN)`, rechaza `UYU` con 422 `MONEDA_NO_EDITABLE`). El frontend ahora convierte (no excluye) montos entre monedas usando estas tasas — ver `lib/proyectos/presentacion.ts` en el repo hermano.
+
 ### Flujo de aprobación completo
 
 ```

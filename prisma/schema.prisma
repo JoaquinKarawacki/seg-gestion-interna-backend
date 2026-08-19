@@ -102,6 +102,19 @@ enum EstadoCotizacion {
   @@map("estado_cotizacion")
 }
 
+// UYU es la moneda base (tasa 1 implícita) — no tiene fila propia acá. Solo
+// USD/EUR se guardan, se seedean en 1 para que el GET nunca truene antes de
+// que un ADMIN los actualice.
+model TipoCambio {
+  id            String   @id @default(uuid())
+  moneda        Moneda   @unique
+  valorEnUyu    Decimal  @map("valor_en_uyu") @db.Decimal(14, 4)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  @@map("tipos_cambio")
+}
+
 model Proyecto {
   id             String        @id @default(uuid())
   nombre         String
