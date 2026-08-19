@@ -9,4 +9,8 @@ export class ActualizarProyectoDto {
   @IsOptional()
   @IsUUID()
   clienteId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  sectorId?: string;
 }

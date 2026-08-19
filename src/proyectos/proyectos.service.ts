@@ -147,6 +147,13 @@ export class ProyectosService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === CODIGO_REFERENCIA_INVALIDA
       ) {
+        if (this.esViolacionDeSectorId(error.meta)) {
+          throw new NotFoundException({
+            error: 'SECTOR_NO_ENCONTRADO',
+            mensaje: 'No existe un sector con ese ID',
+          });
+        }
+
         throw new NotFoundException({
           error: 'CLIENTE_NO_ENCONTRADO',
           mensaje: 'No existe un cliente con ese ID',
@@ -157,11 +164,38 @@ export class ProyectosService {
     }
   }
 
+  // Con el driver adapter de `pg`, el nombre de la constraint viola no viene en
+  // `meta.field_name` (eso es del engine binario clásico) sino anidado en
+  // `meta.driverAdapterError.cause.constraint.index` — confirmado inspeccionando
+  // el error real (P2003) contra Postgres.
+  private esViolacionDeSectorId(
+    meta: Record<string, unknown> | undefined,
+  ): boolean {
+    const driverAdapterError = meta?.driverAdapterError;
+    const cause =
+      driverAdapterError && typeof driverAdapterError === 'object'
+        ? (driverAdapterError as { cause?: unknown }).cause
+        : undefined;
+    const constraint =
+      cause && typeof cause === 'object'
+        ? (cause as { constraint?: unknown }).constraint
+        : undefined;
+    const indice =
+      constraint && typeof constraint === 'object'
+        ? (constraint as { index?: unknown }).index
+        : undefined;
+
+    return (
+      typeof indice === 'string' && indice.toLowerCase().includes('sector')
+    );
+  }
+
   private mapearRespuesta(proyecto: ProyectoModel): RespuestaProyectoDto {
     return {
       id: proyecto.id,
       nombre: proyecto.nombre,
       clienteId: proyecto.clienteId,
+      sectorId: proyecto.sectorId,
     };
   }
 }

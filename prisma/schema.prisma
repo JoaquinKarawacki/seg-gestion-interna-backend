@@ -21,6 +21,7 @@ model Sector {
   id            String        @id @default(uuid())
   nombre        String        @unique
   usuarios      Usuario[]
+  proyectos     Proyecto[]
   ordenesCompra OrdenCompra[]
   creadoEn      DateTime      @default(now()) @map("creado_en")
   actualizadoEn DateTime      @updatedAt @map("actualizado_en")
@@ -106,6 +107,8 @@ model Proyecto {
   nombre        String
   clienteId     String        @map("cliente_id")
   cliente       Cliente       @relation(fields: [clienteId], references: [id])
+  sectorId      String?       @map("sector_id")
+  sector        Sector?       @relation(fields: [sectorId], references: [id])
   tareas        Tarea[]
   cotizaciones  Cotizacion[]
   ordenesCompra OrdenCompra[]

@@ -656,12 +656,43 @@ RUTA_ALMACENAMIENTO=./almacenamiento-local
 ## Comandos de Railway
 
 ```bash
-# Start command del backend en Railway:
-npx prisma migrate deploy && node dist/main.js
+# Start command real en Railway (railway.json → deploy.startCommand):
+npm run start:prod   # = node dist/src/main (ver gotcha de rootDir más abajo)
 
 # Seeds (ejecutar contra DATABASE_PUBLIC_URL desde fuera de Railway):
 DATABASE_URL=<public_url> npx tsx prisma/seed.ts
 ```
+
+**Gotcha de build**: el `tsc`/`nest build` de este repo compila a `dist/src/main.js`, no `dist/main.js`, porque hay archivos `.ts` fuera de `src/` (`prisma.config.ts`, `prisma/seed.ts`) que fuerzan a TypeScript a inferir `rootDir` como la raíz del proyecto. `package.json`'s `start:prod` ya está ajustado a `node dist/src/main`.
+
+**`prisma migrate deploy` NO corre automáticamente en el boot** (a diferencia de lo que decía antes este documento) — contra el Postgres real de Railway (template `postgres-ssl`), el comando quedaba colgado sin salir nunca, lo que rompía la cadena `&&` y el contenedor no llegaba a levantar el server (causa no diagnosticada del todo). Se sacó del `startCommand`. **Cualquier migración nueva de Prisma hay que aplicarla a mano** contra producción (por ejemplo con un TCP proxy temporal + `psql`/`prisma migrate deploy` apuntando a la `DATABASE_PUBLIC_URL`, o reagregando `prisma migrate deploy &&` al `startCommand` por un solo deploy y revirtiendo después).
+
+**Builder**: Dockerfile propio (`Dockerfile` en la raíz del repo), no Nixpacks — Nixpacks no ofrecía una versión de Node suficientemente nueva para el mínimo de Prisma 7.9.1 (necesita 22.12+). La imagen es `node:22-slim` + `apt-get install openssl` (el motor de Prisma necesita OpenSSL, que la imagen slim no trae por defecto).
+
+### Despliegue actual en producción (Railway)
+
+Un solo proyecto Railway (`gestion-interna-seg`) con 3 servicios: `backend`, `frontend`, `Postgres` (template `postgres-ssl`).
+
+| Servicio | URL |
+|---|---|
+| Backend | `https://backend-production-dc81.up.railway.app` |
+| Frontend | `https://frontend-production-cbe52.up.railway.app` |
+
+`NEXT_PUBLIC_API_URL` (frontend) y `FRONTEND_URL` (backend, usado para CORS) ya están cruzados correctamente entre sí. Ambos servicios tienen auto-deploy en push a `main` de su repo respectivo.
+
+**Credenciales de prueba (mismos 4 usuarios que en local, ya seedeados en la base de Railway)** — contraseña `Cambiar123!` para todos:
+
+| Rol | Email |
+|---|---|
+| ADMIN | `admin@segingenieria.com` |
+| ENCARGADO | `encargado@segingenieria.com` |
+| PAGOS | `pagos@segingenieria.com` |
+| SOLICITANTE | `solicitante@segingenieria.com` |
+
+**Pendiente — notificaciones por mail no están activas en producción todavía.** El código (`src/notificaciones/`) ya está completo y funciona contra Microsoft Graph (Outlook/365 real, no un mock) vía client credentials de una app de Azure AD, pero en Railway no están seteadas `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `EMAIL_REMITENTE` ni `EMAILS_EN_COPIA`. Sin esas variables, `CorreoService.enviar()` falla silenciosamente (try/catch que solo logea, a propósito no rompe la transición de estado que lo disparó) — hoy no sale ningún mail real. Para activarlo:
+1. Alguien con acceso al admin de Azure AD/Microsoft 365 de la empresa tiene que registrar una app con permiso de **aplicación** `Mail.Send` (con consentimiento de admin) y elegir la casilla desde la que se manda.
+2. Con tenant id / client id / client secret / casilla remitente, setear esas 4-5 variables en el servicio `backend` de Railway (`railway variable set --service backend ...`).
+3. Una vez seteadas, no hace falta tocar código — el disparo ya está armado (cubre exactamente el caso de "el encargado comenta una OC pendiente → EN_CONSULTA → mail al solicitante" y "el solicitante responde → PENDIENTE → mail al encargado del sector", además de aprobar/rechazar/pagar/anular).
 
 ### Base de datos local para desarrollo
 

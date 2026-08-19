@@ -6,11 +6,13 @@ export const PROYECTOS_REPOSITORIO = Symbol('IProyectosRepositorio');
 export interface DatosCrearProyecto {
   nombre: string;
   clienteId: string;
+  sectorId?: string;
 }
 
 export interface DatosActualizarProyecto {
   nombre?: string;
   clienteId?: string;
+  sectorId?: string;
 }
 
 export interface IProyectosRepositorio extends IRepositorioBase<
