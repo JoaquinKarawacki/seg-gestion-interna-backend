@@ -562,15 +562,22 @@ Roles del sistema:
 
 **Corrección (decidido en Etapa 5, tras revisar `OC Articulos.xlsm` y `OC Servicios.xlsm` reales):** el modelo original de este documento (Ítems detallados con cantidad/precio unitario, Cotización única por Proyecto) no coincide con el proceso real. El modelo vigente:
 
+**Corrección 2 (2026-08-20):** la "Cotización GENERAL" (`tareaId = null`) que describía este diagrama antes ya no existe — se reemplazó por una entidad separada, `PropuestaInversion` (ver detalle más abajo). `Cotizacion.tareaId` es obligatorio desde entonces: toda Cotización pertenece a una Tarea.
+
 ```
 Cliente
   └── Proyecto (uno o varios)
-        ├── Cotización GENERAL (tareaId = null, una ACTIVA a la vez, versionada)
-        │     ├── Proveedor
-        │     └── Monto total + moneda
+        ├── Propuesta de Inversión (una ACTIVA a la vez, versionada,
+        │     puramente informativa — NO se vincula a ninguna OC)
+        │     ├── Costo total aproximado + Ahorro mensual + Cantidad de
+        │     │     meses + % que se queda SEG
+        │     ├── Honorarios (calculado: meses × ahorro mensual × %SEG,
+        │     │     no se persiste como columna)
+        │     └── Archivo adjunto opcional (PDF, Word o imagen)
         └── Tarea (una o varias, ej. "Electricidad", "Construcción")
               └── Cotización DE LA TAREA (una ACTIVA a la vez, versionada
-                    independientemente de la general y de otras tareas)
+                    independientemente de las otras tareas — `tareaId`
+                    obligatorio, ya no existe la cotización general)
                     ├── Proveedor (el que hace esa tarea puntual)
                     └── Monto total + moneda
 
@@ -593,7 +600,9 @@ el "cliente" conceptual es SEG mismo, no se completa ningún Cliente)
   └── Estado → flujo de aprobación
 ```
 
-Una Cotización general y las Cotizaciones de cada Tarea del mismo proyecto pueden estar todas `ACTIVA` al mismo tiempo — el versionado (marcar `REEMPLAZADA`) es independiente por cada combinación proyecto+tarea (`tareaId = null` identifica a la general).
+Las Cotizaciones de cada Tarea del mismo proyecto pueden estar todas `ACTIVA` al mismo tiempo — el versionado (marcar `REEMPLAZADA`) es independiente por cada Tarea. La Propuesta de Inversión versiona por separado, a nivel de todo el Proyecto (una `ACTIVA` a la vez por proyecto, sin dimensión de tarea).
+
+**Consecuencia aceptada explícitamente (2026-08-20):** como `Cotizacion.tareaId` ahora es obligatorio y `PropuestaInversion` no se vincula a `OrdenCompra`, ya no existe el caso "OC a nivel proyecto sin tarea" — toda OC vinculada a una `Cotizacion` (vía `cotizacionId`) va a derivar siempre un `tareaId`. Una OC sigue pudiendo existir "suelta" (sin `cotizacionId`, sin Cliente/Proyecto/Tarea).
 
 ### Avance de pago por proyecto
 El sistema calcula automáticamente para cada proyecto:
@@ -605,11 +614,20 @@ El sistema calcula automáticamente para cada proyecto:
 Este cálculo se expone en `GET /proyectos/:id/avance-pago`.
 
 **Actualización 2026-08-19**: se implementó una versión de esto (tarjeta "Comprometido" del detalle de Proyecto), pero **sin este endpoint** — el cálculo (costo aproximado, honorarios, costo SEG, gastado, margen de equipo) se hace 100% client-side en el frontend (`lib/proyectos/presentacion.ts`, `calcularResumenCostos`), reusando los listados de cotizaciones/OC del proyecto que la pantalla ya trae. `GET /proyectos/:id/avance-pago` sigue sin existir. Cambios reales de backend para esto:
-- `Cotizacion.honorarios` (`Decimal?`) — solo válido en la cotización GENERAL (`tareaId` null); `CotizacionesService.crear()` rechaza con 422 `HONORARIOS_SOLO_EN_COTIZACION_GENERAL` si viene junto a un `tareaId`.
+- ~~`Cotizacion.honorarios` (`Decimal?`) — solo válido en la cotización GENERAL (`tareaId` null)~~ — **reemplazado el 2026-08-20**, ver más abajo.
 - `Proyecto.costoSegManual` (`Decimal?`) — override manual de "costo SEG" (por defecto se calcula como la suma de cotizaciones de tarea activas). Se setea vía `PATCH /proyectos/:id`, se limpia (vuelve a `null`, o sea "recalcular") vía `POST /proyectos/:id/recalcular-costo-seg`.
 - Todo el modelo asume **una sola moneda de referencia por proyecto** (la de la cotización general activa) — cotizaciones de tarea u OC pagadas en otra moneda se excluyen del cálculo, no se mezclan montos de distinta moneda.
 
 **Actualización 2026-08-19 (mismo día, ajuste posterior)**: se agregó conversión real de moneda — el ítem "Tipo de cambio / conversión de moneda" que estaba pendiente en `contexto-gestion-interna-frontend.md` desde la Fase 2 (con el enfoque ya decidido ahí: lo administra un ADMIN dentro de la app) quedó implementado. Modelo nuevo `TipoCambio { moneda: Moneda @unique, valorEnUyu: Decimal }` — solo tiene filas para `USD`/`EUR` (UYU es la base, tasa 1 implícita, sin fila propia); se seedean en 1 (`prisma/seed.ts`) para que `GET /tipos-cambio` nunca truene antes de que un ADMIN las actualice. Módulo nuevo `src/tipos-cambio/` (mismo patrón que `sectores/`): `GET /tipos-cambio` (cualquier rol autenticado), `PATCH /tipos-cambio/:moneda` (`@Roles(ADMIN)`, rechaza `UYU` con 422 `MONEDA_NO_EDITABLE`). El frontend ahora convierte (no excluye) montos entre monedas usando estas tasas — ver `lib/proyectos/presentacion.ts` en el repo hermano.
+
+**Actualización 2026-08-20 (cambio de modelo: Propuesta de Inversión reemplaza a la cotización general)**: el usuario pidió separar la propuesta comercial que se le pasa al cliente (a nivel de todo el proyecto) de las cotizaciones de proveedores por tarea, que hasta ahora vivían mezcladas en la misma entidad `Cotizacion` (la "cotización general", `tareaId = null`, con su campo `honorarios` opcional). Cambios de backend:
+- `Cotizacion.tareaId` pasa a ser **obligatorio** (antes `String?`, ahora `String`) — ya no se puede crear una cotización sin tarea. Se eliminó la columna `Cotizacion.honorarios` por completo (migración `20260820135933_agregar_propuesta_inversion_y_tarea_obligatoria`, que primero limpia las filas de prueba con `tarea_id IS NULL` — confirmado con el usuario que no había datos reales en juego, solo pruebas propias). Se eliminó también `CotizacionesRepositorio.buscarActivaGeneralPorProyecto()` y la ruta `GET /proyectos/:proyectoId/cotizaciones/activa` (ya no tiene sentido, no hay más cotización a nivel proyecto).
+- Módulo nuevo `src/propuestas-inversion/` (mismo patrón de módulo simple y versionado inmutable que `cotizaciones/`, `PropuestasInversionRepositorio.crearNuevaVersion()` versiona solo por `proyectoId`, sin dimensión de tarea). Modelo `PropuestaInversion`: `proyectoId`, `costoTotalAproximado`, `ahorroMensual`, `cantidadMeses` (Int), `porcentajeSeg` (`Decimal(5,2)`, 0-100), `moneda`, `estado` (reusa el enum `EstadoCotizacion`), y tres campos de archivo (`archivoRuta`, `archivoMimeType`, `archivoNombreOriginal`). `honorarios` **no es columna** — se calcula en `PropuestasInversionService.mapearRespuesta()` (`ahorroMensual × cantidadMeses × porcentajeSeg/100`) y se devuelve ya calculado en la respuesta, para no duplicar la fórmula en el frontend.
+- **Puramente informativa**: a diferencia de la vieja cotización general, `PropuestaInversion` NO tiene relación con `OrdenCompra` — decisión explícita del usuario. Consecuencia: ya no existe la posibilidad de una OC "a nivel proyecto sin tarea" (ver nota en el diagrama de arriba).
+- **Archivo adjunto amplío**: a diferencia de `Cotizacion`/factura de OC (ambas hardcodeadas a `application/pdf` en el `FileTypeValidator` del controller y en el `Content-Type`/nombre de la descarga), `PropuestasInversionController` acepta PDF, Word (`.doc`/`.docx`) e imagen (`jpeg`/`png`) vía un `FileTypeValidator` con regex, y la descarga usa el `mimeType`/nombre de archivo reales guardados en las columnas nuevas — no hardcodea nada. **Gotcha de test confirmado en esta sesión**: el `FileTypeValidator` de esta versión de Nest valida por **número mágico real** (paquete `file-type`, lee los bytes del archivo), no solo por el `Content-Type` que manda el cliente — un archivo `.docx`/`.png` de prueba con contenido falso (texto plano) es rechazado aunque el `Content-Type` del `curl -F` diga lo correcto; hace falta un archivo genuino (magic bytes reales) para que pase, igual que ya pasaba silenciosamente con el `application/pdf` de `Cotizacion` (un PDF real arranca con `%PDF`, sí tiene magic number válido).
+- `ProyectosRepositorio` ganó `contarPropuestasInversionAsociadas()`, mismo patrón que `contarCotizacionesAsociadas()` — bloquea `DELETE /proyectos/:id` con 422 `PROYECTO_CON_PROPUESTAS_INVERSION_ASOCIADAS` si el proyecto tiene alguna propuesta cargada.
+- `ACCIONES_AUDITORIA` ganó `CREAR_PROPUESTA_INVERSION`.
+- Verificado end-to-end con los 4 usuarios de prueba: creación con PDF/Word/imagen genuinos, rechazo de tipo inválido, cálculo de honorarios, versionado (REEMPLAZADA automática), descarga con `Content-Type`/nombre reales, bloqueo de `DELETE`, y filtro de auditoría — todo confirmado contra el backend real, no solo `tsc`/`eslint`.
 
 ### Flujo de aprobación completo
 
