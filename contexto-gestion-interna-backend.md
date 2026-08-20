@@ -518,20 +518,14 @@ super({ adapter: adaptador });
 ```
 
 - Después de cada cambio de schema: `npx prisma generate` + reiniciar TS server en VS Code
-- El número de OC se maneja con una secuencia PostgreSQL nativa, no con `autoincrement()` de Prisma
-- **Estrategia de ID en todas las tablas: UUID** (`@id @default(uuid())`), no autoincrement
+- **Estrategia de ID en todas las tablas: UUID** (`@id @default(uuid())`), no autoincrement (esto es solo para los `id` — el campo `numero` de `OrdenCompra` sí usa `autoincrement()`, ver más abajo)
 - **Scripts que importan el cliente generado (ej. `prisma/seed.ts`) deben ejecutarse con `tsx`, no con `ts-node`.** El cliente generado usa imports internos con extensión `.js` explícita apuntando a archivos `.ts` (convención moderna de TypeScript para `moduleResolution: "nodenext"`). `ts-node` en modo CommonJS no resuelve esa sustitución de extensión y falla con `MODULE_NOT_FOUND`; `tsx` sí. Por eso `package.json` tiene `"seed": "tsx prisma/seed.ts"` en vez de usar `ts-node`.
 
-### Gotcha confirmado: `@default(dbgenerated(...))` y migraciones nuevas
+### Gotcha de `@default(dbgenerated(...))` — resuelto (2026-08-20)
 
-El campo `numero` de `OrdenCompra` usa `@default(dbgenerated("nextval('numero_orden_compra_seq')"))` (secuencia nativa, ver más abajo). **Cada vez** que se corre `prisma migrate dev` para generar una migración nueva — sea sobre lo que sea, no tiene que tocar `OrdenCompra` ni `numero` — Prisma vuelve a proponer "resetear" ese default (un `ALTER TABLE ... SET DEFAULT / DROP DEFAULT` seguido de `DROP SEQUENCE`), porque no rastrea bien los `dbgenerated()` entre migraciones. Esto **no es un problema que se arregla una vez**, se repite en cada migración nueva mientras ese campo exista así.
+**Historia (ya no aplica, queda como referencia):** el campo `numero` de `OrdenCompra` usaba `@default(dbgenerated("nextval('numero_orden_compra_seq')"))` (una secuencia creada a mano porque en su momento se creyó que Prisma no podía generar el `CREATE SEQUENCE` desde `autoincrement()`). Cada `prisma migrate dev` — tocara o no `OrdenCompra` — volvía a proponer "resetear" ese default, porque Prisma no rastrea bien los `dbgenerated()` entre migraciones. Había que limpiar el SQL a mano en cada migración nueva (procedimiento documentado históricamente en versiones previas de este archivo).
 
-**Procedimiento a seguir cada vez que se genera una migración nueva** (confirmado dos veces, Etapa 5 y Etapa 6):
-1. Generar normalmente (`prisma migrate dev --name X`). Va a fallar contra la shadow database con `cannot drop sequence numero_orden_compra_seq because other objects depend on it` — es esperado.
-2. Abrir `prisma/migrations/<timestamp>_X/migration.sql` y borrar las líneas espurias (`ALTER TABLE "ordenes_compra" ALTER COLUMN "numero" SET DEFAULT ...` / `ALTER COLUMN "numero" DROP DEFAULT` / `DROP SEQUENCE "numero_orden_compra_seq"`), dejando solo los cambios reales.
-3. Si la migración quedó marcada como fallida en `_prisma_migrations`: `prisma migrate resolve --rolled-back <nombre_migracion>`.
-4. Aplicar con `prisma migrate deploy` (no `migrate dev`, para no volver a disparar el diff que tropieza con lo mismo).
-5. `prisma generate` (deploy no lo hace solo).
+**Resuelto**: se cambió el campo a `numero Int @unique @default(autoincrement())`. Resultó que la secuencia ya existente (`numero_orden_compra_seq`, con su valor actual) es estructuralmente idéntica a lo que Prisma espera de `autoincrement()` — el diff contra la base real quedó **vacío** (`prisma migrate diff --from-config-datasource ... --to-schema ...`), no hizo falta ninguna migración física ni tocar el valor de la secuencia. Confirmado con `prisma migrate dev --create-only` corriendo limpio sin pedir nada, y con una OC de prueba real que siguió numerando correctamente a continuación de la última (`numero: 20`, sin colisión). En el camino también se corrigió el checksum de la migración de Etapa 7 (`_prisma_migrations`, ver "riesgos operacionales" más abajo) — **`prisma migrate dev` ya no está bloqueado**, funciona normal para migraciones futuras.
 
 ---
 
@@ -876,7 +870,7 @@ Probado en vivo con casos límite reales (no solo happy path): derivación serve
 
 - **Sin CORS configurado** (`main.ts` no llama `enableCors()`) — va a bloquear al frontend Next.js separado.
 - **Sin rate limiting en `/auth/login`** — vulnerable a fuerza bruta.
-- **El parche de migraciones de esta etapa (`migrate diff` + `migrate deploy` a mano) es deuda, no solución permanente** — `migrate dev` sigue bloqueado indefinidamente por el checksum de la migración de Etapa 7. Antes de la Etapa 10 (antes de datos reales), conviene resetear la baseline de migraciones y considerar pasar `numero` de OC a `GENERATED ALWAYS AS IDENTITY` de Postgres para sacar a Prisma del problema de raíz.
+- ~~**El parche de migraciones de esta etapa (`migrate diff` + `migrate deploy` a mano) es deuda, no solución permanente** — `migrate dev` sigue bloqueado indefinidamente por el checksum de la migración de Etapa 7.~~ — **resuelto (2026-08-20)**: se corrigió a mano el checksum de la migración de Etapa 7 en `_prisma_migrations` (el archivo en disco no coincidía con el que quedó registrado como aplicado con éxito — confirmado sin drift real contra la base, `prisma migrate status` ya venía limpio). `migrate dev` funciona normal de nuevo. También se resolvió el gotcha de `numero` de OC (ver sección "Prisma" más arriba) — de ahora en más las migraciones nuevas se pueden generar con el flujo estándar (`migrate dev`), sin el atajo manual `migrate diff` + `migrate deploy`.
 - **Cero tests automatizados** sobre el motor de aprobación — si hay que priorizar con tiempo limitado: (1) tabla de transiciones válidas/inválidas, (2) `validarEncargadoDelSector`/guards de rol, (3) los eslabones de validación de monto/proveedor, (4) un e2e del flujo completo enviar→consulta→responder→aprobar→pagar.
 - Condición de carrera de baja probabilidad en `ValidarMontoNoExcedeCotizacionEslabon` (lee-calcula-compara sin transacción/lock — dos OCs creadas casi simultáneamente contra la misma cotización podrían ambas pasar la validación).
 - Sin health check real que verifique conexión a la base, sin índices en `Auditoria` (agregar cuando el volumen lo justifique), sin CI, sin `enableShutdownHooks()`, sin estrategia de backup de la base documentada.

@@ -216,7 +216,7 @@ enum EstadoOC {
 
 model OrdenCompra {
   id               String              @id @default(uuid())
-  numero           Int                 @unique @default(dbgenerated("nextval('numero_orden_compra_seq')"))
+  numero           Int                 @unique @default(autoincrement())
   tipo             TipoOC
   fecha            DateTime
   solicitanteId    String              @map("solicitante_id")
