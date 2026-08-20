@@ -605,18 +605,19 @@ Las Cotizaciones de cada Tarea del mismo proyecto pueden estar todas `ACTIVA` al
 **Consecuencia aceptada explícitamente (2026-08-20):** como `Cotizacion.tareaId` ahora es obligatorio y `PropuestaInversion` no se vincula a `OrdenCompra`, ya no existe el caso "OC a nivel proyecto sin tarea" — toda OC vinculada a una `Cotizacion` (vía `cotizacionId`) va a derivar siempre un `tareaId`. Una OC sigue pudiendo existir "suelta" (sin `cotizacionId`, sin Cliente/Proyecto/Tarea).
 
 ### Avance de pago por proyecto
-El sistema calcula automáticamente para cada proyecto:
+
+**Estado (2026-08-20): resuelto por otro camino, `GET /proyectos/:id/avance-pago` decidido no implementar por ahora** — ver detalle en el punto 8 de "Bugs confirmados" más abajo. Queda esta sección igual (en vez de borrarla) como referencia de qué iba a calcular ese endpoint, por si en el futuro hace falta retomarlo server-side.
+
+El plan original preveía que el sistema calculara automáticamente para cada proyecto, expuesto en `GET /proyectos/:id/avance-pago`:
 - Monto total cotizado (suma de cotizaciones activas)
 - Monto pagado hasta ahora (suma de OCs en estado PAGADO vinculadas al proyecto)
 - Monto pendiente (diferencia)
 - Porcentaje de avance
 
-Este cálculo se expone en `GET /proyectos/:id/avance-pago`.
-
-**Actualización 2026-08-19**: se implementó una versión de esto (tarjeta "Comprometido" del detalle de Proyecto), pero **sin este endpoint** — el cálculo (costo aproximado, honorarios, costo SEG, gastado, margen de equipo) se hace 100% client-side en el frontend (`lib/proyectos/presentacion.ts`, `calcularResumenCostos`), reusando los listados de cotizaciones/OC del proyecto que la pantalla ya trae. `GET /proyectos/:id/avance-pago` sigue sin existir. Cambios reales de backend para esto:
+**Actualización 2026-08-19**: se implementó una versión de esto (tarjeta "Comprometido" del detalle de Proyecto), pero **sin este endpoint** — el cálculo (costo aproximado, honorarios, costo SEG, gastado, margen de equipo) se hace 100% client-side en el frontend (`lib/proyectos/presentacion.ts`, `calcularResumenCostos`), reusando los listados de cotizaciones/OC del proyecto que la pantalla ya trae. Cambios reales de backend para esto:
 - ~~`Cotizacion.honorarios` (`Decimal?`) — solo válido en la cotización GENERAL (`tareaId` null)~~ — **reemplazado el 2026-08-20**, ver más abajo.
 - `Proyecto.costoSegManual` (`Decimal?`) — override manual de "costo SEG" (por defecto se calcula como la suma de cotizaciones de tarea activas). Se setea vía `PATCH /proyectos/:id`, se limpia (vuelve a `null`, o sea "recalcular") vía `POST /proyectos/:id/recalcular-costo-seg`.
-- Todo el modelo asume **una sola moneda de referencia por proyecto** (la de la cotización general activa) — cotizaciones de tarea u OC pagadas en otra moneda se excluyen del cálculo, no se mezclan montos de distinta moneda.
+- **Actualización 2026-08-20**: ya no es "una cotización general" la fuente de la moneda de referencia — desde el cambio de `PropuestaInversion` (ver más arriba), el costo aproximado/honorarios salen de la propuesta de inversión activa del proyecto, y las cotizaciones de tarea/OC pagadas en otra moneda se convierten (no se excluyen) usando `TipoCambio`.
 
 **Actualización 2026-08-19 (mismo día, ajuste posterior)**: se agregó conversión real de moneda — el ítem "Tipo de cambio / conversión de moneda" que estaba pendiente en `contexto-gestion-interna-frontend.md` desde la Fase 2 (con el enfoque ya decidido ahí: lo administra un ADMIN dentro de la app) quedó implementado. Modelo nuevo `TipoCambio { moneda: Moneda @unique, valorEnUyu: Decimal }` — solo tiene filas para `USD`/`EUR` (UYU es la base, tasa 1 implícita, sin fila propia); se seedean en 1 (`prisma/seed.ts`) para que `GET /tipos-cambio` nunca truene antes de que un ADMIN las actualice. Módulo nuevo `src/tipos-cambio/` (mismo patrón que `sectores/`): `GET /tipos-cambio` (cualquier rol autenticado), `PATCH /tipos-cambio/:moneda` (`@Roles(ADMIN)`, rechaza `UYU` con 422 `MONEDA_NO_EDITABLE`). El frontend ahora convierte (no excluye) montos entre monedas usando estas tasas — ver `lib/proyectos/presentacion.ts` en el repo hermano.
 
@@ -861,7 +862,7 @@ Pase de revisión independiente (no una etapa nueva de funcionalidad) hecho con 
 
 **Menor/cosmético:**
 7. `ParseFilePipe` (subida de factura/PDF) devuelve el mensaje de `FileTypeValidator` aunque el fallo real sea de tamaño (`MaxFileSizeValidator`) — confuso para debugging, es comportamiento del propio Nest al combinar validators.
-8. `GET /proyectos/:id/avance-pago`, descrito en presente en la sección "Modelo de dominio" de este documento, **nunca se implementó** — quedó anotado como "pendiente" en Etapa 4/5/6 y después no se volvió a mencionar. No es un bug de comportamiento, es un gap de tracking: hay que decidir si sigue en el plan o se descarta explícitamente.
+8. ~~`GET /proyectos/:id/avance-pago`, descrito en presente en la sección "Modelo de dominio" de este documento, **nunca se implementó**~~ — **resuelto por otro camino (2026-08-20)**: la necesidad de negocio (monto cotizado vs. pagado, avance) quedó cubierta por la tarjeta "Costos y rentabilidad" de `/proyectos/[id]` (frontend, 2026-08-19), que calcula todo 100% client-side en `lib/proyectos/presentacion.ts` (`calcularResumenCostos`) reusando los listados de cotizaciones/OC que la pantalla ya trae, sin este endpoint. Se decide **no implementarlo por ahora** — se deja esta nota como referencia si en el futuro hiciera falta el cálculo server-side (ej. otro cliente además de este frontend, o necesidad de mayor precisión/consistencia que un cálculo hecho en el navegador no puede garantizar).
 
 ### Confirmado como correcto (cobertura exhaustiva, sin hallazgos)
 
