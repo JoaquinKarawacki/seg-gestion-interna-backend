@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { CotizacionModel } from '../../generated/prisma/models';
 import { ALMACENAMIENTO } from '../almacenamiento/puertos/almacenamiento.puerto';
@@ -56,24 +51,6 @@ export class CotizacionesService {
     return cotizaciones.map((cotizacion) => this.mapearRespuesta(cotizacion));
   }
 
-  async buscarActivaGeneralPorProyecto(
-    proyectoId: string,
-  ): Promise<RespuestaCotizacionDto> {
-    const cotizacion =
-      await this.cotizacionesRepositorio.buscarActivaGeneralPorProyecto(
-        proyectoId,
-      );
-
-    if (!cotizacion) {
-      throw new NotFoundException({
-        error: 'COTIZACION_ACTIVA_NO_ENCONTRADA',
-        mensaje: 'El proyecto no tiene una cotización general activa',
-      });
-    }
-
-    return this.mapearRespuesta(cotizacion);
-  }
-
   async buscarActivaPorTarea(tareaId: string): Promise<RespuestaCotizacionDto> {
     const cotizacion =
       await this.cotizacionesRepositorio.buscarActivaPorTarea(tareaId);
@@ -93,14 +70,6 @@ export class CotizacionesService {
     usuarioActual: UsuarioAutenticado,
     archivo?: Express.Multer.File,
   ): Promise<RespuestaCotizacionDto> {
-    if (dto.tareaId && dto.honorarios !== undefined) {
-      throw new UnprocessableEntityException({
-        error: 'HONORARIOS_SOLO_EN_COTIZACION_GENERAL',
-        mensaje:
-          'Los honorarios solo se pueden cargar en la cotización general del proyecto',
-      });
-    }
-
     const archivoGuardado = archivo
       ? await this.almacenamiento.guardar(
           archivo.buffer,
@@ -113,13 +82,9 @@ export class CotizacionesService {
       const cotizacion = await this.ejecutarOMapearReferenciaInvalida(() =>
         this.cotizacionesRepositorio.crearNuevaVersion({
           proyectoId: dto.proyectoId,
-          tareaId: dto.tareaId ?? null,
+          tareaId: dto.tareaId,
           proveedorId: dto.proveedorId,
           montoTotal: new Prisma.Decimal(dto.montoTotal),
-          honorarios:
-            dto.honorarios !== undefined
-              ? new Prisma.Decimal(dto.honorarios)
-              : null,
           moneda: dto.moneda,
           archivoPdfRuta: archivoGuardado?.referencia ?? null,
         }),
@@ -203,7 +168,6 @@ export class CotizacionesService {
       tareaId: cotizacion.tareaId,
       proveedorId: cotizacion.proveedorId,
       montoTotal: cotizacion.montoTotal.toString(),
-      honorarios: cotizacion.honorarios?.toString() ?? null,
       moneda: cotizacion.moneda,
       estado: cotizacion.estado,
       archivoPdfRuta: cotizacion.archivoPdfRuta,

@@ -116,18 +116,19 @@ model TipoCambio {
 }
 
 model Proyecto {
-  id             String        @id @default(uuid())
-  nombre         String
-  clienteId      String        @map("cliente_id")
-  cliente        Cliente       @relation(fields: [clienteId], references: [id])
-  sectorId       String?       @map("sector_id")
-  sector         Sector?       @relation(fields: [sectorId], references: [id])
-  costoSegManual Decimal?      @map("costo_seg_manual") @db.Decimal(14, 2)
-  tareas         Tarea[]
-  cotizaciones   Cotizacion[]
-  ordenesCompra  OrdenCompra[]
-  creadoEn       DateTime      @default(now()) @map("creado_en")
-  actualizadoEn  DateTime      @updatedAt @map("actualizado_en")
+  id                  String               @id @default(uuid())
+  nombre              String
+  clienteId           String               @map("cliente_id")
+  cliente             Cliente              @relation(fields: [clienteId], references: [id])
+  sectorId            String?              @map("sector_id")
+  sector              Sector?              @relation(fields: [sectorId], references: [id])
+  costoSegManual      Decimal?             @map("costo_seg_manual") @db.Decimal(14, 2)
+  tareas              Tarea[]
+  cotizaciones        Cotizacion[]
+  propuestasInversion PropuestaInversion[]
+  ordenesCompra       OrdenCompra[]
+  creadoEn            DateTime             @default(now()) @map("creado_en")
+  actualizadoEn       DateTime             @updatedAt @map("actualizado_en")
 
   @@map("proyectos")
 }
@@ -149,12 +150,11 @@ model Cotizacion {
   id             String           @id @default(uuid())
   proyectoId     String           @map("proyecto_id")
   proyecto       Proyecto         @relation(fields: [proyectoId], references: [id])
-  tareaId        String?          @map("tarea_id")
-  tarea          Tarea?           @relation(fields: [tareaId], references: [id])
+  tareaId        String           @map("tarea_id")
+  tarea          Tarea            @relation(fields: [tareaId], references: [id])
   proveedorId    String           @map("proveedor_id")
   proveedor      Proveedor        @relation(fields: [proveedorId], references: [id])
   montoTotal     Decimal          @map("monto_total") @db.Decimal(14, 2)
-  honorarios     Decimal?         @map("honorarios") @db.Decimal(14, 2)
   moneda         Moneda
   estado         EstadoCotizacion @default(ACTIVA)
   archivoPdfRuta String?          @map("archivo_pdf_ruta")
@@ -163,6 +163,25 @@ model Cotizacion {
   actualizadoEn  DateTime         @updatedAt @map("actualizado_en")
 
   @@map("cotizaciones")
+}
+
+model PropuestaInversion {
+  id                    String           @id @default(uuid())
+  proyectoId            String           @map("proyecto_id")
+  proyecto              Proyecto         @relation(fields: [proyectoId], references: [id])
+  costoTotalAproximado  Decimal          @map("costo_total_aproximado") @db.Decimal(14, 2)
+  ahorroMensual         Decimal          @map("ahorro_mensual") @db.Decimal(14, 2)
+  cantidadMeses         Int              @map("cantidad_meses")
+  porcentajeSeg         Decimal          @map("porcentaje_seg") @db.Decimal(5, 2)
+  moneda                Moneda
+  estado                EstadoCotizacion @default(ACTIVA)
+  archivoRuta           String?          @map("archivo_ruta")
+  archivoMimeType       String?          @map("archivo_mime_type")
+  archivoNombreOriginal String?          @map("archivo_nombre_original")
+  creadoEn              DateTime         @default(now()) @map("creado_en")
+  actualizadoEn         DateTime         @updatedAt @map("actualizado_en")
+
+  @@map("propuestas_inversion")
 }
 
 enum TipoOC {

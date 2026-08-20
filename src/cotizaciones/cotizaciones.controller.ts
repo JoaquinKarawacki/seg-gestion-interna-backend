@@ -65,15 +65,6 @@ export class CotizacionesController {
     return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
   }
 
-  @Get('proyectos/:proyectoId/cotizaciones/activa')
-  async buscarActivaGeneralPorProyecto(
-    @Param('proyectoId') proyectoId: string,
-  ): Promise<RespuestaExitosa<RespuestaCotizacionDto>> {
-    const datos =
-      await this.cotizacionesService.buscarActivaGeneralPorProyecto(proyectoId);
-    return { datos, mensaje: 'Cotización activa obtenida correctamente' };
-  }
-
   @Get('tareas/:tareaId/cotizaciones')
   async listarPorTarea(
     @Param('tareaId') tareaId: string,

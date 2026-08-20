@@ -29,14 +29,6 @@ export class CotizacionesRepositorio implements ICotizacionesRepositorio {
     });
   }
 
-  async buscarActivaGeneralPorProyecto(
-    proyectoId: string,
-  ): Promise<CotizacionModel | null> {
-    return this.prisma.cotizacion.findFirst({
-      where: { proyectoId, tareaId: null, estado: EstadoCotizacion.ACTIVA },
-    });
-  }
-
   async buscarActivaPorTarea(tareaId: string): Promise<CotizacionModel | null> {
     return this.prisma.cotizacion.findFirst({
       where: { tareaId, estado: EstadoCotizacion.ACTIVA },

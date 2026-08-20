@@ -103,18 +103,31 @@ export class ProyectosService {
   async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
     const proyecto = await this.obtenerProyectoOFallar(id);
 
-    const [cotizacionesAsociadas, tareasAsociadas, ordenesCompraAsociadas] =
-      await Promise.all([
-        this.proyectosRepositorio.contarCotizacionesAsociadas(id),
-        this.proyectosRepositorio.contarTareasAsociadas(id),
-        this.proyectosRepositorio.contarOrdenesCompraAsociadas(id),
-      ]);
+    const [
+      cotizacionesAsociadas,
+      propuestasInversionAsociadas,
+      tareasAsociadas,
+      ordenesCompraAsociadas,
+    ] = await Promise.all([
+      this.proyectosRepositorio.contarCotizacionesAsociadas(id),
+      this.proyectosRepositorio.contarPropuestasInversionAsociadas(id),
+      this.proyectosRepositorio.contarTareasAsociadas(id),
+      this.proyectosRepositorio.contarOrdenesCompraAsociadas(id),
+    ]);
 
     if (cotizacionesAsociadas > 0) {
       throw new UnprocessableEntityException({
         error: 'PROYECTO_CON_COTIZACIONES_ASOCIADAS',
         mensaje:
           'No se puede eliminar el proyecto porque tiene cotizaciones cargadas',
+      });
+    }
+
+    if (propuestasInversionAsociadas > 0) {
+      throw new UnprocessableEntityException({
+        error: 'PROYECTO_CON_PROPUESTAS_INVERSION_ASOCIADAS',
+        mensaje:
+          'No se puede eliminar el proyecto porque tiene propuestas de inversión cargadas',
       });
     }
 
