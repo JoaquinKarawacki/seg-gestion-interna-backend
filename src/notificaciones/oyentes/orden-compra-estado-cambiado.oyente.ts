@@ -34,20 +34,32 @@ export class OrdenCompraEstadoCambiadoOyente {
       return;
     }
 
-    const destinatarios = await this.resolverEmails(
-      plantilla.destinatarios,
-      evento,
-    );
-    const emailsEnCopia = this.obtenerEmailsEnCopia();
-    const destinatariosFinales = [
-      ...new Set([...destinatarios, ...emailsEnCopia]),
-    ];
+    // Todo el manejo del evento es fail-soft: como se dispara con emit() (no
+    // emitAsync()) y no hay un handler de unhandledRejection en main.ts, una
+    // excepción sin atrapar acá (no solo en el envío del mail, también en la
+    // resolución de destinatarios) tumbaría el proceso entero, no solo esta
+    // notificación puntual.
+    try {
+      const destinatarios = await this.resolverEmails(
+        plantilla.destinatarios,
+        evento,
+      );
+      const emailsEnCopia = this.obtenerEmailsEnCopia();
+      const destinatariosFinales = [
+        ...new Set([...destinatarios, ...emailsEnCopia]),
+      ];
 
-    await this.correoService.enviar(
-      destinatariosFinales,
-      plantilla.asunto,
-      plantilla.cuerpo,
-    );
+      await this.correoService.enviar(
+        destinatariosFinales,
+        plantilla.asunto,
+        plantilla.cuerpo,
+      );
+    } catch (error) {
+      const mensaje = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `No se pudo procesar la notificación de cambio de estado: ${mensaje}`,
+      );
+    }
   }
 
   private async resolverEmails(

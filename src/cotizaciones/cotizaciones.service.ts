@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import type { CotizacionModel } from '../../generated/prisma/models';
 import { ALMACENAMIENTO } from '../almacenamiento/puertos/almacenamiento.puerto';
@@ -9,6 +14,8 @@ import type {
 import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
+import { TAREAS_REPOSITORIO } from '../tareas/interfaces/tareas-repositorio.interface';
+import type { ITareasRepositorio } from '../tareas/interfaces/tareas-repositorio.interface';
 import { CrearCotizacionDto } from './dtos/crear-cotizacion.dto';
 import { RespuestaCotizacionDto } from './dtos/respuesta-cotizacion.dto';
 import { COTIZACIONES_REPOSITORIO } from './interfaces/cotizaciones-repositorio.interface';
@@ -29,6 +36,8 @@ export class CotizacionesService {
     private readonly cotizacionesRepositorio: ICotizacionesRepositorio,
     @Inject(ALMACENAMIENTO)
     private readonly almacenamiento: IAlmacenamiento,
+    @Inject(TAREAS_REPOSITORIO)
+    private readonly tareasRepositorio: ITareasRepositorio,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -70,6 +79,8 @@ export class CotizacionesService {
     usuarioActual: UsuarioAutenticado,
     archivo?: Express.Multer.File,
   ): Promise<RespuestaCotizacionDto> {
+    await this.validarTareaPerteneceAlProyecto(dto.tareaId, dto.proyectoId);
+
     const archivoGuardado = archivo
       ? await this.almacenamiento.guardar(
           archivo.buffer,
@@ -118,6 +129,20 @@ export class CotizacionesService {
 
     const buffer = await this.almacenamiento.leer(cotizacion.archivoPdfRuta);
     return { buffer, nombreArchivo: `cotizacion-${cotizacion.id}.pdf` };
+  }
+
+  private async validarTareaPerteneceAlProyecto(
+    tareaId: string,
+    proyectoId: string,
+  ): Promise<void> {
+    const tarea = await this.tareasRepositorio.buscarPorId(tareaId);
+
+    if (tarea && tarea.proyectoId !== proyectoId) {
+      throw new UnprocessableEntityException({
+        error: 'TAREA_NO_PERTENECE_AL_PROYECTO',
+        mensaje: 'La tarea indicada no pertenece al proyecto indicado',
+      });
+    }
   }
 
   private async obtenerCotizacionOFallar(id: string): Promise<CotizacionModel> {
