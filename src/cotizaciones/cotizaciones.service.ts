@@ -97,6 +97,7 @@ export class CotizacionesService {
           proveedorId: dto.proveedorId,
           montoTotal: new Prisma.Decimal(dto.montoTotal),
           moneda: dto.moneda,
+          ivaIncluido: dto.ivaIncluido,
           archivoPdfRuta: archivoGuardado?.referencia ?? null,
         }),
       );
@@ -194,6 +195,7 @@ export class CotizacionesService {
       proveedorId: cotizacion.proveedorId,
       montoTotal: cotizacion.montoTotal.toString(),
       moneda: cotizacion.moneda,
+      ivaIncluido: cotizacion.ivaIncluido,
       estado: cotizacion.estado,
       archivoPdfRuta: cotizacion.archivoPdfRuta,
     };

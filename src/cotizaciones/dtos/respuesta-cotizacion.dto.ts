@@ -7,6 +7,7 @@ export class RespuestaCotizacionDto {
   proveedorId!: string;
   montoTotal!: string;
   moneda!: Moneda;
+  ivaIncluido!: boolean;
   estado!: EstadoCotizacion;
   archivoPdfRuta!: string | null;
 }

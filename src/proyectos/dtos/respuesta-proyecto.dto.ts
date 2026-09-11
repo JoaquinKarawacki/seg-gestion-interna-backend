@@ -3,5 +3,4 @@ export class RespuestaProyectoDto {
   nombre!: string;
   clienteId!: string;
   sectorId!: string | null;
-  costoSegManual!: string | null;
 }

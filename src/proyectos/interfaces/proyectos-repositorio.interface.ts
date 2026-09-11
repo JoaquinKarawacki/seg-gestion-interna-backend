@@ -13,9 +13,6 @@ export interface DatosActualizarProyecto {
   nombre?: string;
   clienteId?: string;
   sectorId?: string;
-  // `| null` solo lo usa internamente ProyectosService.recalcularCostoSeg()
-  // para limpiar el override — el DTO público nunca manda null explícito.
-  costoSegManual?: number | null;
 }
 
 export interface IProyectosRepositorio extends IRepositorioBase<
@@ -24,7 +21,6 @@ export interface IProyectosRepositorio extends IRepositorioBase<
   DatosActualizarProyecto
 > {
   contarCotizacionesAsociadas(proyectoId: string): Promise<number>;
-  contarPropuestasInversionAsociadas(proyectoId: string): Promise<number>;
   contarTareasAsociadas(proyectoId: string): Promise<number>;
   contarOrdenesCompraAsociadas(proyectoId: string): Promise<number>;
 }

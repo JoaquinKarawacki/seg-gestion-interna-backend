@@ -1,6 +1,14 @@
-import { Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsPositive, IsUUID } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsPositive,
+  IsUUID,
+} from 'class-validator';
 import { Moneda } from '../../../generated/prisma/enums';
+
+const convertirATexto = (valor: unknown) => valor === true || valor === 'true';
 
 export class CrearCotizacionDto {
   @IsUUID()
@@ -19,4 +27,8 @@ export class CrearCotizacionDto {
 
   @IsEnum(Moneda)
   moneda!: Moneda;
+
+  @Transform(({ value }) => convertirATexto(value))
+  @IsBoolean()
+  ivaIncluido!: boolean;
 }

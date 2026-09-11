@@ -10,6 +10,7 @@ export interface DatosCrearCotizacion {
   proveedorId: string;
   montoTotal: Prisma.Decimal;
   moneda: Moneda;
+  ivaIncluido: boolean;
   archivoPdfRuta?: string | null;
 }
 
