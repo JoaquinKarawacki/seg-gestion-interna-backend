@@ -55,31 +55,37 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
 
   async cambiarEstado(
     id: string,
+    estadoAnterior: EstadoOC,
     estadoNuevo: EstadoOC,
     usuarioId: string,
     motivo?: string | null,
-  ): Promise<OrdenCompraModel> {
+  ): Promise<OrdenCompraModel | null> {
     return this.prisma.$transaction(async (tx) => {
-      const ordenActual = await tx.ordenCompra.findUniqueOrThrow({
-        where: { id },
-      });
-
-      const ordenActualizada = await tx.ordenCompra.update({
-        where: { id },
+      // Compare-and-swap: el UPDATE solo aplica si la orden sigue en el
+      // estado que ya se validó como punto de partida. Si otra transición
+      // concurrente la cambió mientras tanto, `count` da 0 y no se escribe
+      // nada — evita que dos transiciones casi simultáneas validen contra
+      // el mismo estado viejo y una termine pisando a la otra.
+      const resultado = await tx.ordenCompra.updateMany({
+        where: { id, estado: estadoAnterior },
         data: { estado: estadoNuevo },
       });
+
+      if (resultado.count === 0) {
+        return null;
+      }
 
       await tx.historialEstadoOC.create({
         data: {
           ordenCompraId: id,
-          estadoAnterior: ordenActual.estado,
+          estadoAnterior,
           estadoNuevo,
           usuarioId,
           motivo: motivo ?? null,
         },
       });
 
-      return ordenActualizada;
+      return tx.ordenCompra.findUniqueOrThrow({ where: { id } });
     });
   }
 

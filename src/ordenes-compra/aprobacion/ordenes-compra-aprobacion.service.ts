@@ -278,10 +278,19 @@ export class OrdenesCompraAprobacionService {
 
     const ordenActualizada = await this.ordenesCompraRepositorio.cambiarEstado(
       orden.id,
+      estadoAnterior,
       estadoNuevo,
       usuario.id,
       motivo,
     );
+
+    if (!ordenActualizada) {
+      throw new ConflictException({
+        error: 'TRANSICION_INVALIDA',
+        mensaje:
+          'La orden de compra fue modificada por otra acción mientras tanto — volvé a revisarla antes de reintentar',
+      });
+    }
 
     this.emitirCambioDeEstado(
       ordenActualizada,

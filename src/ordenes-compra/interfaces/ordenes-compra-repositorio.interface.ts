@@ -68,10 +68,11 @@ export interface IOrdenesCompraRepositorio extends IRepositorioBase<
   sumarMontoPorCotizacion(cotizacionId: string): Promise<Prisma.Decimal>;
   cambiarEstado(
     id: string,
+    estadoAnterior: EstadoOC,
     estadoNuevo: EstadoOC,
     usuarioId: string,
     motivo?: string | null,
-  ): Promise<OrdenCompraModel>;
+  ): Promise<OrdenCompraModel | null>;
   buscarHistorial(ordenCompraId: string): Promise<HistorialEstadoOCModel[]>;
   contarComentariosAsociados(ordenCompraId: string): Promise<number>;
   buscarConFiltros(
