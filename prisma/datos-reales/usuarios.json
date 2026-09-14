@@ -1,0 +1,224 @@
+[
+  {
+    "sector": "ADMINISTRACION",
+    "nombre": "Lorena Albornoz",
+    "email": "albornoz@segingenieria.com",
+    "rol": "PAGOS"
+  },
+  {
+    "sector": "ADMINISTRACION",
+    "nombre": "Franco Rodriguez",
+    "email": "rodriguez@segingenieria.com",
+    "rol": "PAGOS"
+  },
+  {
+    "sector": "ADMINISTRACION",
+    "nombre": "Jeyckerson Soto",
+    "email": "soto@segingenieria.com",
+    "rol": "PAGOS"
+  },
+  {
+    "sector": "ADMINISTRACION",
+    "nombre": "Mateo Marichal",
+    "email": "marichal@segingenieria.com",
+    "rol": "PAGOS"
+  },
+  {
+    "sector": "AE",
+    "nombre": "Daniel Salomone",
+    "email": "salomone@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "AE",
+    "nombre": "Marcelo Calosso",
+    "email": "calosso@segingenieria.com",
+    "rol": "ENCARGADO"
+  },
+  {
+    "sector": "AE",
+    "nombre": "Ramiro Sanes",
+    "email": "sanes@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "AE",
+    "nombre": "Manuel Martinez",
+    "email": "martinez@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "AE",
+    "nombre": "Matias Olivera",
+    "email": "olivera@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "AE",
+    "nombre": "Andres Diaz",
+    "email": "diaz@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "AE",
+    "nombre": "Joaquin Karawacki",
+    "email": "karawacki@segingenieria.com",
+    "rol": "ADMIN"
+  },
+  {
+    "sector": "ISO",
+    "nombre": "Santiago Gibert",
+    "email": "gibert@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "ISO",
+    "nombre": "Noelia Andrade",
+    "email": "andrade@segingenieria.com",
+    "rol": "ENCARGADO"
+  },
+  {
+    "sector": "ISO",
+    "nombre": "Leonor Bentancour",
+    "email": "bentancour@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "ISO",
+    "nombre": "Tabare Vazquez",
+    "email": "vazquez@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "ECR",
+    "nombre": "Marcel Vivensang",
+    "email": "vivensang@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "ECR",
+    "nombre": "Maciel De Conto",
+    "email": "deconto@segingenieria.com",
+    "rol": "ENCARGADO"
+  },
+  {
+    "sector": "ECR",
+    "nombre": "Enzo Costanzo",
+    "email": "costanzo@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "HELIOTEC",
+    "nombre": "Ramiro Torres",
+    "email": "torres@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "HELIOTEC",
+    "nombre": "Diego Quiroga",
+    "email": "quiroga@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "HELIOTEC",
+    "nombre": "Tobias Rivas",
+    "email": "rivas@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "HELIOTEC",
+    "nombre": "Joaquin Gonzalez",
+    "email": "gonzalez@segheliotec.com",
+    "rol": "ENCARGADO"
+  },
+  {
+    "sector": "HELIOTEC",
+    "nombre": "Paola Acosta",
+    "email": "acosta@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "RENOVABLES",
+    "nombre": "Augusto Lanza",
+    "email": "lanza@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "RENOVABLES",
+    "nombre": "Martin Piedra Cueva",
+    "email": "piedracueva@segingenieria.com",
+    "rol": "ENCARGADO"
+  },
+  {
+    "sector": "RENOVABLES",
+    "nombre": "Marcelo Foglino",
+    "email": "foglino@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "INDICADORES",
+    "nombre": "German Perez",
+    "email": "perez@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "VENTAS",
+    "nombre": "Leonardo De Leon",
+    "email": "deleon@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "VENTAS",
+    "nombre": "Sheila Olsen",
+    "email": "olsen@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "VENTAS",
+    "nombre": "Emiliano Alanis",
+    "email": "alanis@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "VENTAS",
+    "nombre": "Santiago Nunez",
+    "email": "nunez@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "VENTAS",
+    "nombre": "Sebastian Baccino",
+    "email": "baccino@segingenieria.com",
+    "rol": "ENCARGADO"
+  },
+  {
+    "sector": "VENTAS",
+    "nombre": "Haroldo Albanell",
+    "email": "albanell@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "CONSULTING",
+    "nombre": "Federico Gonzalez",
+    "email": "gonzalez@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "CONSULTING",
+    "nombre": "Andres Sarachik",
+    "email": "sarachik@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "CONSULTING",
+    "nombre": "Alvaro Suttner",
+    "email": "suttner@segingenieria.com",
+    "rol": "SOLICITANTE"
+  },
+  {
+    "sector": "CONSULTING",
+    "nombre": "Nicolas Obrusnik",
+    "email": "obrusnik@segingenieria.com",
+    "rol": "ENCARGADO"
+  }
+]

@@ -1,0 +1,695 @@
+[
+  {
+    "nombre": "ABB",
+    "rut": "210144720019",
+    "banco": "CITIBANK SUC. Uruguay",
+    "tipoCuenta": "CAJA_AHORRO",
+    "numeroCuenta": "*0061108602"
+  },
+  {
+    "nombre": "ACLAN SA (MICROSONIC)",
+    "rut": "213808530016",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "576754"
+  },
+  {
+    "nombre": "ADRIAN MOZO",
+    "rut": "110117260014",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "791160"
+  },
+  {
+    "nombre": "ALEJANDRA ESTEVEZ",
+    "rut": "217475430015",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "4960698"
+  },
+  {
+    "nombre": "ALENET S.A (NETTRA)",
+    "rut": "216186150015",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "suc 71 cuenta 5100372080"
+  },
+  {
+    "nombre": "ALIAN S.A/PUNTA CARRETAS SHOPPING",
+    "rut": "211476440015",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1608014"
+  },
+  {
+    "nombre": "ALZAMENDY CAMPAL CARLOS DAMIAN",
+    "rut": "219428020015",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001398709-00001"
+  },
+  {
+    "nombre": "ANNIE HAREAU",
+    "rut": "214071390017",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8819260"
+  },
+  {
+    "nombre": "Aramid S.A",
+    "rut": "212388710019",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001553217-00003"
+  },
+  {
+    "nombre": "AT SAS",
+    "rut": "211899090018",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "7113375"
+  },
+  {
+    "nombre": "BAKO SA",
+    "rut": "210308300017",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "7046800"
+  },
+  {
+    "nombre": "BILOR SA",
+    "rut": "217621380013",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001565455-00001"
+  },
+  {
+    "nombre": "BLIKA",
+    "rut": "214597150012",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001559734-00003"
+  },
+  {
+    "nombre": "Brun Turismo SRL",
+    "rut": "216761280013",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "0007000000832464."
+  },
+  {
+    "nombre": "BYS Ingenieria SRL",
+    "rut": "219476130011",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "0005-   005101329161"
+  },
+  {
+    "nombre": "Camara Uruguayo-Alemana",
+    "rut": "215698830017",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "SUC 61 CC 4060725"
+  },
+  {
+    "nombre": "Cambre y Cia. SA",
+    "rut": "210361310013",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "750000757460-6"
+  },
+  {
+    "nombre": "CAVICA",
+    "rut": "217011080016",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "0072-000000367265"
+  },
+  {
+    "nombre": "CHAPALIA SRL/ CRISTAR ZERBI",
+    "rut": "216593770012",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "632139"
+  },
+  {
+    "nombre": "CORRESPONDENCIA SRL",
+    "rut": "214493260016",
+    "banco": "BBVA",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "999001645"
+  },
+  {
+    "nombre": "DARIO ANDRIOLI",
+    "rut": "212481780013",
+    "banco": "SCOTIABANK",
+    "tipoCuenta": "CAJA_AHORRO",
+    "numeroCuenta": "*0461378301"
+  },
+  {
+    "nombre": "DARSEG S.A",
+    "rut": "212104030018",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001552509-00003"
+  },
+  {
+    "nombre": "DEACO SRL (SAMPLER)",
+    "rut": "216813000016",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1689800"
+  },
+  {
+    "nombre": "Diego Delbono",
+    "rut": "217572870016",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8013989"
+  },
+  {
+    "nombre": "Diego Gimenez/ GS SANITARIA SAS",
+    "rut": "219607720011",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001272854-00001"
+  },
+  {
+    "nombre": "DIEGO KENNY (KENNYCO SRL)",
+    "rut": "218028090018",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "259808"
+  },
+  {
+    "nombre": "DISTRICOMP S.A.",
+    "rut": "212363900019",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "7653007"
+  },
+  {
+    "nombre": "ECOMAN S.A",
+    "rut": "216109470019",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "CC 1601885"
+  },
+  {
+    "nombre": "FAMET S.A",
+    "rut": "210697820017",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1606013"
+  },
+  {
+    "nombre": "Federico Cuneo (SIGE)",
+    "rut": "217959000019",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "CA 1126652"
+  },
+  {
+    "nombre": "Federico Sosa",
+    "rut": "216915350016",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "0084-005101269142"
+  },
+  {
+    "nombre": "FIDEMAR S.A",
+    "rut": "210956470017",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1549439-00002"
+  },
+  {
+    "nombre": "FIERRO VIGNOLI S.A (FIVISA)",
+    "rut": "210000400017",
+    "banco": "ITAU",
+    "tipoCuenta": "CAJA_AHORRO",
+    "numeroCuenta": "*0931883"
+  },
+  {
+    "nombre": "FILSA LTDA",
+    "rut": "213743960011",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001557110-00002"
+  },
+  {
+    "nombre": "FIORELLA GHIARDO",
+    "rut": "218806930018",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001153757-00004"
+  },
+  {
+    "nombre": "FOCUS INGENIERIA  SRL",
+    "rut": "217648560012",
+    "banco": "HSBC",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "3929856"
+  },
+  {
+    "nombre": "FREDDY BOCALINI",
+    "rut": "216398420016",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "000-80027000001"
+  },
+  {
+    "nombre": "GABRIEL BERRETTA CHIARA",
+    "rut": "160133260011",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "110331727-00001"
+  },
+  {
+    "nombre": "GEOSUR",
+    "rut": "214256670016",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "pesos - 2818072 // USD - 0850877"
+  },
+  {
+    "nombre": "GIANNI S.A",
+    "rut": "110050760010",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8296807"
+  },
+  {
+    "nombre": "GNS SOFTWARE",
+    "rut": "216739460012",
+    "banco": "BBVA",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "24841439"
+  },
+  {
+    "nombre": "GOODLIFE SAS",
+    "rut": "220277530013",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "2639569"
+  },
+  {
+    "nombre": "GUSTAVO HERNÁNDEZ /SOSA NUÑEZ",
+    "rut": "220336560017",
+    "banco": "BBVA",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "22570161"
+  },
+  {
+    "nombre": "INCENTIVA SRL",
+    "rut": "217468160016",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "110614799-00002"
+  },
+  {
+    "nombre": "INFOPRINT",
+    "rut": "216546670015",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "110578225-00001"
+  },
+  {
+    "nombre": "Jorge Tolosa (MS impresos)",
+    "rut": "212736470014",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8003421"
+  },
+  {
+    "nombre": "JOSE CASCO",
+    "rut": "216990030015",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "CA 001092536-00001"
+  },
+  {
+    "nombre": "JOSE ROCHA MACHADO// ELECTROSERVICE",
+    "rut": "150239760010",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001313763-00001"
+  },
+  {
+    "nombre": "KLOSANOV",
+    "rut": "217514180010",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "pesos - 0205087 // USD - 0205077"
+  },
+  {
+    "nombre": "LA LIGA SANITARIA",
+    "rut": "210345170016",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001548318-00004"
+  },
+  {
+    "nombre": "LSQA S.A.",
+    "rut": "213632060012",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001556758-00001"
+  },
+  {
+    "nombre": "Maritime Serv. Line Uruguay S.A. // MSL",
+    "rut": "213156960014",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "4135809"
+  },
+  {
+    "nombre": "MARSUR",
+    "rut": "211081750011",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001549718-00002"
+  },
+  {
+    "nombre": "METLIFE",
+    "rut": "213624740018",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8936802"
+  },
+  {
+    "nombre": "MGI",
+    "rut": "215150470011",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "725810"
+  },
+  {
+    "nombre": "MOVILIDAD ELECTRICA S.R.L.// PROSEPAC",
+    "rut": "217876800018",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "957715"
+  },
+  {
+    "nombre": "NET UY",
+    "rut": "080164600017",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1242464"
+  },
+  {
+    "nombre": "Nicolas de Marco y Cia S.A",
+    "rut": "210262210010",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "CC 4111705"
+  },
+  {
+    "nombre": "NOALER S.A. (CIR)",
+    "rut": "213797180014",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "pesos - 1992026 // USD - 0547824"
+  },
+  {
+    "nombre": "NORDICA / ELECTROURUGUAY",
+    "rut": "210714860018",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001548999-00004"
+  },
+  {
+    "nombre": "NORTELCO S.A",
+    "rut": "214186840015",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "SUC 0075 00001297813"
+  },
+  {
+    "nombre": "NOVOTECNICA SRL",
+    "rut": "160209560010",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001540523-00001"
+  },
+  {
+    "nombre": "NUVLIR S.A / RAS TRANSPORT",
+    "rut": "217071280011",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "581838"
+  },
+  {
+    "nombre": "Papeleria Aldo S.A",
+    "rut": "210003030016",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "7848455"
+  },
+  {
+    "nombre": "PEREDA ROSSINI",
+    "rut": "216370940015",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1694361"
+  },
+  {
+    "nombre": "Petrofield SA/ QUANTIK",
+    "rut": "217668120018",
+    "banco": "SCOTIABANK",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "2801582800"
+  },
+  {
+    "nombre": "PROVENIX SRL / GNS sueldos",
+    "rut": "216228650010",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001566125-00001"
+  },
+  {
+    "nombre": "RAFAEL OCHOVIET",
+    "rut": "215096250012",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CAJA_AHORRO",
+    "numeroCuenta": "*0005000009522603"
+  },
+  {
+    "nombre": "RILFORT S.A/ TELSOFT",
+    "rut": "212895110012",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1731106"
+  },
+  {
+    "nombre": "Robert Solano/ RS INSTALACIONES",
+    "rut": "215094070017",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8211028"
+  },
+  {
+    "nombre": "Rodrigo Tomas Piñero /SABONIS",
+    "rut": "213866340011",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001802124-0001"
+  },
+  {
+    "nombre": "ROMIS",
+    "rut": "211488740019",
+    "banco": "ITAU",
+    "tipoCuenta": "CAJA_AHORRO",
+    "numeroCuenta": "*0943889"
+  },
+  {
+    "nombre": "S.I.P.P.S.A./ PARRELLA",
+    "rut": "211165620011",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "2614920"
+  },
+  {
+    "nombre": "SALCO Uruguay  S.A",
+    "rut": "210731920015",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "CC 00154902700002"
+  },
+  {
+    "nombre": "SBI SEGUROS URUGUAY S.A.",
+    "rut": "213348670014",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8488807"
+  },
+  {
+    "nombre": "Sebastián Llanes Ríos/DE TODAS PARTES",
+    "rut": "214689200016",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "CC 1562630"
+  },
+  {
+    "nombre": "SECOIN S.A",
+    "rut": "210277540011",
+    "banco": "BBVA",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "N° 993900362"
+  },
+  {
+    "nombre": "SELER S.A",
+    "rut": "211543410011",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "698867"
+  },
+  {
+    "nombre": "Sigla Uruguay SAS",
+    "rut": "219302810017",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "9664739"
+  },
+  {
+    "nombre": "Sistema Flamingo SRL/UNIMED",
+    "rut": "217085050013",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1331423"
+  },
+  {
+    "nombre": "SOCIOPÚBLICO S.R.L",
+    "rut": "218347050013",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "2284968"
+  },
+  {
+    "nombre": "SSL SAS",
+    "rut": "219064900014",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "854622"
+  },
+  {
+    "nombre": "Stephanie Aliverti/GESTION POST",
+    "rut": "219635740013",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "9247400"
+  },
+  {
+    "nombre": "TAYM URUGUAY SA",
+    "rut": "216498090018",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001567040-00002"
+  },
+  {
+    "nombre": "TECNICA DEL PLATA LTDA",
+    "rut": "212313490011",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001553034 00002"
+  },
+  {
+    "nombre": "TEMAC S.A",
+    "rut": "211335250011",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "1357877"
+  },
+  {
+    "nombre": "TEMIX SRL",
+    "rut": "217498840015",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "SUC 19 CC 5100449791"
+  },
+  {
+    "nombre": "UCM URUGUAY SA",
+    "rut": "210271050012",
+    "banco": "SCOTIABANK",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "0386845101 – Suc. 003"
+  },
+  {
+    "nombre": "UNOSESENTA SRL",
+    "rut": "218112820013",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "8100000 920479"
+  },
+  {
+    "nombre": "UTE",
+    "rut": "210778720012",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001549127-00004"
+  },
+  {
+    "nombre": "VEREFRIL SA",
+    "rut": "215210750015",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "None"
+  },
+  {
+    "nombre": "VERGARA Y CIA",
+    "rut": "211796560011",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "3164004"
+  },
+  {
+    "nombre": "VERYCAM SA",
+    "rut": "215448760011",
+    "banco": "ITAU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "9218870"
+  },
+  {
+    "nombre": "WALTER HUGO S.A/UFFICIO",
+    "rut": "210155740016",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001547541-00002"
+  },
+  {
+    "nombre": "WERBA S.A",
+    "rut": "210129120014",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001547386-00002"
+  },
+  {
+    "nombre": "WURTH",
+    "rut": "212053400018",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "001552377-00001"
+  },
+  {
+    "nombre": "ZAVA SRL (FASTER)",
+    "rut": "213851770015",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "suc 84/ 748781"
+  },
+  {
+    "nombre": "ZENBIEN SA /AGUSTIN ROMELLI",
+    "rut": "216311630013",
+    "banco": "SANTANDER",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "CC SUC 0005-005100220417"
+  },
+  {
+    "nombre": "ZETAS",
+    "rut": "215777910013",
+    "banco": "BROU",
+    "tipoCuenta": "CUENTA_CORRIENTE",
+    "numeroCuenta": "USD - 001564764-00001 / $ - 001564764-00002"
+  }
+]

@@ -1,0 +1,2014 @@
+[
+  {
+    "nombre": "Intendencia Municipal de Canelones",
+    "rut": "020071360012"
+  },
+  {
+    "nombre": "Orsi automóviles SAS",
+    "rut": "020155880017"
+  },
+  {
+    "nombre": "Sinerxia S.A.",
+    "rut": "020413760019"
+  },
+  {
+    "nombre": "Molino Carmelo S.A",
+    "rut": "040033890012"
+  },
+  {
+    "nombre": "Intendencia de Colonia",
+    "rut": "040066000016"
+  },
+  {
+    "nombre": "Intendencia de Durazno",
+    "rut": "050025320013"
+  },
+  {
+    "nombre": "Lanas Trinidad S.A.",
+    "rut": "060004870011"
+  },
+  {
+    "nombre": "Intendencia de Flores",
+    "rut": "060014790010"
+  },
+  {
+    "nombre": "Intendencia Departamental Florida",
+    "rut": "070030580014"
+  },
+  {
+    "nombre": "Coop de trabajadores MOLINO FLORIDA",
+    "rut": "070261310012"
+  },
+  {
+    "nombre": "San Francisco C.I.S.A.",
+    "rut": "080005550015"
+  },
+  {
+    "nombre": "Corfrisa S.A.",
+    "rut": "080021670011"
+  },
+  {
+    "nombre": "Agroveterinaria Sauce",
+    "rut": "080045110016"
+  },
+  {
+    "nombre": "Patricia de León",
+    "rut": "080159770015"
+  },
+  {
+    "nombre": "Hipervital S.A.S.",
+    "rut": "080282650014"
+  },
+  {
+    "nombre": "Intendencia Dep. de Lavalleja",
+    "rut": "090034520010"
+  },
+  {
+    "nombre": "CAMDEL IAMPP",
+    "rut": "090105250010"
+  },
+  {
+    "nombre": "PASOS FIRMES SRL",
+    "rut": "090187320018"
+  },
+  {
+    "nombre": "Hedero SRL",
+    "rut": "090197240017"
+  },
+  {
+    "nombre": "Valtech SRL",
+    "rut": "090264340014"
+  },
+  {
+    "nombre": "CRAME IAMPP",
+    "rut": "100177050019"
+  },
+  {
+    "nombre": "Diego Casañas",
+    "rut": "100259820012"
+  },
+  {
+    "nombre": "Passadore y CIA SRL",
+    "rut": "100334230019"
+  },
+  {
+    "nombre": "RICARDO PERDOMO",
+    "rut": "100348000010"
+  },
+  {
+    "nombre": "TORRE 12 LUNAS",
+    "rut": "100459750018"
+  },
+  {
+    "nombre": "Complejo Lincoln Center",
+    "rut": "100459950017"
+  },
+  {
+    "nombre": "EDIFICIO MYTHOS",
+    "rut": "100532360016"
+  },
+  {
+    "nombre": "ANIBAL ALBERTO ARIAS CABRERA",
+    "rut": "100572910017"
+  },
+  {
+    "nombre": "Zapatta Reina",
+    "rut": "100776310018"
+  },
+  {
+    "nombre": "ARTAGAVEYTIA RIPKA MAITE Y POMES ALBERTO LUIS",
+    "rut": "100796620012"
+  },
+  {
+    "nombre": "Amperio S.A.S",
+    "rut": "100835530015"
+  },
+  {
+    "nombre": "D.A.Dos",
+    "rut": "100871400010"
+  },
+  {
+    "nombre": "SGCPYME SAS",
+    "rut": "100872400014"
+  },
+  {
+    "nombre": "LAS BARRERAS SA",
+    "rut": "110035310018"
+  },
+  {
+    "nombre": "Aliro SRL",
+    "rut": "110106350017"
+  },
+  {
+    "nombre": "Margarita Maria Fernandez de los Santos",
+    "rut": "110301220011"
+  },
+  {
+    "nombre": "ALEJANDRO RIVAS DE VECCHI",
+    "rut": "110343530019"
+  },
+  {
+    "nombre": "Barraca Europa S.A.",
+    "rut": "120003950019"
+  },
+  {
+    "nombre": "CONFITERIA LAS FAMILIAS S.A.",
+    "rut": "120009000012"
+  },
+  {
+    "nombre": "Intendencia de Río Negro",
+    "rut": "130026840012"
+  },
+  {
+    "nombre": "AMEDRIN AIPP",
+    "rut": "130064930015"
+  },
+  {
+    "nombre": "David Henderson",
+    "rut": "130072310012"
+  },
+  {
+    "nombre": "SABORNIN SERGIO FERNANDO",
+    "rut": "130100650013"
+  },
+  {
+    "nombre": "Marcos Fabian Letamendia Alvez",
+    "rut": "130131710018"
+  },
+  {
+    "nombre": "SOBRINO RODRIGUEZ GERMAN Y MARTINEZ VILLALBA XIMENA SOLEDAD",
+    "rut": "130144970013"
+  },
+  {
+    "nombre": "INTENDENCIA MUNICIPAL DE ROCHA",
+    "rut": "150030860019"
+  },
+  {
+    "nombre": "PATRICIA MARGOLIS",
+    "rut": "150115260016"
+  },
+  {
+    "nombre": "INTENDENCIA MUNICIPAL DE SALTO",
+    "rut": "160050700014"
+  },
+  {
+    "nombre": "Intendencia de San Jose",
+    "rut": "170036090015"
+  },
+  {
+    "nombre": "CARLOS TORTEROLO",
+    "rut": "170131010015"
+  },
+  {
+    "nombre": "Rodrigo Rivas",
+    "rut": "170208910015"
+  },
+  {
+    "nombre": "CAMPO CHICO LTDA",
+    "rut": "170209440012"
+  },
+  {
+    "nombre": "Intendencia de Soriano",
+    "rut": "180042060014"
+  },
+  {
+    "nombre": "Nelson Lopez y Cia Ltda.",
+    "rut": "180100610018"
+  },
+  {
+    "nombre": "COMTA",
+    "rut": "190034730011"
+  },
+  {
+    "nombre": "Intendencia Dep. de Tacuarembo",
+    "rut": "190035680018"
+  },
+  {
+    "nombre": "TIC SAS",
+    "rut": "190331520011"
+  },
+  {
+    "nombre": "Panaderia Carlos Lucas",
+    "rut": "200081900018"
+  },
+  {
+    "nombre": "C.I.R. SOC. ANON.",
+    "rut": "210000730017"
+  },
+  {
+    "nombre": "Cinter",
+    "rut": "210000990019"
+  },
+  {
+    "nombre": "DISA MONTEVIDEO S.A.",
+    "rut": "210001000012"
+  },
+  {
+    "nombre": "ATMA S.A.",
+    "rut": "210001950010"
+  },
+  {
+    "nombre": "Barraca de Hierros San Martín SA",
+    "rut": "210002430010"
+  },
+  {
+    "nombre": "Julio Cesar Lestido S.A.",
+    "rut": "210002590018"
+  },
+  {
+    "nombre": "Industria Sulfúrica S.A.",
+    "rut": "210002700018"
+  },
+  {
+    "nombre": "CUTCSA",
+    "rut": "210002720019"
+  },
+  {
+    "nombre": "Mosca Hnos. S.A.",
+    "rut": "210002810018"
+  },
+  {
+    "nombre": "Papeleria Aldo S.A.",
+    "rut": "210003030016"
+  },
+  {
+    "nombre": "TRAXPALCO S.A",
+    "rut": "210003210014"
+  },
+  {
+    "nombre": "TATA S.A.",
+    "rut": "210003270017"
+  },
+  {
+    "nombre": "Interagrovial S.A.",
+    "rut": "210065430018"
+  },
+  {
+    "nombre": "Compañía Salus S.A",
+    "rut": "210072410019"
+  },
+  {
+    "nombre": "Paycueros S.A.",
+    "rut": "210073410012"
+  },
+  {
+    "nombre": "FNC S.A.",
+    "rut": "210114160015"
+  },
+  {
+    "nombre": "CERCIDO LOPEZ Y CIA S.A.",
+    "rut": "210116710012"
+  },
+  {
+    "nombre": "Cementos Artigas SA",
+    "rut": "210130610011"
+  },
+  {
+    "nombre": "AVELINO ACEVEDO S.A",
+    "rut": "210134170016"
+  },
+  {
+    "nombre": "SAETA",
+    "rut": "210134210018"
+  },
+  {
+    "nombre": "Frigorífico Canelones S.A",
+    "rut": "210137360010"
+  },
+  {
+    "nombre": "Samuel Liberman S.A.",
+    "rut": "210147490014"
+  },
+  {
+    "nombre": "TEXTIL LA PAZ S.A.",
+    "rut": "210147870011"
+  },
+  {
+    "nombre": "Sika Uruguay S.A.",
+    "rut": "210148330010"
+  },
+  {
+    "nombre": "Linde Uruguay Ltda",
+    "rut": "210150500017"
+  },
+  {
+    "nombre": "Efice S.A.",
+    "rut": "210152640010"
+  },
+  {
+    "nombre": "Nordex S.A.",
+    "rut": "210153070013"
+  },
+  {
+    "nombre": "SOCIEDAD URUGUAYA DE ESMALTADOS S.A.",
+    "rut": "210153700017"
+  },
+  {
+    "nombre": "Arrozal 33",
+    "rut": "210162660014"
+  },
+  {
+    "nombre": "Establecimientos Juan Sarubbi SA",
+    "rut": "210163670013"
+  },
+  {
+    "nombre": "Hotel Nirvana S.A.",
+    "rut": "210166600016"
+  },
+  {
+    "nombre": "PONTYN S.A.",
+    "rut": "210182980014"
+  },
+  {
+    "nombre": "El Hogar de las Medias S.A.",
+    "rut": "210185650015"
+  },
+  {
+    "nombre": "AUTOMOTORES MOTOR HAUS S.A.",
+    "rut": "210195060016"
+  },
+  {
+    "nombre": "CRIOH S.A.",
+    "rut": "210207820015"
+  },
+  {
+    "nombre": "Frigorifico Tacuarembo S.A.",
+    "rut": "210220860017"
+  },
+  {
+    "nombre": "Tuverta S.A.",
+    "rut": "210251070018"
+  },
+  {
+    "nombre": "PANIFICADORA BIMBO DEL URUGUAY S.A.",
+    "rut": "210253350018"
+  },
+  {
+    "nombre": "Harrington S.A.",
+    "rut": "210253650011"
+  },
+  {
+    "nombre": "Rodacar Industrial S.A.",
+    "rut": "210263260011"
+  },
+  {
+    "nombre": "Sudel S.A.",
+    "rut": "210263730018"
+  },
+  {
+    "nombre": "SUPERMERCADOS DISCO DEL URUGUAY S.A",
+    "rut": "210274130017"
+  },
+  {
+    "nombre": "Coop. Nac.de Productores de Leche",
+    "rut": "210276180011"
+  },
+  {
+    "nombre": "Sevel Uruguay S.A.",
+    "rut": "210276940016"
+  },
+  {
+    "nombre": "Pedro Merla SA",
+    "rut": "210285850016"
+  },
+  {
+    "nombre": "Devoto Hermanos. S.A.",
+    "rut": "210297450018"
+  },
+  {
+    "nombre": "Curtiembre Paris S.A.",
+    "rut": "210315170018"
+  },
+  {
+    "nombre": "Strong S.A.",
+    "rut": "210322920019"
+  },
+  {
+    "nombre": "Nirea S.A.",
+    "rut": "210332820017"
+  },
+  {
+    "nombre": "SOLDO HNOS. S.A",
+    "rut": "210342060015"
+  },
+  {
+    "nombre": "Santa Rosa Automotores S.A.",
+    "rut": "210343370018"
+  },
+  {
+    "nombre": "SAN ROQUE S.A.",
+    "rut": "210354300016"
+  },
+  {
+    "nombre": "Ayax S.A.",
+    "rut": "210383480019"
+  },
+  {
+    "nombre": "Graciela y José Meijon Ltda",
+    "rut": "210409520012"
+  },
+  {
+    "nombre": "Frigorifico Carrasco SA",
+    "rut": "210417550014"
+  },
+  {
+    "nombre": "Piñeyrua y Cia",
+    "rut": "210422780014"
+  },
+  {
+    "nombre": "EXPRESO RUTA 5 S.A.",
+    "rut": "210443000018"
+  },
+  {
+    "nombre": "BANCO DE SEGUROS DEL ESTADO",
+    "rut": "210465050018"
+  },
+  {
+    "nombre": "A.N.C.A.P",
+    "rut": "210475730011"
+  },
+  {
+    "nombre": "Barraca Parana S.A.",
+    "rut": "210478750013"
+  },
+  {
+    "nombre": "Farmaco Uruguayo SA",
+    "rut": "210577030019"
+  },
+  {
+    "nombre": "Advanced Maritime Services S.A.",
+    "rut": "210628550014"
+  },
+  {
+    "nombre": "Tierras de Rincón del Indio S.A",
+    "rut": "210630990018"
+  },
+  {
+    "nombre": "Mercados Devoto S.A.",
+    "rut": "210650500016"
+  },
+  {
+    "nombre": "HSBC Bank Uruguay S.A.",
+    "rut": "210697930017"
+  },
+  {
+    "nombre": "Cybe SA",
+    "rut": "210703920014"
+  },
+  {
+    "nombre": "Nordica S.A.",
+    "rut": "210714860018"
+  },
+  {
+    "nombre": "La Cabaña S.R.L.",
+    "rut": "210716690012"
+  },
+  {
+    "nombre": "Frigorífico Las Piedras S.A.",
+    "rut": "210745160018"
+  },
+  {
+    "nombre": "UTE - Unidad Eficiencia Energetica",
+    "rut": "210778720012"
+  },
+  {
+    "nombre": "Bor S.A.",
+    "rut": "210821480014"
+  },
+  {
+    "nombre": "MARINAS S.A.",
+    "rut": "210926650017"
+  },
+  {
+    "nombre": "Establecimiento Juanico SA",
+    "rut": "210973860014"
+  },
+  {
+    "nombre": "Adm Nacional de Telecomunicaciones",
+    "rut": "211003420017"
+  },
+  {
+    "nombre": "SANARY S.A.",
+    "rut": "211151330016"
+  },
+  {
+    "nombre": "Abedules SA",
+    "rut": "211211380014"
+  },
+  {
+    "nombre": "Laboratorios Microsules Uruguay S.A.",
+    "rut": "211262100019"
+  },
+  {
+    "nombre": "Distancia S.A.",
+    "rut": "211270470016"
+  },
+  {
+    "nombre": "BANCO SANTANDER S.A.",
+    "rut": "211307180016"
+  },
+  {
+    "nombre": "ALCARAZ S.A",
+    "rut": "211337530015"
+  },
+  {
+    "nombre": "MICROCOSMOS S.A",
+    "rut": "211338610012"
+  },
+  {
+    "nombre": "Guarneri y Ghilino SRL",
+    "rut": "211352070011"
+  },
+  {
+    "nombre": "LA GRAN FLAUTA SRL",
+    "rut": "211372050016"
+  },
+  {
+    "nombre": "REMOL S.A.",
+    "rut": "211398320010"
+  },
+  {
+    "nombre": "Elfis S.A.",
+    "rut": "211401240019"
+  },
+  {
+    "nombre": "VESSENA S.A.",
+    "rut": "211407940012"
+  },
+  {
+    "nombre": "Blue Bird S.A.",
+    "rut": "211448070012"
+  },
+  {
+    "nombre": "Alian S.A.",
+    "rut": "211476440015"
+  },
+  {
+    "nombre": "Ronay S.A.",
+    "rut": "211485990014"
+  },
+  {
+    "nombre": "ROMIS S.A.",
+    "rut": "211488740019"
+  },
+  {
+    "nombre": "D'Informatique S.A.",
+    "rut": "211523420011"
+  },
+  {
+    "nombre": "COBOE S.A.",
+    "rut": "211576970016"
+  },
+  {
+    "nombre": "Harrison S.A.",
+    "rut": "211676940011"
+  },
+  {
+    "nombre": "Gralado S.A. BIC",
+    "rut": "211677550012"
+  },
+  {
+    "nombre": "G. Pose. SRL",
+    "rut": "211756420014"
+  },
+  {
+    "nombre": "Intendencia de Montevideo",
+    "rut": "211763350018"
+  },
+  {
+    "nombre": "Club de Golf del Uruguay",
+    "rut": "211770740012"
+  },
+  {
+    "nombre": "Club Banco Republica",
+    "rut": "211774290011"
+  },
+  {
+    "nombre": "Tabare Cardoso Mega",
+    "rut": "211801140011"
+  },
+  {
+    "nombre": "CO.P.A.C.",
+    "rut": "211843440013"
+  },
+  {
+    "nombre": "Indutop S.A.",
+    "rut": "211858950012"
+  },
+  {
+    "nombre": "GARESE Hnos. Ltda.",
+    "rut": "211873700013"
+  },
+  {
+    "nombre": "Adm.Obras Sanitarias del Estado",
+    "rut": "211962820014"
+  },
+  {
+    "nombre": "Encomiendas del Litoral Ltda.",
+    "rut": "211995450011"
+  },
+  {
+    "nombre": "L. Bolt SA",
+    "rut": "212154890010"
+  },
+  {
+    "nombre": "Empresa de Seguridad y Vigilancia Unión SRL",
+    "rut": "212233410011"
+  },
+  {
+    "nombre": "Tioma S.A",
+    "rut": "212280360017"
+  },
+  {
+    "nombre": "Bachema ltda.",
+    "rut": "212285210013"
+  },
+  {
+    "nombre": "Yin Yin SRL",
+    "rut": "212286950010"
+  },
+  {
+    "nombre": "Deceleste S.A.",
+    "rut": "212295360018"
+  },
+  {
+    "nombre": "Novabarca S.A.",
+    "rut": "212297950017"
+  },
+  {
+    "nombre": "BALUMA S.A.",
+    "rut": "212303260013"
+  },
+  {
+    "nombre": "Supermercado Covadonga S.A.",
+    "rut": "212334750012"
+  },
+  {
+    "nombre": "Automovil Club del Uruguay",
+    "rut": "212360980011"
+  },
+  {
+    "nombre": "Royal West S.A.",
+    "rut": "212367430017"
+  },
+  {
+    "nombre": "URUFORUS S.A.",
+    "rut": "212367990012"
+  },
+  {
+    "nombre": "Intermark Ltda.",
+    "rut": "212440120019"
+  },
+  {
+    "nombre": "BUGALLO Y BELLO LTDA",
+    "rut": "212457130012"
+  },
+  {
+    "nombre": "Pepsi Cola Manufacturing Company of Uruguay SRL",
+    "rut": "212466600018"
+  },
+  {
+    "nombre": "Marystay S.A.",
+    "rut": "212511650015"
+  },
+  {
+    "nombre": "Tonosol SA",
+    "rut": "212519860019"
+  },
+  {
+    "nombre": "ERSINAL S.A.",
+    "rut": "212531360012"
+  },
+  {
+    "nombre": "Marimar S.A.",
+    "rut": "212584130011"
+  },
+  {
+    "nombre": "HYNDAI FIDOCAR S.A.",
+    "rut": "212625630013"
+  },
+  {
+    "nombre": "Enrico De Nicola Sierra",
+    "rut": "212639870011"
+  },
+  {
+    "nombre": "Swiss Medical Uruguay S.A",
+    "rut": "212659800019"
+  },
+  {
+    "nombre": "Ediciones Santillana S.A.",
+    "rut": "212689100015"
+  },
+  {
+    "nombre": "Cristalpet S.A.",
+    "rut": "212697900017"
+  },
+  {
+    "nombre": "FASCIOLI ADMINISTRACIONES SAS",
+    "rut": "212752560014"
+  },
+  {
+    "nombre": "ARCHIDOC SAS",
+    "rut": "212752830011"
+  },
+  {
+    "nombre": "GABY-CAR LTDA.",
+    "rut": "212821800015"
+  },
+  {
+    "nombre": "Somil S.A.",
+    "rut": "212839010016"
+  },
+  {
+    "nombre": "Juan Fagundez",
+    "rut": "212859360012"
+  },
+  {
+    "nombre": "Diego San Martin",
+    "rut": "212870520012"
+  },
+  {
+    "nombre": "Ralitor S.A",
+    "rut": "212886430018"
+  },
+  {
+    "nombre": "OSENCOR S.A.",
+    "rut": "212890530013"
+  },
+  {
+    "nombre": "Retop S.A.",
+    "rut": "212892530010"
+  },
+  {
+    "nombre": "Grupo Continental Zona Franca S.A.",
+    "rut": "212998060018"
+  },
+  {
+    "nombre": "DESTOL S.A.",
+    "rut": "213092360011"
+  },
+  {
+    "nombre": "SMIRNA S.A.",
+    "rut": "213124190019"
+  },
+  {
+    "nombre": "GABRIEL SOUTTO",
+    "rut": "213160210016"
+  },
+  {
+    "nombre": "Sagel Ltda",
+    "rut": "213178880013"
+  },
+  {
+    "nombre": "TELEDATA S.A.",
+    "rut": "213224550017"
+  },
+  {
+    "nombre": "MICLONAR SA",
+    "rut": "213235050010"
+  },
+  {
+    "nombre": "BRAVOSUL S.A.",
+    "rut": "213251900015"
+  },
+  {
+    "nombre": "JUAN MARTIN LAMELAS",
+    "rut": "213294120011"
+  },
+  {
+    "nombre": "FEDIR S.A.",
+    "rut": "213300470015"
+  },
+  {
+    "nombre": "Afap Itaú S.A.",
+    "rut": "213403150013"
+  },
+  {
+    "nombre": "Ameluz S.A.",
+    "rut": "213428330015"
+  },
+  {
+    "nombre": "ODALER S.A.",
+    "rut": "213458920015"
+  },
+  {
+    "nombre": "NEDACORP SA",
+    "rut": "213459250013"
+  },
+  {
+    "nombre": "Maderal S.A.",
+    "rut": "213476340017"
+  },
+  {
+    "nombre": "Ernesto Elenter Grimberg",
+    "rut": "213494140016"
+  },
+  {
+    "nombre": "Seamans Medical Service",
+    "rut": "213501210010"
+  },
+  {
+    "nombre": "MESILAR S.A.",
+    "rut": "213522070013"
+  },
+  {
+    "nombre": "EDOLAR S.A.",
+    "rut": "213586720019"
+  },
+  {
+    "nombre": "Presidencia de la Republica",
+    "rut": "213622970016"
+  },
+  {
+    "nombre": "VERYLOND S.A.",
+    "rut": "213633740017"
+  },
+  {
+    "nombre": "WILSON MENENDEZ MARCELO",
+    "rut": "213646850010"
+  },
+  {
+    "nombre": "TELNIR S.A.",
+    "rut": "213648770014"
+  },
+  {
+    "nombre": "Kedal S.A.",
+    "rut": "213728480012"
+  },
+  {
+    "nombre": "Fullcat SA",
+    "rut": "213738820010"
+  },
+  {
+    "nombre": "Ferniland S.A.",
+    "rut": "213747030019"
+  },
+  {
+    "nombre": "Gustavo Tormo",
+    "rut": "213751900014"
+  },
+  {
+    "nombre": "DIEGO TOSAR",
+    "rut": "213772580019"
+  },
+  {
+    "nombre": "ACLAN SA",
+    "rut": "213808530016"
+  },
+  {
+    "nombre": "ROLCON S.A.",
+    "rut": "213809880010"
+  },
+  {
+    "nombre": "Mariane Estellano Schipper",
+    "rut": "213838960019"
+  },
+  {
+    "nombre": "KEMENTOL S.A.",
+    "rut": "213909440012"
+  },
+  {
+    "nombre": "PAUMAVE SRL",
+    "rut": "213912600017"
+  },
+  {
+    "nombre": "Alfalider S.A.",
+    "rut": "213938400015"
+  },
+  {
+    "nombre": "NEGLEY S.A.",
+    "rut": "213955470018"
+  },
+  {
+    "nombre": "Cementos del Plata S.A.",
+    "rut": "213961450015"
+  },
+  {
+    "nombre": "Lepal SRL",
+    "rut": "213962500016"
+  },
+  {
+    "nombre": "KENELTUR S.A.",
+    "rut": "214003470019"
+  },
+  {
+    "nombre": "FINOSOL S.A.",
+    "rut": "214061540016"
+  },
+  {
+    "nombre": "Arredo S.A.",
+    "rut": "214071610017"
+  },
+  {
+    "nombre": "TERMINALES GRANELERAS URUGUAYAS S.A.,",
+    "rut": "214081800013"
+  },
+  {
+    "nombre": "ACOSTA SILVA ANA LAURA",
+    "rut": "214084180016"
+  },
+  {
+    "nombre": "Gabriela Rohr",
+    "rut": "214097910018"
+  },
+  {
+    "nombre": "COMISIÓN TÉCNICA MIXTA DE SALTO GRA",
+    "rut": "214107320013"
+  },
+  {
+    "nombre": "Arquitecto Pablo Szames",
+    "rut": "214124930010"
+  },
+  {
+    "nombre": "Montecuir S.A.",
+    "rut": "214133240013"
+  },
+  {
+    "nombre": "CASA DEL RESORTE SRL",
+    "rut": "214139070012"
+  },
+  {
+    "nombre": "Alvaro Edelman",
+    "rut": "214167720018"
+  },
+  {
+    "nombre": "Alcoholes del Uruguay S.A",
+    "rut": "214172500012"
+  },
+  {
+    "nombre": "NORTELCO S.A.",
+    "rut": "214186840015"
+  },
+  {
+    "nombre": "NOBLESTILO S.A.",
+    "rut": "214195170019"
+  },
+  {
+    "nombre": "Antilur S.A.",
+    "rut": "214200240016"
+  },
+  {
+    "nombre": "USSEL S.A.",
+    "rut": "214214350013"
+  },
+  {
+    "nombre": "Pirion Ltda.",
+    "rut": "214226360019"
+  },
+  {
+    "nombre": "Angapa S.A.",
+    "rut": "214316930019"
+  },
+  {
+    "nombre": "Verinex S.A.",
+    "rut": "214329790016"
+  },
+  {
+    "nombre": "PNUD Proyecto REIF",
+    "rut": "214342660015"
+  },
+  {
+    "nombre": "Alicia Rubio Propiedades",
+    "rut": "214361380014"
+  },
+  {
+    "nombre": "Distrilube SRL",
+    "rut": "214364560013"
+  },
+  {
+    "nombre": "Asociación Uruguaya de Fútbol",
+    "rut": "214368590014"
+  },
+  {
+    "nombre": "Fanaprhu S.A.",
+    "rut": "214382270013"
+  },
+  {
+    "nombre": "VALGROUP S.A.",
+    "rut": "214393990012"
+  },
+  {
+    "nombre": "INAU",
+    "rut": "214446570012"
+  },
+  {
+    "nombre": "SUNFER SA",
+    "rut": "214472910011"
+  },
+  {
+    "nombre": "LABTECH S.A.",
+    "rut": "214496250011"
+  },
+  {
+    "nombre": "Eduardo Vilensky",
+    "rut": "214502340013"
+  },
+  {
+    "nombre": "METALUR S.A",
+    "rut": "214517040010"
+  },
+  {
+    "nombre": "LADENIX S.A.",
+    "rut": "214535530016"
+  },
+  {
+    "nombre": "Diego Berro",
+    "rut": "214551780013"
+  },
+  {
+    "nombre": "Dirección Nacional de Aduanas",
+    "rut": "214554920010"
+  },
+  {
+    "nombre": "RAMASIL S.A.",
+    "rut": "214558090012"
+  },
+  {
+    "nombre": "Nicolas Lopez",
+    "rut": "214561280013"
+  },
+  {
+    "nombre": "Autocar Ltda.",
+    "rut": "214564220011"
+  },
+  {
+    "nombre": "HRU S.A.",
+    "rut": "214575780013"
+  },
+  {
+    "nombre": "GERARDO MÉNDEZ MOURE",
+    "rut": "214582820017"
+  },
+  {
+    "nombre": "Vidrieria Sobol S.A",
+    "rut": "214585030017"
+  },
+  {
+    "nombre": "Gabriella Antonaccio",
+    "rut": "214601990016"
+  },
+  {
+    "nombre": "Dafelir S.A.",
+    "rut": "214604900018"
+  },
+  {
+    "nombre": "AGROENFOQUE S.A.",
+    "rut": "214607570019"
+  },
+  {
+    "nombre": "Dacrimar S.A.",
+    "rut": "214610500018"
+  },
+  {
+    "nombre": "Kielto S.A",
+    "rut": "214663460010"
+  },
+  {
+    "nombre": "Meliter S.A.",
+    "rut": "214671920017"
+  },
+  {
+    "nombre": "Scotiabank Uruguay S.A.",
+    "rut": "214765780014"
+  },
+  {
+    "nombre": "LOS CIMARRONES SRL",
+    "rut": "214773460015"
+  },
+  {
+    "nombre": "TIMEKOL S.A.",
+    "rut": "214801150011"
+  },
+  {
+    "nombre": "Transportes Horbal SRL",
+    "rut": "214814840011"
+  },
+  {
+    "nombre": "Servicios Electromecanicos S.A.",
+    "rut": "214823840010"
+  },
+  {
+    "nombre": "SOMICAR S.A.",
+    "rut": "214824500019"
+  },
+  {
+    "nombre": "PULSA S.A.",
+    "rut": "214827910013"
+  },
+  {
+    "nombre": "Urupanel S.A",
+    "rut": "214847250019"
+  },
+  {
+    "nombre": "DEBINOR SA",
+    "rut": "214876370019"
+  },
+  {
+    "nombre": "MALATIC S.A.",
+    "rut": "214877100015"
+  },
+  {
+    "nombre": "PALTICOR SA",
+    "rut": "214886680010"
+  },
+  {
+    "nombre": "Dofen SRL",
+    "rut": "214915670014"
+  },
+  {
+    "nombre": "Supertrans SAS",
+    "rut": "214920110013"
+  },
+  {
+    "nombre": "Abedil SA",
+    "rut": "214933150019"
+  },
+  {
+    "nombre": "Rafael Nogués",
+    "rut": "214939340014"
+  },
+  {
+    "nombre": "Manuel Gonzalez Rodriguez",
+    "rut": "214941590014"
+  },
+  {
+    "nombre": "Jose Acuña",
+    "rut": "214982240018"
+  },
+  {
+    "nombre": "Ministerio del Interior",
+    "rut": "214995720013"
+  },
+  {
+    "nombre": "Joaquín Diaz Amela",
+    "rut": "215013120019"
+  },
+  {
+    "nombre": "TRES TIPOS SRL",
+    "rut": "215025760018"
+  },
+  {
+    "nombre": "Tezelit S.A.",
+    "rut": "215049900014"
+  },
+  {
+    "nombre": "SEBITUR S.A.",
+    "rut": "215052830013"
+  },
+  {
+    "nombre": "AGRIFIRM URUGUAY S.A.",
+    "rut": "215063410010"
+  },
+  {
+    "nombre": "ATINUR SA",
+    "rut": "215067280014"
+  },
+  {
+    "nombre": "Servicios de Ingeniería Eléctrica Uruguay S.A.",
+    "rut": "215078650012"
+  },
+  {
+    "nombre": "Mibelux S.A.",
+    "rut": "215095630016"
+  },
+  {
+    "nombre": "NIDALAN S.A.",
+    "rut": "215098970012"
+  },
+  {
+    "nombre": "Sadenir S.A.",
+    "rut": "215108900011"
+  },
+  {
+    "nombre": "Unilam SA",
+    "rut": "215123530017"
+  },
+  {
+    "nombre": "EBITAL SA",
+    "rut": "215148800018"
+  },
+  {
+    "nombre": "Ministerio de Desarrollo Social",
+    "rut": "215151990019"
+  },
+  {
+    "nombre": "COOP. AGRARIA NACIONAL DE RESPONSAB",
+    "rut": "215243820012"
+  },
+  {
+    "nombre": "WTC Free Zone S.A.",
+    "rut": "215253330018"
+  },
+  {
+    "nombre": "Mariano Preve",
+    "rut": "215290780013"
+  },
+  {
+    "nombre": "Mikodal S.A.",
+    "rut": "215308540019"
+  },
+  {
+    "nombre": "TCS Uruguay S.A.",
+    "rut": "215313170011"
+  },
+  {
+    "nombre": "ECOMEL SA",
+    "rut": "215322000018"
+  },
+  {
+    "nombre": "MARTIN RIFON",
+    "rut": "215347090010"
+  },
+  {
+    "nombre": "Federico Irutta",
+    "rut": "215348400013"
+  },
+  {
+    "nombre": "SHOWY S.A.",
+    "rut": "215351000012"
+  },
+  {
+    "nombre": "TOPILEN SA",
+    "rut": "215393810012"
+  },
+  {
+    "nombre": "Costa Urbana S.A.",
+    "rut": "215405910011"
+  },
+  {
+    "nombre": "GAITAN SRL",
+    "rut": "215440000018"
+  },
+  {
+    "nombre": "Moltaden S.A.",
+    "rut": "215486910017"
+  },
+  {
+    "nombre": "Farogran S.A.",
+    "rut": "215502980010"
+  },
+  {
+    "nombre": "TERAPFIS SA",
+    "rut": "215518520014"
+  },
+  {
+    "nombre": "Fermais S.A.",
+    "rut": "215521660018"
+  },
+  {
+    "nombre": "PARQUE DE LAS CIENCIAS S.A.",
+    "rut": "215546380019"
+  },
+  {
+    "nombre": "Aledma S.A.",
+    "rut": "215548960012"
+  },
+  {
+    "nombre": "Estancias del Lago S.R.L.",
+    "rut": "215573870013"
+  },
+  {
+    "nombre": "Edificio Marti",
+    "rut": "215700350013"
+  },
+  {
+    "nombre": "EDIFICIO NECOCHEA",
+    "rut": "215702540014"
+  },
+  {
+    "nombre": "Residencial Beverly",
+    "rut": "215702850013"
+  },
+  {
+    "nombre": "Edificio Albatros",
+    "rut": "215706210019"
+  },
+  {
+    "nombre": "Edificio Long Champ",
+    "rut": "215706590016"
+  },
+  {
+    "nombre": "Conjunto Habitacional Parque Posadas",
+    "rut": "215709200014"
+  },
+  {
+    "nombre": "Edificio Fiorella",
+    "rut": "215712790013"
+  },
+  {
+    "nombre": "Edificio Andalucia",
+    "rut": "215736980017"
+  },
+  {
+    "nombre": "Lider Fens S.A",
+    "rut": "215755920016"
+  },
+  {
+    "nombre": "ISOARDI, METRE Y OTROS",
+    "rut": "215762320010"
+  },
+  {
+    "nombre": "Mayer, González y Otros",
+    "rut": "215762350017"
+  },
+  {
+    "nombre": "ZETAS SRL",
+    "rut": "215777910013"
+  },
+  {
+    "nombre": "Angelina D'Orsi",
+    "rut": "215828180017"
+  },
+  {
+    "nombre": "Jorge Gabriel Curi Lehmann",
+    "rut": "215847140017"
+  },
+  {
+    "nombre": "Javier Tórtora",
+    "rut": "215863750010"
+  },
+  {
+    "nombre": "Diego Strozzi",
+    "rut": "215868140016"
+  },
+  {
+    "nombre": "OLUB GRINBERG LAILA GABRIELA, ACEVEDO SUAREZ AGUSTIN Y OTROS",
+    "rut": "215923740016"
+  },
+  {
+    "nombre": "ANEP - CONSEJO DE EDUCACIÓN INICI",
+    "rut": "215926790014"
+  },
+  {
+    "nombre": "Consejo Educación Secundaria",
+    "rut": "215926810015"
+  },
+  {
+    "nombre": "CARRASCO NOBILE S.A.",
+    "rut": "215993690018"
+  },
+  {
+    "nombre": "BIENSTAR S.A.",
+    "rut": "216049280014"
+  },
+  {
+    "nombre": "Juan Andres Fontan",
+    "rut": "216074520015"
+  },
+  {
+    "nombre": "ECOMAN S.A.",
+    "rut": "216109470019"
+  },
+  {
+    "nombre": "Natalia Castelli",
+    "rut": "216116600011"
+  },
+  {
+    "nombre": "María Jimena Zubía Montero",
+    "rut": "216122920014"
+  },
+  {
+    "nombre": "Ladaner S.A.",
+    "rut": "216124260011"
+  },
+  {
+    "nombre": "By API S.R.L",
+    "rut": "216126820014"
+  },
+  {
+    "nombre": "Wadena S.A.",
+    "rut": "216155270019"
+  },
+  {
+    "nombre": "MADERBLU S.A.",
+    "rut": "216170490016"
+  },
+  {
+    "nombre": "ACOSTA BENITEZ, RICARDO JESUS",
+    "rut": "216179830014"
+  },
+  {
+    "nombre": "Nuevocentro S.A.",
+    "rut": "216182830011"
+  },
+  {
+    "nombre": "Adrian Rosso",
+    "rut": "216229760014"
+  },
+  {
+    "nombre": "Verónica Irisarri",
+    "rut": "216247820015"
+  },
+  {
+    "nombre": "Leslie Bryan Crawford Regueira",
+    "rut": "216250300019"
+  },
+  {
+    "nombre": "Etenpark S.A",
+    "rut": "216261300015"
+  },
+  {
+    "nombre": "Cualderon S.A",
+    "rut": "216264000012"
+  },
+  {
+    "nombre": "CASMU",
+    "rut": "216309010011"
+  },
+  {
+    "nombre": "Zenbien S.A.",
+    "rut": "216311630013"
+  },
+  {
+    "nombre": "INSTITUTO NACIONAL DE EMPLEO Y FORM",
+    "rut": "216332980013"
+  },
+  {
+    "nombre": "Universo Binario S.R.L",
+    "rut": "216359520013"
+  },
+  {
+    "nombre": "Embajada de Suiza",
+    "rut": "216378680012"
+  },
+  {
+    "nombre": "INSTALACIONES ELECTRICAS BOCALINI RODRIGUEZ ANGEL FREDDY",
+    "rut": "216398420016"
+  },
+  {
+    "nombre": "Alvaro Arbuet",
+    "rut": "216401860018"
+  },
+  {
+    "nombre": "DALZIMARE S.A.",
+    "rut": "216413300012"
+  },
+  {
+    "nombre": "Arobras SA",
+    "rut": "216417790014"
+  },
+  {
+    "nombre": "Luis Fernando Posada",
+    "rut": "216446820015"
+  },
+  {
+    "nombre": "TOYIMA S.A.",
+    "rut": "216451550012"
+  },
+  {
+    "nombre": "Complejo del Molino SA",
+    "rut": "216459980016"
+  },
+  {
+    "nombre": "Bluetrade LTDA",
+    "rut": "216468520014"
+  },
+  {
+    "nombre": "Astidey S.A.",
+    "rut": "216481580017"
+  },
+  {
+    "nombre": "PTC SA",
+    "rut": "216503500010"
+  },
+  {
+    "nombre": "Tiburin S.A.",
+    "rut": "216504120017"
+  },
+  {
+    "nombre": "Celedom S.A",
+    "rut": "216523120019"
+  },
+  {
+    "nombre": "David Gorodich",
+    "rut": "216569470012"
+  },
+  {
+    "nombre": "Degajo SRL",
+    "rut": "216575150016"
+  },
+  {
+    "nombre": "Acomana SA",
+    "rut": "216583640019"
+  },
+  {
+    "nombre": "Omar Marcel Vázquez",
+    "rut": "216583730018"
+  },
+  {
+    "nombre": "Lastril S.A.",
+    "rut": "216605190010"
+  },
+  {
+    "nombre": "CLOUDSOFT S.A.S.",
+    "rut": "216606380018"
+  },
+  {
+    "nombre": "NIGAMAR S.A.",
+    "rut": "216610020012"
+  },
+  {
+    "nombre": "TGL URUGUAY SA",
+    "rut": "216616070011"
+  },
+  {
+    "nombre": "Laboratorio Ecotech SRL",
+    "rut": "216618990010"
+  },
+  {
+    "nombre": "DH URUGUAY MARKETPLACE S.A",
+    "rut": "216639270017"
+  },
+  {
+    "nombre": "DIAMALER S.A.",
+    "rut": "216684420014"
+  },
+  {
+    "nombre": "María Aguirre",
+    "rut": "216688600017"
+  },
+  {
+    "nombre": "AMANOR S.A.",
+    "rut": "216726140014"
+  },
+  {
+    "nombre": "Cliente 1",
+    "rut": "216739460012"
+  },
+  {
+    "nombre": "BULA FRANCO SRL",
+    "rut": "216773340016"
+  },
+  {
+    "nombre": "Dany Cardozo",
+    "rut": "216800070010"
+  },
+  {
+    "nombre": "BDF URUGUAY SRL",
+    "rut": "216810800011"
+  },
+  {
+    "nombre": "Karina Flom Rubinovich",
+    "rut": "216834720018"
+  },
+  {
+    "nombre": "Fideicomiso 62148/11",
+    "rut": "216875900010"
+  },
+  {
+    "nombre": "MIS PETATES SAS",
+    "rut": "216913160015"
+  },
+  {
+    "nombre": "Ultralider S.A.",
+    "rut": "216965920010"
+  },
+  {
+    "nombre": "UNIDAD AGROALIMENTARIA METROPOLITANA",
+    "rut": "216978970011"
+  },
+  {
+    "nombre": "Jose Casco Castro",
+    "rut": "216990030015"
+  },
+  {
+    "nombre": "Eduardo Friss",
+    "rut": "216994070011"
+  },
+  {
+    "nombre": "HOMECENTER SODIMAC S.A.",
+    "rut": "216996650015"
+  },
+  {
+    "nombre": "CIR INVERSIONES S.A.",
+    "rut": "217003810019"
+  },
+  {
+    "nombre": "Edificio ONIX",
+    "rut": "217022090018"
+  },
+  {
+    "nombre": "Almirtaun SA",
+    "rut": "217091020015"
+  },
+  {
+    "nombre": "FIDEICOMISO 53.383/12",
+    "rut": "217091530013"
+  },
+  {
+    "nombre": "NERAFOX SA",
+    "rut": "217121440017"
+  },
+  {
+    "nombre": "Pluspetrol Uruguay SA",
+    "rut": "217125480013"
+  },
+  {
+    "nombre": "Jolipark S.A.",
+    "rut": "217145160014"
+  },
+  {
+    "nombre": "Marcos Merola Lessa",
+    "rut": "217149410015"
+  },
+  {
+    "nombre": "BA Energy Solutions S.A.",
+    "rut": "217167070018"
+  },
+  {
+    "nombre": "NIMBUSTAR S.A.",
+    "rut": "217248300013"
+  },
+  {
+    "nombre": "Hector de Rebolledo",
+    "rut": "217252170013"
+  },
+  {
+    "nombre": "Despejado S.A.",
+    "rut": "217265480016"
+  },
+  {
+    "nombre": "Master Mind SAS",
+    "rut": "217265990014"
+  },
+  {
+    "nombre": "ARBOREAL S.A.",
+    "rut": "217274570014"
+  },
+  {
+    "nombre": "PATRI RODRIGUEZ",
+    "rut": "217304660016"
+  },
+  {
+    "nombre": "SEG Heliotec Uruguay S.A.",
+    "rut": "217355120019"
+  },
+  {
+    "nombre": "RELAXED S.A.",
+    "rut": "217423540014"
+  },
+  {
+    "nombre": "Tornaria Iglesias SRL",
+    "rut": "217470900013"
+  },
+  {
+    "nombre": "Federico Nogueira",
+    "rut": "217568770010"
+  },
+  {
+    "nombre": "DAFIRUZ TRADING S.A.",
+    "rut": "217580660017"
+  },
+  {
+    "nombre": "Badupark SA",
+    "rut": "217601760015"
+  },
+  {
+    "nombre": "Pronta Luna SAS",
+    "rut": "217606010014"
+  },
+  {
+    "nombre": "Glaster S.A.",
+    "rut": "217621680017"
+  },
+  {
+    "nombre": "Unedal S.A",
+    "rut": "217738160013"
+  },
+  {
+    "nombre": "Construinnov srl",
+    "rut": "217783920013"
+  },
+  {
+    "nombre": "Pablo Frontini",
+    "rut": "217825550014"
+  },
+  {
+    "nombre": "Invenergy Services Uruguay SRL",
+    "rut": "217832550016"
+  },
+  {
+    "nombre": "Core Brand SRL",
+    "rut": "217839470018"
+  },
+  {
+    "nombre": "Alejandro Lopez",
+    "rut": "217850190018"
+  },
+  {
+    "nombre": "Benapres Borges Bruno Santiago",
+    "rut": "217866860018"
+  },
+  {
+    "nombre": "ETNL FARMA S.A.",
+    "rut": "217914950018"
+  },
+  {
+    "nombre": "CUNEO FUGASOT FEDERICO",
+    "rut": "217959000019"
+  },
+  {
+    "nombre": "Kennyco S.R.L.",
+    "rut": "218028090018"
+  },
+  {
+    "nombre": "Scout SAS",
+    "rut": "218063900012"
+  },
+  {
+    "nombre": "ELEVRAST S.A.",
+    "rut": "218089070017"
+  },
+  {
+    "nombre": "Onerique SRL",
+    "rut": "218113940012"
+  },
+  {
+    "nombre": "Pisano LTDA",
+    "rut": "218134360015"
+  },
+  {
+    "nombre": "CANSELION SRL",
+    "rut": "218174530019"
+  },
+  {
+    "nombre": "ENEL URUGUAY S.A.",
+    "rut": "218234440010"
+  },
+  {
+    "nombre": "EDIFICIO ARGENTA TOWER",
+    "rut": "218250960015"
+  },
+  {
+    "nombre": "Tramotur S.A.",
+    "rut": "218261390010"
+  },
+  {
+    "nombre": "Saroka Jessica",
+    "rut": "218277020013"
+  },
+  {
+    "nombre": "BARRILES S.A.",
+    "rut": "218277870017"
+  },
+  {
+    "nombre": "SOLEC Uruguay",
+    "rut": "218326600014"
+  },
+  {
+    "nombre": "Grupo Informatico.com SRL",
+    "rut": "218346920014"
+  },
+  {
+    "nombre": "Enwendil SA",
+    "rut": "218387220017"
+  },
+  {
+    "nombre": "TIFEMAX S.A.",
+    "rut": "218390170017"
+  },
+  {
+    "nombre": "Chitialic S.R.L.",
+    "rut": "218397890015"
+  },
+  {
+    "nombre": "Pablo Revetria y Silvia Torres",
+    "rut": "218415580019"
+  },
+  {
+    "nombre": "Asociación Uruguaya de Generación Privada de Energía Eléctrica",
+    "rut": "218462080019"
+  },
+  {
+    "nombre": "LOGIMED SRL",
+    "rut": "218506090014"
+  },
+  {
+    "nombre": "Materiales Londres Ltda",
+    "rut": "218513710014"
+  },
+  {
+    "nombre": "Torsacco srl",
+    "rut": "218546100010"
+  },
+  {
+    "nombre": "Culloden SRL",
+    "rut": "218558060019"
+  },
+  {
+    "nombre": "Labelstore SAS",
+    "rut": "218615040018"
+  },
+  {
+    "nombre": "NESYLA S.A.",
+    "rut": "218624020016"
+  },
+  {
+    "nombre": "Gabriela Pommerenck",
+    "rut": "218681710018"
+  },
+  {
+    "nombre": "JP JP SRL",
+    "rut": "218699230018"
+  },
+  {
+    "nombre": "ID365 SAS",
+    "rut": "218706090018"
+  },
+  {
+    "nombre": "GRUPO ONE S.A.",
+    "rut": "218751790015"
+  },
+  {
+    "nombre": "MUNDO MASCOTA URUGUAY SAS",
+    "rut": "218834580018"
+  },
+  {
+    "nombre": "IKUMA S.A.S.",
+    "rut": "218842380014"
+  },
+  {
+    "nombre": "REIMA URUGUAY SAS",
+    "rut": "218857250014"
+  },
+  {
+    "nombre": "BOOSTER SOFTWARE S.A.S",
+    "rut": "218876810011"
+  },
+  {
+    "nombre": "TU RACION SAS",
+    "rut": "218911640016"
+  },
+  {
+    "nombre": "TAGMA SAS",
+    "rut": "218930340014"
+  },
+  {
+    "nombre": "TRUELIA SAS",
+    "rut": "218948450016"
+  },
+  {
+    "nombre": "MABATEL SAS",
+    "rut": "218994650014"
+  },
+  {
+    "nombre": "BRUNO MONTELONGO",
+    "rut": "219000900013"
+  },
+  {
+    "nombre": "ENERTRAG URUGUAY S.A",
+    "rut": "219003840011"
+  },
+  {
+    "nombre": "SOS UY SAS",
+    "rut": "219006660014"
+  },
+  {
+    "nombre": "SOTURI SAD",
+    "rut": "219023610011"
+  },
+  {
+    "nombre": "Darlax Company S.A.",
+    "rut": "219030350011"
+  },
+  {
+    "nombre": "Ditamerica SAS",
+    "rut": "219045110011"
+  },
+  {
+    "nombre": "JB ASESORES SAS",
+    "rut": "219161070012"
+  },
+  {
+    "nombre": "GRESMOL S.A.",
+    "rut": "219220200010"
+  },
+  {
+    "nombre": "Gremul SA",
+    "rut": "219258300012"
+  },
+  {
+    "nombre": "ETTLIN DIETRICH SUCESORES",
+    "rut": "219303210013"
+  },
+  {
+    "nombre": "Burdea SAS",
+    "rut": "219320860012"
+  },
+  {
+    "nombre": "AUSTRALIS ASESORES DE INVERSION",
+    "rut": "219346870015"
+  },
+  {
+    "nombre": "Yorulor SAS",
+    "rut": "219361650012"
+  },
+  {
+    "nombre": "TILBURMAX S.A.S",
+    "rut": "219362350012"
+  },
+  {
+    "nombre": "Piornedo SAS",
+    "rut": "219431880011"
+  },
+  {
+    "nombre": "BYS INGENIERIA SRL",
+    "rut": "219476130011"
+  },
+  {
+    "nombre": "PEKALE SAS",
+    "rut": "219483360019"
+  },
+  {
+    "nombre": "Carrion Bemz SAS",
+    "rut": "219763430017"
+  },
+  {
+    "nombre": "Miller Time SAS",
+    "rut": "219783430012"
+  },
+  {
+    "nombre": "Futpro SA",
+    "rut": "219815380015"
+  },
+  {
+    "nombre": "AUTOSTORE SAS",
+    "rut": "219821530015"
+  },
+  {
+    "nombre": "Jose Andres Díaz Ardoino",
+    "rut": "219837600018"
+  },
+  {
+    "nombre": "Soluciones Ingenio SAS",
+    "rut": "220080440018"
+  },
+  {
+    "nombre": "Fernandez Gerfauo Paola",
+    "rut": "220117980010"
+  },
+  {
+    "nombre": "MAVRIS SAS",
+    "rut": "220185960011"
+  },
+  {
+    "nombre": "Pilunoc SAS",
+    "rut": "220189110012"
+  },
+  {
+    "nombre": "Beauty Carrasco SAS",
+    "rut": "220266580014"
+  },
+  {
+    "nombre": "DRESKAL SAS",
+    "rut": "220293730013"
+  },
+  {
+    "nombre": "GHELFA GUSTAVO MARÍA Y GHELFA BENÍTEZ GONZALO MARÍA",
+    "rut": "220350670010"
+  },
+  {
+    "nombre": "EP SAS",
+    "rut": "220467030011"
+  }
+]
