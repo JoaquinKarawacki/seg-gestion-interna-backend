@@ -15,7 +15,12 @@ const ORDENES_COMPRA = [
   'e4a503d5-64e6-4b1b-970d-d59594da1459', // #2
   '0b009454-99b6-46d2-ac51-2c8786b8c510', // #1
 ];
-const COTIZACIONES = ['2fb7f5c2-931b-4058-a337-faab04032672', '99023a84-3751-407f-9248-300faf758730'];
+const COTIZACIONES = [
+  '2fb7f5c2-931b-4058-a337-faab04032672', // Torres del Puerto / Cimientos y estructura
+  '99023a84-3751-407f-9248-300faf758730', // Torres del Puerto / Cimientos y estructura
+  'abc559f5-cb21-4510-ab29-1434f75840b2', // Puerto / Cimientos
+  '8c7eb85d-6c7c-42aa-a580-2ad301403373', // Puerto / Cimientos
+];
 const TAREAS = [
   '81fdd4ea-ef66-4768-8929-359186e0118b', // Cimientos y estructura
   '716dd655-ee46-470d-82fe-907d3677e68b', // Cambio de bomba
