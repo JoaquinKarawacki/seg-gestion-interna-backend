@@ -1,0 +1,348 @@
+[
+  {
+    "nombre": "Osmosis",
+    "cliente": "CAMDEL",
+    "tareas": [
+      {
+        "ref": "OS-CAMDEL-1",
+        "nombre": "Osmosis CAMDEL",
+        "numeroFactura": "-",
+        "nota": null,
+        "proveedor": "Geosur",
+        "moneda": "UYU",
+        "montoTotal": 1891000.0,
+        "pagos": [
+          {
+            "fecha": "2025-10-10",
+            "monto": 378200.0,
+            "nota": "20%"
+          },
+          {
+            "fecha": "2025-11-28",
+            "monto": 378200.0,
+            "nota": "20%"
+          },
+          {
+            "fecha": "2025-12-19",
+            "monto": 283560.0,
+            "nota": "15%"
+          },
+          {
+            "fecha": "2026-04-24",
+            "monto": 472750.0,
+            "nota": "25%"
+          },
+          {
+            "fecha": "2026-06-19",
+            "monto": 378290.0,
+            "nota": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Osmosis",
+    "cliente": "SOFITEL",
+    "tareas": [
+      {
+        "ref": "OS-SOFITEL-1",
+        "nombre": "Osmosis SOFITEL",
+        "numeroFactura": "-",
+        "nota": null,
+        "proveedor": "Geosur",
+        "moneda": "USD",
+        "montoTotal": 93330.0,
+        "pagos": [
+          {
+            "fecha": "2026-02-27",
+            "monto": 23332.5,
+            "nota": "25%"
+          },
+          {
+            "fecha": "2026-06-15",
+            "monto": 23332.5,
+            "nota": "25%"
+          },
+          {
+            "fecha": "2026-08-14",
+            "monto": 23332.5,
+            "nota": "25%"
+          }
+        ]
+      },
+      {
+        "ref": "OS-SOFITEL-2",
+        "nombre": "NAPA SOFITEL",
+        "numeroFactura": "-",
+        "nota": null,
+        "proveedor": "Geosur",
+        "moneda": "USD",
+        "montoTotal": 32086.0,
+        "pagos": [
+          {
+            "fecha": "2026-04-15",
+            "monto": 8021.5,
+            "nota": "25% de la Napa"
+          },
+          {
+            "fecha": "2026-05-05",
+            "monto": 16043.0,
+            "nota": "50% de la Napa - resta 25% final"
+          },
+          {
+            "fecha": "2026-05-29",
+            "monto": 8021.5,
+            "nota": "25% Final"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Osmosis",
+    "cliente": "UAM",
+    "tareas": [
+      {
+        "ref": "OS-UAM-1",
+        "nombre": "Osmosis UAM",
+        "numeroFactura": "-",
+        "nota": null,
+        "proveedor": "Geosur",
+        "moneda": "USD",
+        "montoTotal": 83814.0,
+        "pagos": [
+          {
+            "fecha": "2026-02-09",
+            "monto": 20953.5,
+            "nota": "25%"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Bombas de Calor",
+    "cliente": "BSE",
+    "tareas": [
+      {
+        "ref": "BC-BSE-1",
+        "nombre": "5 Bombas de calor Trosten",
+        "numeroFactura": "114004",
+        "nota": null,
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 94184.0,
+        "pagos": [
+          {
+            "fecha": "2025-09-01",
+            "monto": 28255.0,
+            "nota": null
+          },
+          {
+            "fecha": "2026-03-16",
+            "monto": 47092.0,
+            "nota": null
+          },
+          {
+            "fecha": "2026-06-05",
+            "monto": 18837.0,
+            "nota": null
+          }
+        ]
+      },
+      {
+        "ref": "BC-BSE-2",
+        "nombre": "Acopio - Instalación",
+        "numeroFactura": "116421",
+        "nota": null,
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 10614.0,
+        "pagos": [
+          {
+            "fecha": "2026-01-30",
+            "monto": 10614.0,
+            "nota": "Pago total"
+          }
+        ]
+      },
+      {
+        "ref": "BC-BSE-3",
+        "nombre": "Instalación",
+        "numeroFactura": "121704",
+        "nota": null,
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 60146.0,
+        "pagos": [
+          {
+            "fecha": "2026-06-05",
+            "monto": 13005.0,
+            "nota": null
+          },
+          {
+            "fecha": "2026-06-05",
+            "monto": 30647.0,
+            "nota": "Fecha no especificada en el original",
+            "fechaAproximada": true
+          }
+        ]
+      },
+      {
+        "ref": "BC-BSE-4",
+        "nombre": "Instalación Circuladora",
+        "numeroFactura": "121708",
+        "nota": null,
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 9086.56,
+        "pagos": [
+          {
+            "fecha": "2026-07-03",
+            "monto": 9086.56,
+            "nota": "Pago total"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Bombas de Calor",
+    "cliente": "CAMDEL",
+    "tareas": [
+      {
+        "ref": "BC-CAMDEL-1",
+        "nombre": "Bombas de calor + Equipo + Instalación",
+        "numeroFactura": "114006",
+        "nota": "Ref. informativa del proveedor: USD 41.600 + IVA USD 9.152",
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 50874.0,
+        "pagos": [
+          {
+            "fecha": "2025-10-31",
+            "monto": 15225.0,
+            "nota": null
+          },
+          {
+            "fecha": "2026-04-30",
+            "monto": 9152.0,
+            "nota": "Pago IVA F. 114006"
+          },
+          {
+            "fecha": "2026-06-05",
+            "monto": 16322.0,
+            "nota": null
+          }
+        ]
+      },
+      {
+        "ref": "BC-CAMDEL-2",
+        "nombre": "Dif. Presup. Inicial + Adicional Nuevo Colector",
+        "numeroFactura": "119070",
+        "nota": "Pendiente: CIR aún no emitió la Nota de Crédito correspondiente",
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 8515.6,
+        "pagos": []
+      }
+    ]
+  },
+  {
+    "nombre": "Bombas de Calor",
+    "cliente": "COMTA",
+    "tareas": [
+      {
+        "ref": "BC-COMTA-1",
+        "nombre": "Bombas de calor + Equipo + Instalación",
+        "numeroFactura": "114005",
+        "nota": null,
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 88084.0,
+        "pagos": [
+          {
+            "fecha": "2025-09-05",
+            "monto": 26425.2,
+            "nota": null
+          },
+          {
+            "fecha": "2026-04-30",
+            "monto": 15884.0,
+            "nota": null
+          },
+          {
+            "fecha": "2026-06-05",
+            "monto": 28158.0,
+            "nota": null
+          }
+        ]
+      },
+      {
+        "ref": "BC-COMTA-2",
+        "nombre": "Adicional",
+        "numeroFactura": "117708",
+        "nota": "Factura sin desglose de Monto Base / IVA en el original",
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 12566.0,
+        "pagos": [
+          {
+            "fecha": "2026-03-27",
+            "monto": 12566.0,
+            "nota": "Pago total"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Bombas de Calor",
+    "cliente": "SOFITEL",
+    "tareas": [
+      {
+        "ref": "BC-SOFITEL-1",
+        "nombre": "Bombas de Calor Piscina",
+        "numeroFactura": "118997",
+        "nota": null,
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 17165.4,
+        "pagos": [
+          {
+            "fecha": "2026-04-17",
+            "monto": 3433.0,
+            "nota": null
+          },
+          {
+            "fecha": "2026-07-31",
+            "monto": 5721.8,
+            "nota": null
+          },
+          {
+            "fecha": "2026-08-28",
+            "monto": 1830.96,
+            "nota": null
+          }
+        ]
+      },
+      {
+        "ref": "BC-SOFITEL-2",
+        "nombre": "Bombas de Calor ACS",
+        "numeroFactura": "*** (pendiente)",
+        "nota": "Número de factura pendiente de confirmar en el original",
+        "proveedor": "NOALER S.A. (CIR)",
+        "moneda": "USD",
+        "montoTotal": 93330.0,
+        "pagos": [
+          {
+            "fecha": "2026-06-12",
+            "monto": 24251.0,
+            "nota": "ok"
+          }
+        ]
+      }
+    ]
+  }
+]
