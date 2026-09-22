@@ -67,7 +67,7 @@ export class ComentariosService {
   ): Promise<void> {
     const esEncargadoDelSector =
       usuario.rol === RolUsuario.ENCARGADO &&
-      usuario.sectorId === orden.sectorId;
+      usuario.sectoresEncargado.includes(orden.sectorId);
     const esElSolicitante = usuario.id === orden.solicitanteId;
 
     if (orden.estado === EstadoOC.PENDIENTE && esEncargadoDelSector) {

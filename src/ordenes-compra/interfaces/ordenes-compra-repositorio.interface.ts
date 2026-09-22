@@ -51,7 +51,7 @@ export interface FiltrosOrdenCompra {
   proyectoId?: string;
   cotizacionId?: string;
   estado?: EstadoOC;
-  sectorId?: string;
+  sectorId?: string | string[];
   solicitanteId?: string;
 }
 

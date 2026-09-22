@@ -7,4 +7,5 @@ export class RespuestaUsuarioDto {
   rol!: RolUsuario;
   activo!: boolean;
   sectorId!: string | null;
+  sectoresEncargadoIds!: string[];
 }

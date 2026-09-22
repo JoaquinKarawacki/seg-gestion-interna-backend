@@ -14,6 +14,15 @@ import {
   PaginacionOrdenCompra,
 } from './interfaces/ordenes-compra-repositorio.interface';
 
+function condicionSector(
+  sectorId: FiltrosOrdenCompra['sectorId'],
+): string | { in: string[] } | undefined {
+  if (Array.isArray(sectorId)) {
+    return sectorId.length > 0 ? { in: sectorId } : undefined;
+  }
+  return sectorId;
+}
+
 @Injectable()
 export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
   constructor(private readonly prisma: PrismaService) {}
@@ -111,7 +120,7 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
         proyectoId: filtros.proyectoId,
         cotizacionId: filtros.cotizacionId,
         estado: filtros.estado,
-        sectorId: filtros.sectorId,
+        sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,
       },
       orderBy: { numero: 'desc' },
@@ -126,7 +135,7 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
         proyectoId: filtros.proyectoId,
         cotizacionId: filtros.cotizacionId,
         estado: filtros.estado,
-        sectorId: filtros.sectorId,
+        sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,
       },
     });

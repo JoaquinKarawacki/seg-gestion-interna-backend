@@ -21,6 +21,7 @@ model Sector {
   id            String        @id @default(uuid())
   nombre        String        @unique
   usuarios      Usuario[]
+  encargados    Usuario[]     @relation("SectorEncargados")
   proyectos     Proyecto[]
   ordenesCompra OrdenCompra[]
   creadoEn      DateTime      @default(now()) @map("creado_en")
@@ -38,6 +39,7 @@ model Usuario {
   activo                   Boolean             @default(true)
   sectorId                 String?             @map("sector_id")
   sector                   Sector?             @relation(fields: [sectorId], references: [id])
+  sectoresEncargado        Sector[]            @relation("SectorEncargados")
   historialEstadosOC       HistorialEstadoOC[]
   ordenesCompraSolicitadas OrdenCompra[]
   comentarios              Comentario[]

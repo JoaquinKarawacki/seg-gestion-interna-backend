@@ -326,7 +326,7 @@ export class OrdenesCompraService {
     usuario: UsuarioAutenticado,
   ): void {
     const esElSolicitante = usuario.id === orden.solicitanteId;
-    const esDelMismoSector = usuario.sectorId === orden.sectorId;
+    const esDelMismoSector = usuario.sectoresEncargado.includes(orden.sectorId);
     const esAdmin = usuario.rol === RolUsuario.ADMIN;
 
     if (!esElSolicitante && !esDelMismoSector && !esAdmin) {

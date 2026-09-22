@@ -1,9 +1,11 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import type { UsuarioModel } from '../../generated/prisma/models';
 import { USUARIOS_REPOSITORIO } from '../usuarios/interfaces/usuarios-repositorio.interface';
-import type { IUsuariosRepositorio } from '../usuarios/interfaces/usuarios-repositorio.interface';
+import type {
+  IUsuariosRepositorio,
+  UsuarioConSectoresEncargado,
+} from '../usuarios/interfaces/usuarios-repositorio.interface';
 import { LoginDto } from './dtos/login.dto';
 import type {
   RespuestaAuthDto,
@@ -46,7 +48,7 @@ export class AuthService {
   private async validarCredenciales(
     email: string,
     contrasena: string,
-  ): Promise<UsuarioModel> {
+  ): Promise<UsuarioConSectoresEncargado> {
     const usuario = await this.usuariosRepositorio.buscarPorEmail(email);
     const credencialesInvalidas = new UnauthorizedException({
       error: 'CREDENCIALES_INVALIDAS',
@@ -69,19 +71,20 @@ export class AuthService {
     return usuario;
   }
 
-  private generarToken(usuario: UsuarioModel): string {
+  private generarToken(usuario: UsuarioConSectoresEncargado): string {
     const payload: PayloadJwt = {
       sub: usuario.id,
       email: usuario.email,
       rol: usuario.rol,
       sectorId: usuario.sectorId,
+      sectoresEncargado: usuario.sectoresEncargado.map((s) => s.id),
     };
 
     return this.jwtService.sign(payload);
   }
 
   private mapearUsuarioAutenticado(
-    usuario: UsuarioModel,
+    usuario: UsuarioConSectoresEncargado,
   ): UsuarioAutenticadoDto {
     return {
       id: usuario.id,

@@ -251,7 +251,7 @@ export class OrdenesCompraAprobacionService {
     orden: OrdenCompraModel,
     usuario: UsuarioAutenticado,
   ): void {
-    if (usuario.sectorId !== orden.sectorId) {
+    if (!usuario.sectoresEncargado.includes(orden.sectorId)) {
       throw new ForbiddenException({
         error: 'SIN_PERMISO_SOBRE_SECTOR',
         mensaje: 'No tenés permiso sobre el sector de esta orden de compra',

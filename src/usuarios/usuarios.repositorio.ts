@@ -6,22 +6,38 @@ import {
   DatosActualizarUsuario,
   DatosCrearUsuario,
   IUsuariosRepositorio,
+  UsuarioConSectoresEncargado,
 } from './interfaces/usuarios-repositorio.interface';
+
+const INCLUIR_SECTORES_ENCARGADO = {
+  sectoresEncargado: { select: { id: true } },
+} as const;
 
 @Injectable()
 export class UsuariosRepositorio implements IUsuariosRepositorio {
   constructor(private readonly prisma: PrismaService) {}
 
-  async buscarPorId(id: string): Promise<UsuarioModel | null> {
-    return this.prisma.usuario.findUnique({ where: { id } });
+  async buscarPorId(id: string): Promise<UsuarioConSectoresEncargado | null> {
+    return this.prisma.usuario.findUnique({
+      where: { id },
+      include: INCLUIR_SECTORES_ENCARGADO,
+    });
   }
 
-  async buscarPorEmail(email: string): Promise<UsuarioModel | null> {
-    return this.prisma.usuario.findUnique({ where: { email } });
+  async buscarPorEmail(
+    email: string,
+  ): Promise<UsuarioConSectoresEncargado | null> {
+    return this.prisma.usuario.findUnique({
+      where: { email },
+      include: INCLUIR_SECTORES_ENCARGADO,
+    });
   }
 
-  async buscarTodos(): Promise<UsuarioModel[]> {
-    return this.prisma.usuario.findMany({ orderBy: { nombre: 'asc' } });
+  async buscarTodos(): Promise<UsuarioConSectoresEncargado[]> {
+    return this.prisma.usuario.findMany({
+      orderBy: { nombre: 'asc' },
+      include: INCLUIR_SECTORES_ENCARGADO,
+    });
   }
 
   async buscarActivosPorRol(
@@ -32,20 +48,39 @@ export class UsuariosRepositorio implements IUsuariosRepositorio {
       where: {
         rol,
         activo: true,
-        ...(sectorId ? { sectorId } : {}),
+        ...(sectorId ? { sectoresEncargado: { some: { id: sectorId } } } : {}),
       },
     });
   }
 
-  async crear(datos: DatosCrearUsuario): Promise<UsuarioModel> {
-    return this.prisma.usuario.create({ data: datos });
+  async crear(datos: DatosCrearUsuario): Promise<UsuarioConSectoresEncargado> {
+    const { sectoresEncargadoIds, ...resto } = datos;
+    return this.prisma.usuario.create({
+      data: {
+        ...resto,
+        sectoresEncargado: sectoresEncargadoIds
+          ? { connect: sectoresEncargadoIds.map((id) => ({ id })) }
+          : undefined,
+      },
+      include: INCLUIR_SECTORES_ENCARGADO,
+    });
   }
 
   async actualizar(
     id: string,
     datos: DatosActualizarUsuario,
-  ): Promise<UsuarioModel> {
-    return this.prisma.usuario.update({ where: { id }, data: datos });
+  ): Promise<UsuarioConSectoresEncargado> {
+    const { sectoresEncargadoIds, ...resto } = datos;
+    return this.prisma.usuario.update({
+      where: { id },
+      data: {
+        ...resto,
+        sectoresEncargado: sectoresEncargadoIds
+          ? { set: sectoresEncargadoIds.map((id) => ({ id })) }
+          : undefined,
+      },
+      include: INCLUIR_SECTORES_ENCARGADO,
+    });
   }
 
   async eliminar(id: string): Promise<void> {

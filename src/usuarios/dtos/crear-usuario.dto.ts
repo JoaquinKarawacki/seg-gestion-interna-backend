@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -25,4 +26,9 @@ export class CrearUsuarioDto {
   @IsOptional()
   @IsUUID()
   sectorId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  sectoresEncargadoIds?: string[];
 }

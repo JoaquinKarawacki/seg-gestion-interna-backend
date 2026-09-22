@@ -60,9 +60,14 @@ export class OrdenesCompraController {
       POR_PAGINA_MAXIMO,
       Math.max(1, Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO),
     );
+    // "sectorId" acepta una lista separada por comas (ej. un encargado de
+    // varios sectores viendo "mis pendientes de aprobación" en el dashboard).
+    const sectorIds = sectorId?.includes(',')
+      ? sectorId.split(',').filter(Boolean)
+      : sectorId;
 
     const { datos, total } = await this.ordenesCompraService.listar(
-      { proyectoId, cotizacionId, estado, sectorId, solicitanteId },
+      { proyectoId, cotizacionId, estado, sectorId: sectorIds, solicitanteId },
       { pagina, porPagina },
     );
 

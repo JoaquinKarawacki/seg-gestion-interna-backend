@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '../../generated/prisma/client';
-import type { UsuarioModel } from '../../generated/prisma/models';
 import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
@@ -16,7 +15,10 @@ import { CambiarContrasenaDto } from './dtos/cambiar-contrasena.dto';
 import { CrearUsuarioDto } from './dtos/crear-usuario.dto';
 import { RespuestaUsuarioDto } from './dtos/respuesta-usuario.dto';
 import { USUARIOS_REPOSITORIO } from './interfaces/usuarios-repositorio.interface';
-import type { IUsuariosRepositorio } from './interfaces/usuarios-repositorio.interface';
+import type {
+  IUsuariosRepositorio,
+  UsuarioConSectoresEncargado,
+} from './interfaces/usuarios-repositorio.interface';
 
 const RONDAS_HASH = 10;
 const CODIGO_RESTRICCION_UNICA = 'P2002';
@@ -52,6 +54,7 @@ export class UsuariosService {
         contrasenaHash,
         rol: dto.rol,
         sectorId: dto.sectorId ?? null,
+        sectoresEncargadoIds: dto.sectoresEncargadoIds,
       }),
     );
 
@@ -136,7 +139,9 @@ export class UsuariosService {
     });
   }
 
-  private async obtenerUsuarioOFallar(id: string): Promise<UsuarioModel> {
+  private async obtenerUsuarioOFallar(
+    id: string,
+  ): Promise<UsuarioConSectoresEncargado> {
     const usuario = await this.usuariosRepositorio.buscarPorId(id);
 
     if (!usuario) {
@@ -150,8 +155,8 @@ export class UsuariosService {
   }
 
   private async ejecutarOMapearConflicto(
-    operacion: () => Promise<UsuarioModel>,
-  ): Promise<UsuarioModel> {
+    operacion: () => Promise<UsuarioConSectoresEncargado>,
+  ): Promise<UsuarioConSectoresEncargado> {
     try {
       return await operacion();
     } catch (error) {
@@ -169,7 +174,9 @@ export class UsuariosService {
     }
   }
 
-  private mapearRespuesta(usuario: UsuarioModel): RespuestaUsuarioDto {
+  private mapearRespuesta(
+    usuario: UsuarioConSectoresEncargado,
+  ): RespuestaUsuarioDto {
     return {
       id: usuario.id,
       nombre: usuario.nombre,
@@ -177,6 +184,7 @@ export class UsuariosService {
       rol: usuario.rol,
       activo: usuario.activo,
       sectorId: usuario.sectorId,
+      sectoresEncargadoIds: usuario.sectoresEncargado.map((s) => s.id),
     };
   }
 }
