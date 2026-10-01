@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EstadoCotizacion } from '../../generated/prisma/enums';
 import { CotizacionModel } from '../../generated/prisma/models';
 import {
-  DatosCrearCotizacion,
+  CotizacionConRelaciones,
   ICotizacionesRepositorio,
 } from './interfaces/cotizaciones-repositorio.interface';
 
@@ -35,20 +35,14 @@ export class CotizacionesRepositorio implements ICotizacionesRepositorio {
     });
   }
 
-  async crearNuevaVersion(
-    datos: DatosCrearCotizacion,
-  ): Promise<CotizacionModel> {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.cotizacion.updateMany({
-        where: {
-          proyectoId: datos.proyectoId,
-          tareaId: datos.tareaId,
-          estado: EstadoCotizacion.ACTIVA,
-        },
-        data: { estado: EstadoCotizacion.REEMPLAZADA },
-      });
-
-      return tx.cotizacion.create({ data: datos });
+  async buscarTodasParaBusqueda(): Promise<CotizacionConRelaciones[]> {
+    return this.prisma.cotizacion.findMany({
+      orderBy: { creadoEn: 'desc' },
+      include: {
+        proyecto: { select: { nombre: true } },
+        proveedor: { select: { nombre: true } },
+        tarea: { select: { nombre: true } },
+      },
     });
   }
 }

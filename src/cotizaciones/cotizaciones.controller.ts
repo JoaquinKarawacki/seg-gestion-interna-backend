@@ -1,43 +1,36 @@
 import {
-  Body,
   Controller,
-  FileTypeValidator,
   Get,
-  MaxFileSizeValidator,
   Param,
-  ParseFilePipe,
-  Post,
-  Req,
   StreamableFile,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { Request } from 'express';
 import { JwtGuardia } from '../comun/guardias/jwt.guardia';
 import { RolesGuardia } from '../comun/guardias/roles.guardia';
-import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
 import {
   RespuestaExitosa,
   RespuestaLista,
 } from '../comun/tipos/respuesta-api.tipo';
 import { CotizacionesService } from './cotizaciones.service';
-import { CrearCotizacionDto } from './dtos/crear-cotizacion.dto';
+import { RespuestaCotizacionBusquedaDto } from './dtos/respuesta-cotizacion-busqueda.dto';
 import { RespuestaCotizacionDto } from './dtos/respuesta-cotizacion.dto';
 
-const TAMANIO_MAXIMO_ARCHIVO_BYTES = 10 * 1024 * 1024;
-
-type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
-
-// Sin prefijo de clase a proposito: las rutas de Cotizacion se reparten
-// entre /cotizaciones, /proyectos/:proyectoId/cotizaciones y
-// /tareas/:tareaId/cotizaciones porque el recurso se lee "anidado" bajo
-// Proyecto/Tarea pero conceptualmente le pertenece a este modulo.
+// Sin prefijo de clase a proposito: las rutas de Cotizacion se reparten entre
+// /cotizaciones, /proyectos/:proyectoId/cotizaciones y
+// /tareas/:tareaId/cotizaciones. La creacion ya NO se expone acá: una
+// cotización solo nace desde el flujo de Orden de Compra.
 @Controller()
 @UseGuards(JwtGuardia, RolesGuardia)
 export class CotizacionesController {
   constructor(private readonly cotizacionesService: CotizacionesService) {}
+
+  @Get('cotizaciones')
+  async listarParaBusqueda(): Promise<
+    RespuestaLista<RespuestaCotizacionBusquedaDto>
+  > {
+    const datos = await this.cotizacionesService.listarParaBusqueda();
+    return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
+  }
 
   @Get('cotizaciones/:id')
   async buscarPorId(
@@ -79,29 +72,5 @@ export class CotizacionesController {
   ): Promise<RespuestaExitosa<RespuestaCotizacionDto>> {
     const datos = await this.cotizacionesService.buscarActivaPorTarea(tareaId);
     return { datos, mensaje: 'Cotización activa obtenida correctamente' };
-  }
-
-  @Post('cotizaciones')
-  @UseInterceptors(FileInterceptor('archivo'))
-  async crear(
-    @Body() dto: CrearCotizacionDto,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({ fileType: 'application/pdf' }),
-          new MaxFileSizeValidator({ maxSize: TAMANIO_MAXIMO_ARCHIVO_BYTES }),
-        ],
-        fileIsRequired: false,
-      }),
-    )
-    archivo: Express.Multer.File | undefined,
-    @Req() solicitud: SolicitudAutenticada,
-  ): Promise<RespuestaExitosa<RespuestaCotizacionDto>> {
-    const datos = await this.cotizacionesService.crear(
-      dto,
-      solicitud.user,
-      archivo,
-    );
-    return { datos, mensaje: 'Cotización creada correctamente' };
   }
 }

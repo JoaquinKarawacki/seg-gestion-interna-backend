@@ -1,27 +1,22 @@
-import { Prisma } from '../../../generated/prisma/client';
-import { Moneda } from '../../../generated/prisma/enums';
 import { CotizacionModel } from '../../../generated/prisma/models';
 
 export const COTIZACIONES_REPOSITORIO = Symbol('ICotizacionesRepositorio');
 
-export interface DatosCrearCotizacion {
-  proyectoId: string;
-  tareaId: string;
-  proveedorId: string;
-  montoTotal: Prisma.Decimal;
-  moneda: Moneda;
-  ivaIncluido: boolean;
-  archivoPdfRuta?: string | null;
+// Cotización con los nombres de sus relaciones resueltos, para la búsqueda
+// global reutilizable (evita un N+1 de mapas en el frontend).
+export interface CotizacionConRelaciones extends CotizacionModel {
+  proyecto: { nombre: string };
+  proveedor: { nombre: string };
+  tarea: { nombre: string };
 }
 
-// Cotizacion es un registro versionado e inmutable: no se edita ni se
-// borra, solo se reemplaza creando una version nueva. Por eso esta
-// interfaz NO extiende IRepositorioBase (no tiene sentido un
-// actualizar/eliminar genericos aca).
+// Cotizacion es un registro versionado e inmutable: no se edita ni se borra
+// directamente (nace y muere junto con su Orden de Compra). Por eso esta
+// interfaz NO extiende IRepositorioBase.
 export interface ICotizacionesRepositorio {
   buscarPorId(id: string): Promise<CotizacionModel | null>;
   buscarPorProyecto(proyectoId: string): Promise<CotizacionModel[]>;
   buscarPorTarea(tareaId: string): Promise<CotizacionModel[]>;
   buscarActivaPorTarea(tareaId: string): Promise<CotizacionModel | null>;
-  crearNuevaVersion(datos: DatosCrearCotizacion): Promise<CotizacionModel>;
+  buscarTodasParaBusqueda(): Promise<CotizacionConRelaciones[]>;
 }

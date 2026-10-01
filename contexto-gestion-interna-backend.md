@@ -961,6 +961,49 @@ La migración (`20260922191857_agregar_sectores_encargado`) hace backfill: todo 
 
 ---
 
+## Orden de Compra (entidad nueva) — Fase 1 (2026-09-30)
+
+Cambio grande de dominio: se introduce una entidad NUEVA **"Orden de Compra" (OC)**, distinta y **previa** a la que hasta ahora existía. Para evitar confusión de nombres:
+
+| Concepto de negocio | Modelo de código | Tabla | Rutas | Etiqueta UI |
+|---|---|---|---|---|
+| Orden de **Pago** (la que ya existía) | `OrdenCompra` | `ordenes_compra` | `/ordenes-compra` | "Orden de Pago" |
+| Orden de **Compra** (NUEVA, previa al pago) | `SolicitudCompra` | `solicitudes_compra` | `/solicitudes-compra` | "Orden de Compra" |
+
+**Cardinalidad**: `Proyecto → (N) Orden de Compra → 1 Cotización → (N) Órdenes de Pago`. Cada OC crea **su propia** cotización independiente (1:1). Una cotización admite varias OP (pagos parciales), acotadas por su monto vía el eslabón `ValidarMontoNoExcedeCotizacion` ya existente (base de la futura alarma de Fase 2).
+
+**Modelo (`schema.prisma`, migración `20260930190806_agregar_rubro_y_solicitud_compra`, aditiva):**
+- `enum EstadoSolicitudCompra { BORRADOR, PENDIENTE, APROBADO, RECHAZADO, ANULADO }` (máquina reducida, sin estados de pago).
+- `model Rubro` — catálogo global (`id, nombre @unique, activo`). Semilla en `seed.ts`: **Equipos, Instalación, Monitoreo**. "Otros" NO se seedea: es una opción de UI que crea un rubro personalizado por nombre (findOrCreate en el flujo de OC).
+- `model SolicitudCompra` — `numero autoincrement`, `tipo (TipoOC)`, `fecha default(now())`, `solicitanteId`, `sectorId` (OC **lleva sector**, se aprueba por sector), `proveedorId`, `clienteId?` (derivado del proyecto), `proyectoId`, `rubroId`, `tareaId` (auto), `cotizacionId @unique` (auto, 1:1), `moneda`, `monto`, `concepto`, `pagaIva`, `ivaIncluido`, `observaciones?`, `archivoPdfRuta` (**obligatorio**), `estado @default(BORRADOR)`. Nota: la OC **no** tiene `formaPago` (eso es de la OP).
+- `model HistorialEstadoSolicitudCompra` — espejo de `HistorialEstadoOC`.
+- `OrdenCompra` (OP) gana `solicitudCompraId String?` (FK nullable) para enlazar OP↔OC en Fase 2. Sin uso todavía.
+
+**Módulos nuevos:**
+- `src/rubros/` — CRUD catálogo (molde de `Sector`). `GET /rubros` (cualquier autenticado), `POST/PATCH/DELETE` ADMIN. Repo con `buscarPorNombre` (para el findOrCreate) y `contarSolicitudesAsociadas` (protege el delete).
+- `src/solicitudes-compra/` — entidad + flujo + submódulo `aprobacion/`. Importa `AlmacenamientoModulo, ProyectosModulo, RubrosModulo`.
+  - **Creación transaccional** (`crearConCotizacionYTarea` en el repo): guarda el PDF fuera de la tx (rollback manual en `catch`), y en **una sola `$transaction`**: findOrCreate `Tarea` del proyecto cuyo `nombre = rubro.nombre` (se reutiliza entre OC del mismo rubro; no se crean tareas extra) → `create` de la Cotización independiente (sin versionado `REEMPLAZADA`) → `create` de la `SolicitudCompra`. Deriva `clienteId` del proyecto. Rubro: `rubroId` o `rubroNombre` (findOrCreate).
+  - **PDF obligatorio**: `ParseFilePipe({ fileIsRequired: true, ... })` (mismo validador built-in de Nest, por `mimetype`, que la OP).
+  - **Aprobación** (`aprobacion/`): espejo de la OP. `transiciones-solicitud-compra.ts`, CAS `cambiarEstado` + historial, `validarEncargadoDelSector` (usa `usuario.sectoresEncargado.includes(oc.sectorId)`), auditoría por transición, y emisión de evento. Endpoints: `POST :id/enviar` (cualquier autenticado), `/aprobar` y `/rechazar` `@Roles(ENCARGADO)`, `/anular` `@Roles(ADMIN, ENCARGADO)`, `GET :id/historial`.
+  - **Borrado**: `DELETE :id` solo en BORRADOR; borra también su Cotización (1:1) en una tx, conserva la Tarea.
+- **Notificación**: evento genérico `SOLICITUD_COMPRA_ESTADO_CAMBIADO` + oyente nuevo en `notificaciones/` (fail-soft, un solo mail por transición), plantillas en `plantillas-solicitud-compra.ts` (destinatarios SOLICITANTE / ENCARGADO_SECTOR). Mismo `CorreoService` (Graph, inactivo en prod sin credenciales Azure).
+
+**Cotizaciones — cambios:**
+- Se **eliminó** el endpoint público `POST /cotizaciones` (y `CotizacionesService.crear` + el DTO de creación): una cotización solo nace desde el flujo de OC. Los `GET` de lectura se mantienen.
+- Nuevo `GET /cotizaciones` (listado global enriquecido para la búsqueda/reutilización): devuelve `proyectoNombre`, `proveedorNombre`, `rubroNombre` (= `tarea.nombre`), para que el frontend busque sin N+1.
+
+**Auditoría**: acciones nuevas en `acciones-auditoria.constantes.ts` (CREAR/ACTUALIZAR/ELIMINAR_RUBRO, CREAR/ELIMINAR_SOLICITUD_COMPRA, ENVIAR/APROBAR/RECHAZAR/ANULAR_SOLICITUD_COMPRA).
+
+**Verificado (2026-09-30)**: `build` + `lint` limpios; la app bootea con todas las rutas mapeadas; **prueba E2E por API real (Node fetch): 26/26 checks OK** — creación OC→Cotización+Tarea, reutilización de tarea con cotización independiente, enviar→aprobar por encargado del sector, historial/auditoría, 403 por rol, 409 transición inválida, `POST /cotizaciones` → 404, búsqueda global con nombres, y control de saldo OP>monto → 422.
+
+**Decisiones tomadas con el usuario**: nombre de código `SolicitudCompra` (no renombrar la OP); OC con sector (reuso total de permisos + notificaciones); cada OC su propia cotización (sin versionado); aprobación reusando el mecanismo actual; `POST /cotizaciones` cerrado.
+
+**Diferido a propósito en Fase 1**: la **edición** de una OC (editaría/desincronizaría la cotización enlazada) — se usa eliminar+recrear en BORRADOR.
+
+**Fase 2 (próxima sesión, no implementada)**: OC aprobada → botón "Crear Orden de Pago" con datos precargados (vía el FK `solicitudCompraId`); "Pago único" (crear OC+OP en un flujo, caso SEG eMove); **alarma monto OP > monto OC** (advertencia/confirmación/bloqueo, a decidir).
+
+---
+
 ## Plan de etapas
 
 ### Etapa 1 — Scaffolding y configuración base

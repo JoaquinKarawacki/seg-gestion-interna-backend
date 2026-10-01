@@ -1,28 +1,14 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { Prisma } from '../../generated/prisma/client';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { CotizacionModel } from '../../generated/prisma/models';
 import { ALMACENAMIENTO } from '../almacenamiento/puertos/almacenamiento.puerto';
-import type {
-  ArchivoAlmacenado,
-  IAlmacenamiento,
-} from '../almacenamiento/puertos/almacenamiento.puerto';
-import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
-import { AuditoriaService } from '../auditoria/auditoria.service';
-import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
-import { TAREAS_REPOSITORIO } from '../tareas/interfaces/tareas-repositorio.interface';
-import type { ITareasRepositorio } from '../tareas/interfaces/tareas-repositorio.interface';
-import { CrearCotizacionDto } from './dtos/crear-cotizacion.dto';
+import type { IAlmacenamiento } from '../almacenamiento/puertos/almacenamiento.puerto';
+import { RespuestaCotizacionBusquedaDto } from './dtos/respuesta-cotizacion-busqueda.dto';
 import { RespuestaCotizacionDto } from './dtos/respuesta-cotizacion.dto';
 import { COTIZACIONES_REPOSITORIO } from './interfaces/cotizaciones-repositorio.interface';
-import type { ICotizacionesRepositorio } from './interfaces/cotizaciones-repositorio.interface';
-
-const CODIGO_REFERENCIA_INVALIDA = 'P2003';
-const CARPETA_ARCHIVOS = 'cotizaciones';
+import type {
+  CotizacionConRelaciones,
+  ICotizacionesRepositorio,
+} from './interfaces/cotizaciones-repositorio.interface';
 
 export interface ArchivoDescargado {
   buffer: Buffer;
@@ -36,9 +22,6 @@ export class CotizacionesService {
     private readonly cotizacionesRepositorio: ICotizacionesRepositorio,
     @Inject(ALMACENAMIENTO)
     private readonly almacenamiento: IAlmacenamiento,
-    @Inject(TAREAS_REPOSITORIO)
-    private readonly tareasRepositorio: ITareasRepositorio,
-    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async buscarPorId(id: string): Promise<RespuestaCotizacionDto> {
@@ -74,48 +57,11 @@ export class CotizacionesService {
     return this.mapearRespuesta(cotizacion);
   }
 
-  async crear(
-    dto: CrearCotizacionDto,
-    usuarioActual: UsuarioAutenticado,
-    archivo?: Express.Multer.File,
-  ): Promise<RespuestaCotizacionDto> {
-    await this.validarTareaPerteneceAlProyecto(dto.tareaId, dto.proyectoId);
-
-    const archivoGuardado = archivo
-      ? await this.almacenamiento.guardar(
-          archivo.buffer,
-          archivo.originalname,
-          CARPETA_ARCHIVOS,
-        )
-      : null;
-
-    try {
-      const cotizacion = await this.ejecutarOMapearReferenciaInvalida(() =>
-        this.cotizacionesRepositorio.crearNuevaVersion({
-          proyectoId: dto.proyectoId,
-          tareaId: dto.tareaId,
-          proveedorId: dto.proveedorId,
-          montoTotal: new Prisma.Decimal(dto.montoTotal),
-          moneda: dto.moneda,
-          ivaIncluido: dto.ivaIncluido,
-          archivoPdfRuta: archivoGuardado?.referencia ?? null,
-        }),
-      );
-
-      await this.auditoriaService.registrar({
-        usuarioId: usuarioActual.id,
-        usuarioEmail: usuarioActual.email,
-        accion: ACCIONES_AUDITORIA.CREAR_COTIZACION,
-        descripcion: `Creó una cotización de ${cotizacion.montoTotal.toString()} ${cotizacion.moneda} para el proyecto ${cotizacion.proyectoId}`,
-        entidad: 'Cotizacion',
-        entidadId: cotizacion.id,
-      });
-
-      return this.mapearRespuesta(cotizacion);
-    } catch (error) {
-      await this.revertirArchivoGuardado(archivoGuardado);
-      throw error;
-    }
+  // Listado global enriquecido para buscar/reutilizar cotizaciones anteriores.
+  async listarParaBusqueda(): Promise<RespuestaCotizacionBusquedaDto[]> {
+    const cotizaciones =
+      await this.cotizacionesRepositorio.buscarTodasParaBusqueda();
+    return cotizaciones.map((cotizacion) => this.mapearBusqueda(cotizacion));
   }
 
   async descargarArchivo(id: string): Promise<ArchivoDescargado> {
@@ -132,20 +78,6 @@ export class CotizacionesService {
     return { buffer, nombreArchivo: `cotizacion-${cotizacion.id}.pdf` };
   }
 
-  private async validarTareaPerteneceAlProyecto(
-    tareaId: string,
-    proyectoId: string,
-  ): Promise<void> {
-    const tarea = await this.tareasRepositorio.buscarPorId(tareaId);
-
-    if (tarea && tarea.proyectoId !== proyectoId) {
-      throw new UnprocessableEntityException({
-        error: 'TAREA_NO_PERTENECE_AL_PROYECTO',
-        mensaje: 'La tarea indicada no pertenece al proyecto indicado',
-      });
-    }
-  }
-
   private async obtenerCotizacionOFallar(id: string): Promise<CotizacionModel> {
     const cotizacion = await this.cotizacionesRepositorio.buscarPorId(id);
 
@@ -159,34 +91,6 @@ export class CotizacionesService {
     return cotizacion;
   }
 
-  private async revertirArchivoGuardado(
-    archivoGuardado: ArchivoAlmacenado | null,
-  ): Promise<void> {
-    if (archivoGuardado) {
-      await this.almacenamiento.eliminar(archivoGuardado.referencia);
-    }
-  }
-
-  private async ejecutarOMapearReferenciaInvalida(
-    operacion: () => Promise<CotizacionModel>,
-  ): Promise<CotizacionModel> {
-    try {
-      return await operacion();
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === CODIGO_REFERENCIA_INVALIDA
-      ) {
-        throw new NotFoundException({
-          error: 'PROYECTO_O_PROVEEDOR_NO_ENCONTRADO',
-          mensaje: 'El proyecto o el proveedor indicado no existen',
-        });
-      }
-
-      throw error;
-    }
-  }
-
   private mapearRespuesta(cotizacion: CotizacionModel): RespuestaCotizacionDto {
     return {
       id: cotizacion.id,
@@ -198,6 +102,26 @@ export class CotizacionesService {
       ivaIncluido: cotizacion.ivaIncluido,
       estado: cotizacion.estado,
       archivoPdfRuta: cotizacion.archivoPdfRuta,
+    };
+  }
+
+  private mapearBusqueda(
+    cotizacion: CotizacionConRelaciones,
+  ): RespuestaCotizacionBusquedaDto {
+    return {
+      id: cotizacion.id,
+      proyectoId: cotizacion.proyectoId,
+      proyectoNombre: cotizacion.proyecto.nombre,
+      proveedorId: cotizacion.proveedorId,
+      proveedorNombre: cotizacion.proveedor.nombre,
+      tareaId: cotizacion.tareaId,
+      rubroNombre: cotizacion.tarea.nombre,
+      montoTotal: cotizacion.montoTotal.toString(),
+      moneda: cotizacion.moneda,
+      ivaIncluido: cotizacion.ivaIncluido,
+      estado: cotizacion.estado,
+      archivoPdfRuta: cotizacion.archivoPdfRuta,
+      creadoEn: cotizacion.creadoEn,
     };
   }
 }

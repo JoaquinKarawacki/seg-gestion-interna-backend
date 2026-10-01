@@ -13,7 +13,9 @@ import { OrdenesCompraModulo } from './ordenes-compra/ordenes-compra.modulo';
 import { PrismaModulo } from './prisma/prisma.modulo';
 import { ProveedoresModulo } from './proveedores/proveedores.modulo';
 import { ProyectosModulo } from './proyectos/proyectos.modulo';
+import { RubrosModulo } from './rubros/rubros.modulo';
 import { SectoresModulo } from './sectores/sectores.modulo';
+import { SolicitudesCompraModulo } from './solicitudes-compra/solicitudes-compra.modulo';
 import { TareasModulo } from './tareas/tareas.modulo';
 import { TiposCambioModulo } from './tipos-cambio/tipos-cambio.modulo';
 
@@ -32,6 +34,8 @@ import { TiposCambioModulo } from './tipos-cambio/tipos-cambio.modulo';
     ProyectosModulo,
     TareasModulo,
     CotizacionesModulo,
+    RubrosModulo,
+    SolicitudesCompraModulo,
     OrdenesCompraModulo,
     ComentariosModulo,
     NotificacionesModulo,

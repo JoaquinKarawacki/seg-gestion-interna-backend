@@ -7,6 +7,8 @@ import { Moneda, RolUsuario } from '../generated/prisma/enums';
 const RONDAS_SALT = 10;
 const CONTRASENA_DE_PRUEBA = 'Cambiar123!';
 
+const RUBROS_BASE = ['Equipos', 'Instalación', 'Monitoreo'];
+
 const USUARIOS_DE_PRUEBA = [
   {
     nombre: 'Solicitante de Prueba',
@@ -43,6 +45,16 @@ async function main(): Promise<void> {
       where: { email: usuario.email },
       update: {},
       create: { ...usuario, contrasenaHash },
+    });
+  }
+
+  // Rubros base del catálogo. "Otros" no se seedea: es una opción de la UI
+  // que permite crear un rubro personalizado desde el flujo de Orden de Compra.
+  for (const nombre of RUBROS_BASE) {
+    await prisma.rubro.upsert({
+      where: { nombre },
+      update: {},
+      create: { nombre },
     });
   }
 
