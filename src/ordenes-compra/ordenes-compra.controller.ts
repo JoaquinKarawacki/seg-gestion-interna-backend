@@ -55,10 +55,16 @@ export class OrdenesCompraController {
     @Query('pagina') paginaQuery?: string,
     @Query('porPagina') porPaginaQuery?: string,
   ): Promise<RespuestaLista<RespuestaOrdenCompraDto>> {
-    const pagina = Math.max(1, Number.parseInt(paginaQuery ?? '', 10) || PAGINA_DEFECTO);
+    const pagina = Math.max(
+      1,
+      Number.parseInt(paginaQuery ?? '', 10) || PAGINA_DEFECTO,
+    );
     const porPagina = Math.min(
       POR_PAGINA_MAXIMO,
-      Math.max(1, Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO),
+      Math.max(
+        1,
+        Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO,
+      ),
     );
     // "sectorId" acepta una lista separada por comas (ej. un encargado de
     // varios sectores viendo "mis pendientes de aprobación" en el dashboard).

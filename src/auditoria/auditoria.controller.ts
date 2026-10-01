@@ -25,10 +25,16 @@ export class AuditoriaController {
     @Query('pagina') paginaQuery?: string,
     @Query('porPagina') porPaginaQuery?: string,
   ): Promise<RespuestaLista<RespuestaAuditoriaDto>> {
-    const pagina = Math.max(1, Number.parseInt(paginaQuery ?? '', 10) || PAGINA_DEFECTO);
+    const pagina = Math.max(
+      1,
+      Number.parseInt(paginaQuery ?? '', 10) || PAGINA_DEFECTO,
+    );
     const porPagina = Math.min(
       POR_PAGINA_MAXIMO,
-      Math.max(1, Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO),
+      Math.max(
+        1,
+        Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO,
+      ),
     );
 
     const { datos, total } = await this.auditoriaService.listar(

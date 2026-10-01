@@ -12,7 +12,10 @@ export class TiposCambioRepositorio implements ITiposCambioRepositorio {
     return this.prisma.tipoCambio.findMany({ orderBy: { moneda: 'asc' } });
   }
 
-  async actualizar(moneda: Moneda, valorEnUyu: number): Promise<TipoCambioModel> {
+  async actualizar(
+    moneda: Moneda,
+    valorEnUyu: number,
+  ): Promise<TipoCambioModel> {
     return this.prisma.tipoCambio.upsert({
       where: { moneda },
       update: { valorEnUyu },
