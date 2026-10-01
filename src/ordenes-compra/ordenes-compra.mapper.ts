@@ -16,6 +16,7 @@ export function mapearRespuestaOrdenCompra(
     proyectoId: orden.proyectoId,
     tareaId: orden.tareaId,
     cotizacionId: orden.cotizacionId,
+    solicitudCompraId: orden.solicitudCompraId,
     moneda: orden.moneda,
     monto: orden.monto.toString(),
     concepto: orden.concepto,

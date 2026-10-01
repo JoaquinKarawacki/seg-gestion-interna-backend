@@ -7,7 +7,11 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
-import { EstadoOC, RolUsuario } from '../../generated/prisma/enums';
+import {
+  EstadoOC,
+  EstadoSolicitudCompra,
+  RolUsuario,
+} from '../../generated/prisma/enums';
 import type { OrdenCompraModel } from '../../generated/prisma/models';
 import { ALMACENAMIENTO } from '../almacenamiento/puertos/almacenamiento.puerto';
 import type {
@@ -18,6 +22,8 @@ import { COTIZACIONES_REPOSITORIO } from '../cotizaciones/interfaces/cotizacione
 import type { ICotizacionesRepositorio } from '../cotizaciones/interfaces/cotizaciones-repositorio.interface';
 import { PROYECTOS_REPOSITORIO } from '../proyectos/interfaces/proyectos-repositorio.interface';
 import type { IProyectosRepositorio } from '../proyectos/interfaces/proyectos-repositorio.interface';
+import { SOLICITUDES_COMPRA_REPOSITORIO } from '../solicitudes-compra/interfaces/solicitudes-compra-repositorio.interface';
+import type { ISolicitudesCompraRepositorio } from '../solicitudes-compra/interfaces/solicitudes-compra-repositorio.interface';
 import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
@@ -57,6 +63,8 @@ export class OrdenesCompraService {
     private readonly cotizacionesRepositorio: ICotizacionesRepositorio,
     @Inject(PROYECTOS_REPOSITORIO)
     private readonly proyectosRepositorio: IProyectosRepositorio,
+    @Inject(SOLICITUDES_COMPRA_REPOSITORIO)
+    private readonly solicitudesCompraRepositorio: ISolicitudesCompraRepositorio,
     @Inject(ALMACENAMIENTO)
     private readonly almacenamiento: IAlmacenamiento,
     private readonly cadenaValidacionOC: CadenaValidacionOC,
@@ -89,13 +97,18 @@ export class OrdenesCompraService {
     usuario: UsuarioAutenticado,
     factura?: Express.Multer.File,
   ): Promise<RespuestaOrdenCompraDto> {
-    const jerarquia = await this.derivarJerarquia(dto.cotizacionId);
+    // Si la OP se genera desde una orden de compra (SolicitudCompra) aprobada,
+    // la cotización efectiva es la de esa OC (relación 1:1); si no, se usa la
+    // que venga en el DTO.
+    const cotizacionId = await this.resolverCotizacion(dto);
+    const jerarquia = await this.derivarJerarquia(cotizacionId ?? undefined);
     const monto = new Prisma.Decimal(dto.monto);
 
     await this.cadenaValidacionOC.ejecutar({
       proveedorId: dto.proveedorId,
-      cotizacionId: dto.cotizacionId ?? null,
+      cotizacionId,
       monto,
+      confirmarExcesoMonto: dto.confirmarExcesoMonto ?? false,
     });
 
     const facturaGuardada = factura
@@ -117,7 +130,8 @@ export class OrdenesCompraService {
           clienteId: jerarquia.clienteId,
           proyectoId: jerarquia.proyectoId,
           tareaId: jerarquia.tareaId,
-          cotizacionId: dto.cotizacionId ?? null,
+          cotizacionId,
+          solicitudCompraId: dto.solicitudCompraId ?? null,
           moneda: dto.moneda,
           monto,
           concepto: dto.concepto,
@@ -133,7 +147,13 @@ export class OrdenesCompraService {
         usuarioId: usuario.id,
         usuarioEmail: usuario.email,
         accion: ACCIONES_AUDITORIA.CREAR_ORDEN_COMPRA,
-        descripcion: `Creó la orden de compra #${orden.numero}`,
+        descripcion: `Creó la orden de compra #${orden.numero}${
+          dto.solicitudCompraId
+            ? ' (generada desde una orden de compra aprobada)'
+            : ''
+        }${
+          dto.confirmarExcesoMonto ? ' con confirmación de exceso de monto' : ''
+        }`,
         entidad: 'OrdenCompra',
         entidadId: orden.id,
       });
@@ -270,6 +290,41 @@ export class OrdenesCompraService {
       entidad: 'OrdenCompra',
       entidadId: orden.id,
     });
+  }
+
+  /**
+   * Determina qué cotización usar al crear una Orden de Pago.
+   * - Sin `solicitudCompraId`: flujo clásico, se usa la cotización del DTO (o null).
+   * - Con `solicitudCompraId`: la OP se genera desde una Orden de Compra; se valida
+   *   que exista y esté APROBADA, y se devuelve su cotización (relación 1:1).
+   */
+  private async resolverCotizacion(
+    dto: CrearOrdenCompraDto,
+  ): Promise<string | null> {
+    if (!dto.solicitudCompraId) {
+      return dto.cotizacionId ?? null;
+    }
+
+    const solicitud = await this.solicitudesCompraRepositorio.buscarPorId(
+      dto.solicitudCompraId,
+    );
+
+    if (!solicitud) {
+      throw new NotFoundException({
+        error: 'SOLICITUD_COMPRA_NO_ENCONTRADA',
+        mensaje: 'No existe una orden de compra con ese ID',
+      });
+    }
+
+    if (solicitud.estado !== EstadoSolicitudCompra.APROBADO) {
+      throw new UnprocessableEntityException({
+        error: 'OC_NO_APROBADA',
+        mensaje:
+          'Solo se puede generar una orden de pago desde una orden de compra aprobada',
+      });
+    }
+
+    return solicitud.cotizacionId;
   }
 
   private async derivarJerarquia(

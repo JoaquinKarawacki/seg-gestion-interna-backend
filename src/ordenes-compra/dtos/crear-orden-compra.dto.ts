@@ -31,6 +31,10 @@ export class CrearOrdenCompraDto {
   @IsUUID()
   cotizacionId?: string;
 
+  @IsOptional()
+  @IsUUID()
+  solicitudCompraId?: string;
+
   @IsEnum(Moneda)
   moneda!: Moneda;
 
@@ -57,4 +61,13 @@ export class CrearOrdenCompraDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  // Override explícito de la alarma de monto: cuando el monto supera el de la
+  // orden de compra vinculada, el backend bloquea con 422 MONTO_EXCEDE_COTIZACION;
+  // el frontend muestra la advertencia y reenvía con este flag en true para
+  // confirmar y permitir el exceso.
+  @Transform(({ value }) => convertirATexto(value))
+  @IsOptional()
+  @IsBoolean()
+  confirmarExcesoMonto?: boolean;
 }

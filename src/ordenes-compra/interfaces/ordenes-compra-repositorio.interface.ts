@@ -23,6 +23,7 @@ export interface DatosCrearOrdenCompra {
   proyectoId: string | null;
   tareaId: string | null;
   cotizacionId: string | null;
+  solicitudCompraId?: string | null;
   moneda: Moneda;
   monto: Prisma.Decimal;
   concepto: string;

@@ -40,7 +40,14 @@ export class ValidarMontoNoExcedeCotizacionEslabon extends EslabonValidacionOCBa
       );
     const montoTotalConNueva = montoYaComprometido.add(datos.monto);
 
-    if (montoTotalConNueva.greaterThan(cotizacion.montoTotal)) {
+    const excedeCotizacion = montoTotalConNueva.greaterThan(
+      cotizacion.montoTotal,
+    );
+
+    // Advertencia + confirmar: si excede pero el usuario ya confirmó el exceso,
+    // se permite. Sin confirmación, se bloquea para que el frontend muestre la
+    // advertencia y reenvíe con confirmarExcesoMonto.
+    if (excedeCotizacion && !datos.confirmarExcesoMonto) {
       throw new UnprocessableEntityException({
         error: 'MONTO_EXCEDE_COTIZACION',
         mensaje:

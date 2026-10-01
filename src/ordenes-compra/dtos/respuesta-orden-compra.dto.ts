@@ -17,6 +17,7 @@ export class RespuestaOrdenCompraDto {
   proyectoId!: string | null;
   tareaId!: string | null;
   cotizacionId!: string | null;
+  solicitudCompraId!: string | null;
   moneda!: Moneda;
   monto!: string;
   concepto!: string;
