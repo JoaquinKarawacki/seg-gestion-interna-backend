@@ -337,6 +337,10 @@ model SolicitudCompra {
   observaciones    String?
   archivoPdfRuta   String                           @map("archivo_pdf_ruta")
   estado           EstadoSolicitudCompra            @default(BORRADOR)
+  // Pago único: al aprobar esta OC se genera automáticamente una Orden de Pago por el
+  // total, con esta forma de pago. Ver src/ordenes-compra/oyentes/solicitud-compra-aprobada.oyente.ts
+  esPagoUnico        Boolean   @default(false) @map("es_pago_unico")
+  pagoUnicoFormaPago FormaPago? @map("pago_unico_forma_pago")
   ordenesPago      OrdenCompra[]
   historialEstados HistorialEstadoSolicitudCompra[]
   creadoEn         DateTime                         @default(now()) @map("creado_en")

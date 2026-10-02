@@ -76,6 +76,8 @@ export class SolicitudesCompraRepositorio implements ISolicitudesCompraRepositor
           ivaIncluido: datos.ivaIncluido,
           observaciones: datos.observaciones,
           archivoPdfRuta: datos.archivoPdfRuta,
+          esPagoUnico: datos.esPagoUnico,
+          pagoUnicoFormaPago: datos.pagoUnicoFormaPago,
         },
       });
     });

@@ -92,6 +92,14 @@ export class SolicitudesCompraService {
       });
     }
 
+    // Pago único: la forma de pago es obligatoria porque la OP se genera con ella al aprobar.
+    if (dto.esPagoUnico && !dto.pagoUnicoFormaPago) {
+      throw new UnprocessableEntityException({
+        error: 'FORMA_PAGO_REQUERIDA_PAGO_UNICO',
+        mensaje: 'Indicá la forma de pago para generar el pago único',
+      });
+    }
+
     const rubro = await this.resolverRubro(dto);
     const monto = new Prisma.Decimal(dto.monto);
 
@@ -119,6 +127,8 @@ export class SolicitudesCompraService {
           ivaIncluido: dto.ivaIncluido,
           observaciones: dto.observaciones ?? null,
           archivoPdfRuta: adjuntoGuardado.referencia,
+          esPagoUnico: dto.esPagoUnico ?? false,
+          pagoUnicoFormaPago: dto.pagoUnicoFormaPago ?? null,
         }),
       );
 

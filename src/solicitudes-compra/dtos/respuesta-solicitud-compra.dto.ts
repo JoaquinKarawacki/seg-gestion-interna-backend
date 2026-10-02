@@ -1,5 +1,6 @@
 import {
   EstadoSolicitudCompra,
+  FormaPago,
   Moneda,
   TipoOC,
 } from '../../../generated/prisma/enums';
@@ -25,4 +26,6 @@ export class RespuestaSolicitudCompraDto {
   observaciones!: string | null;
   archivoPdfRuta!: string;
   estado!: EstadoSolicitudCompra;
+  esPagoUnico!: boolean;
+  pagoUnicoFormaPago!: FormaPago | null;
 }

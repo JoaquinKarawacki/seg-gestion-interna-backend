@@ -9,7 +9,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { Moneda, TipoOC } from '../../../generated/prisma/enums';
+import { FormaPago, Moneda, TipoOC } from '../../../generated/prisma/enums';
 
 const aBooleano = (valor: unknown) => valor === true || valor === 'true';
 
@@ -60,4 +60,16 @@ export class CrearSolicitudCompraDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  // Pago único: si es true, al aprobar la OC se genera sola una Orden de Pago por el
+  // total con `pagoUnicoFormaPago`. El service valida que la forma de pago venga cuando
+  // esPagoUnico es true (FORMA_PAGO_REQUERIDA_PAGO_UNICO).
+  @Transform(({ value }) => aBooleano(value))
+  @IsOptional()
+  @IsBoolean()
+  esPagoUnico?: boolean;
+
+  @IsOptional()
+  @IsEnum(FormaPago)
+  pagoUnicoFormaPago?: FormaPago;
 }

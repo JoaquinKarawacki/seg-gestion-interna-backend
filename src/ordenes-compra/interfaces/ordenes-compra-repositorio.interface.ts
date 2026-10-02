@@ -51,6 +51,9 @@ export interface DatosActualizarOrdenCompra {
 export interface FiltrosOrdenCompra {
   proyectoId?: string;
   cotizacionId?: string;
+  // OPs generadas desde una OC (SolicitudCompra). Se usa para la idempotencia del
+  // pago único: contar las OPs ya ligadas a una OC puntual.
+  solicitudCompraId?: string;
   estado?: EstadoOC;
   sectorId?: string | string[];
   solicitanteId?: string;

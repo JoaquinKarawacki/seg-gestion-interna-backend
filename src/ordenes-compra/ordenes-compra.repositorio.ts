@@ -119,6 +119,7 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
       where: {
         proyectoId: filtros.proyectoId,
         cotizacionId: filtros.cotizacionId,
+        solicitudCompraId: filtros.solicitudCompraId,
         estado: filtros.estado,
         sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,
@@ -134,6 +135,7 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
       where: {
         proyectoId: filtros.proyectoId,
         cotizacionId: filtros.cotizacionId,
+        solicitudCompraId: filtros.solicitudCompraId,
         estado: filtros.estado,
         sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,

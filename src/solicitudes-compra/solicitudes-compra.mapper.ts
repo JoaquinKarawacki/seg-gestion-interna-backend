@@ -25,5 +25,7 @@ export function mapearRespuestaSolicitudCompra(
     observaciones: solicitud.observaciones,
     archivoPdfRuta: solicitud.archivoPdfRuta,
     estado: solicitud.estado,
+    esPagoUnico: solicitud.esPagoUnico,
+    pagoUnicoFormaPago: solicitud.pagoUnicoFormaPago,
   };
 }

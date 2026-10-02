@@ -1,6 +1,7 @@
 import { Prisma } from '../../../generated/prisma/client';
 import {
   EstadoSolicitudCompra,
+  FormaPago,
   Moneda,
   TipoOC,
 } from '../../../generated/prisma/enums';
@@ -31,6 +32,8 @@ export interface DatosCrearSolicitudConCotizacion {
   ivaIncluido: boolean;
   observaciones: string | null;
   archivoPdfRuta: string;
+  esPagoUnico: boolean;
+  pagoUnicoFormaPago: FormaPago | null;
 }
 
 export interface FiltrosSolicitudCompra {
