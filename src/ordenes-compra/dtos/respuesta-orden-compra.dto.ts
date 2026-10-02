@@ -14,17 +14,18 @@ export class RespuestaOrdenCompraDto {
   sectorId!: string;
   proveedorId!: string;
   clienteId!: string | null;
-  proyectoId!: string | null;
-  tareaId!: string | null;
-  cotizacionId!: string | null;
-  solicitudCompraId!: string | null;
+  proyectoId!: string;
+  rubroId!: string;
+  tareaId!: string;
+  cotizacionId!: string;
   moneda!: Moneda;
   monto!: string;
   concepto!: string;
-  formaPago!: FormaPago;
   pagaIva!: boolean;
   ivaIncluido!: boolean;
   observaciones!: string | null;
-  facturaPdfRuta!: string | null;
+  archivoPdfRuta!: string;
   estado!: EstadoOC;
+  esPagoUnico!: boolean;
+  pagoUnicoFormaPago!: FormaPago | null;
 }

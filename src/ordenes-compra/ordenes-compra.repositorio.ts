@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '../../generated/prisma/client';
 import { EstadoOC } from '../../generated/prisma/enums';
 import {
   HistorialEstadoOCModel,
   OrdenCompraModel,
 } from '../../generated/prisma/models';
 import {
-  DatosActualizarOrdenCompra,
-  DatosCrearOrdenCompra,
+  DatosCrearSolicitudConCotizacion,
   FiltrosOrdenCompra,
   IOrdenesCompraRepositorio,
   PaginacionOrdenCompra,
@@ -31,35 +29,58 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
     return this.prisma.ordenCompra.findUnique({ where: { id } });
   }
 
-  async buscarTodos(): Promise<OrdenCompraModel[]> {
-    return this.prisma.ordenCompra.findMany({ orderBy: { numero: 'desc' } });
-  }
-
-  async crear(datos: DatosCrearOrdenCompra): Promise<OrdenCompraModel> {
-    return this.prisma.ordenCompra.create({ data: datos });
-  }
-
-  async actualizar(
-    id: string,
-    datos: DatosActualizarOrdenCompra,
+  // Crea, en una sola transacción, la Tarea del rubro (reutilizándola si ya
+  // existe en el proyecto), la Cotización independiente (1:1 con la OC) y la
+  // Orden de Compra que las enlaza. El PDF ya se guardó fuera de la tx.
+  async crearConCotizacionYTarea(
+    datos: DatosCrearSolicitudConCotizacion,
   ): Promise<OrdenCompraModel> {
-    return this.prisma.ordenCompra.update({ where: { id }, data: datos });
-  }
+    return this.prisma.$transaction(async (tx) => {
+      const tareaExistente = await tx.tarea.findFirst({
+        where: { proyectoId: datos.proyectoId, nombre: datos.rubroNombre },
+      });
 
-  async eliminar(id: string): Promise<void> {
-    await this.prisma.ordenCompra.delete({ where: { id } });
-  }
+      const tarea =
+        tareaExistente ??
+        (await tx.tarea.create({
+          data: { proyectoId: datos.proyectoId, nombre: datos.rubroNombre },
+        }));
 
-  async sumarMontoPorCotizacion(cotizacionId: string): Promise<Prisma.Decimal> {
-    const resultado = await this.prisma.ordenCompra.aggregate({
-      where: {
-        cotizacionId,
-        estado: { not: EstadoOC.ANULADO },
-      },
-      _sum: { monto: true },
+      const cotizacion = await tx.cotizacion.create({
+        data: {
+          proyectoId: datos.proyectoId,
+          tareaId: tarea.id,
+          proveedorId: datos.proveedorId,
+          montoTotal: datos.monto,
+          moneda: datos.moneda,
+          ivaIncluido: datos.ivaIncluido,
+          archivoPdfRuta: datos.archivoPdfRuta,
+        },
+      });
+
+      return tx.ordenCompra.create({
+        data: {
+          tipo: datos.tipo,
+          solicitanteId: datos.solicitanteId,
+          sectorId: datos.sectorId,
+          proveedorId: datos.proveedorId,
+          clienteId: datos.clienteId,
+          proyectoId: datos.proyectoId,
+          rubroId: datos.rubroId,
+          tareaId: tarea.id,
+          cotizacionId: cotizacion.id,
+          moneda: datos.moneda,
+          monto: datos.monto,
+          concepto: datos.concepto,
+          pagaIva: datos.pagaIva,
+          ivaIncluido: datos.ivaIncluido,
+          observaciones: datos.observaciones,
+          archivoPdfRuta: datos.archivoPdfRuta,
+          esPagoUnico: datos.esPagoUnico,
+          pagoUnicoFormaPago: datos.pagoUnicoFormaPago,
+        },
+      });
     });
-
-    return resultado._sum.monto ?? new Prisma.Decimal(0);
   }
 
   async cambiarEstado(
@@ -70,11 +91,8 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
     motivo?: string | null,
   ): Promise<OrdenCompraModel | null> {
     return this.prisma.$transaction(async (tx) => {
-      // Compare-and-swap: el UPDATE solo aplica si la orden sigue en el
-      // estado que ya se validó como punto de partida. Si otra transición
-      // concurrente la cambió mientras tanto, `count` da 0 y no se escribe
-      // nada — evita que dos transiciones casi simultáneas validen contra
-      // el mismo estado viejo y una termine pisando a la otra.
+      // Compare-and-swap: igual que en la OP, el UPDATE solo aplica si la OC
+      // sigue en el estado validado como punto de partida.
       const resultado = await tx.ordenCompra.updateMany({
         where: { id, estado: estadoAnterior },
         data: { estado: estadoNuevo },
@@ -107,8 +125,19 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
     });
   }
 
-  async contarComentariosAsociados(ordenCompraId: string): Promise<number> {
-    return this.prisma.comentario.count({ where: { ordenCompraId } });
+  // Al borrar una OC en BORRADOR se borra también su Cotización (1:1, creada
+  // por esta OC y aún sin Órdenes de Pago). La Tarea se conserva porque se
+  // comparte entre OCs del mismo rubro.
+  async eliminar(id: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const solicitud = await tx.ordenCompra.findUniqueOrThrow({
+        where: { id },
+        select: { cotizacionId: true },
+      });
+
+      await tx.ordenCompra.delete({ where: { id } });
+      await tx.cotizacion.delete({ where: { id: solicitud.cotizacionId } });
+    });
   }
 
   async buscarConFiltros(
@@ -118,8 +147,6 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
     return this.prisma.ordenCompra.findMany({
       where: {
         proyectoId: filtros.proyectoId,
-        cotizacionId: filtros.cotizacionId,
-        solicitudCompraId: filtros.solicitudCompraId,
         estado: filtros.estado,
         sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,
@@ -134,8 +161,6 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
     return this.prisma.ordenCompra.count({
       where: {
         proyectoId: filtros.proyectoId,
-        cotizacionId: filtros.cotizacionId,
-        solicitudCompraId: filtros.solicitudCompraId,
         estado: filtros.estado,
         sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,

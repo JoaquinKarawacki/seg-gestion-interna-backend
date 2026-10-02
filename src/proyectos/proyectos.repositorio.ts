@@ -42,7 +42,7 @@ export class ProyectosRepositorio implements IProyectosRepositorio {
     return this.prisma.tarea.count({ where: { proyectoId } });
   }
 
-  async contarOrdenesCompraAsociadas(proyectoId: string): Promise<number> {
-    return this.prisma.ordenCompra.count({ where: { proyectoId } });
+  async contarOrdenesPagoAsociadas(proyectoId: string): Promise<number> {
+    return this.prisma.ordenPago.count({ where: { proyectoId } });
   }
 }

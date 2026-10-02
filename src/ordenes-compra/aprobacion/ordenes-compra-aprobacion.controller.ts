@@ -20,9 +20,8 @@ import {
   RespuestaLista,
 } from '../../comun/tipos/respuesta-api.tipo';
 import { RespuestaOrdenCompraDto } from '../dtos/respuesta-orden-compra.dto';
-import { MotivoTransicionOpcionalDto } from './dtos/motivo-transicion-opcional.dto';
 import { MotivoTransicionDto } from './dtos/motivo-transicion.dto';
-import { RespuestaHistorialEstadoOCDto } from './dtos/respuesta-historial-estado-oc.dto';
+import { RespuestaHistorialOrdenCompraDto } from './dtos/respuesta-historial-orden-compra.dto';
 import { OrdenesCompraAprobacionService } from './ordenes-compra-aprobacion.service';
 
 type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
@@ -31,7 +30,7 @@ type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 @UseGuards(JwtGuardia, RolesGuardia)
 export class OrdenesCompraAprobacionController {
   constructor(
-    private readonly ordenesCompraAprobacionService: OrdenesCompraAprobacionService,
+    private readonly aprobacionService: OrdenesCompraAprobacionService,
   ) {}
 
   @Post(':id/enviar')
@@ -40,10 +39,7 @@ export class OrdenesCompraAprobacionController {
     @Param('id') id: string,
     @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraAprobacionService.enviar(
-      id,
-      solicitud.user,
-    );
+    const datos = await this.aprobacionService.enviar(id, solicitud.user);
     return { datos, mensaje: 'Orden de compra enviada correctamente' };
   }
 
@@ -54,10 +50,7 @@ export class OrdenesCompraAprobacionController {
     @Param('id') id: string,
     @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraAprobacionService.aprobar(
-      id,
-      solicitud.user,
-    );
+    const datos = await this.aprobacionService.aprobar(id, solicitud.user);
     return { datos, mensaje: 'Orden de compra aprobada correctamente' };
   }
 
@@ -69,58 +62,12 @@ export class OrdenesCompraAprobacionController {
     @Body() dto: MotivoTransicionDto,
     @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraAprobacionService.rechazar(
+    const datos = await this.aprobacionService.rechazar(
       id,
       solicitud.user,
       dto.motivo,
     );
     return { datos, mensaje: 'Orden de compra rechazada correctamente' };
-  }
-
-  @Post(':id/observar-pago')
-  @Roles(RolUsuario.PAGOS)
-  @HttpCode(HttpStatus.OK)
-  async observarPago(
-    @Param('id') id: string,
-    @Body() dto: MotivoTransicionDto,
-    @Req() solicitud: SolicitudAutenticada,
-  ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraAprobacionService.observarPago(
-      id,
-      solicitud.user,
-      dto.motivo,
-    );
-    return { datos, mensaje: 'Pago observado correctamente' };
-  }
-
-  @Post(':id/resolver-observacion')
-  @Roles(RolUsuario.PAGOS)
-  @HttpCode(HttpStatus.OK)
-  async resolverObservacion(
-    @Param('id') id: string,
-    @Body() dto: MotivoTransicionOpcionalDto,
-    @Req() solicitud: SolicitudAutenticada,
-  ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraAprobacionService.resolverObservacion(
-      id,
-      solicitud.user,
-      dto.motivo,
-    );
-    return { datos, mensaje: 'Observación resuelta correctamente' };
-  }
-
-  @Post(':id/confirmar-pago')
-  @Roles(RolUsuario.PAGOS)
-  @HttpCode(HttpStatus.OK)
-  async confirmarPago(
-    @Param('id') id: string,
-    @Req() solicitud: SolicitudAutenticada,
-  ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraAprobacionService.confirmarPago(
-      id,
-      solicitud.user,
-    );
-    return { datos, mensaje: 'Pago confirmado correctamente' };
   }
 
   @Post(':id/anular')
@@ -131,7 +78,7 @@ export class OrdenesCompraAprobacionController {
     @Body() dto: MotivoTransicionDto,
     @Req() solicitud: SolicitudAutenticada,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraAprobacionService.anular(
+    const datos = await this.aprobacionService.anular(
       id,
       solicitud.user,
       dto.motivo,
@@ -142,8 +89,8 @@ export class OrdenesCompraAprobacionController {
   @Get(':id/historial')
   async listarHistorial(
     @Param('id') id: string,
-  ): Promise<RespuestaLista<RespuestaHistorialEstadoOCDto>> {
-    const datos = await this.ordenesCompraAprobacionService.listarHistorial(id);
+  ): Promise<RespuestaLista<RespuestaHistorialOrdenCompraDto>> {
+    const datos = await this.aprobacionService.listarHistorial(id);
     return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
   }
 }

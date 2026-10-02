@@ -83,12 +83,12 @@ export class TareasService {
   async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
     const tarea = await this.obtenerTareaOFallar(id);
 
-    const [cotizacionesAsociadas, ordenesCompraAsociadas] = await Promise.all([
+    const [cotizacionesAsociadas, ordenesPagoAsociadas] = await Promise.all([
       this.tareasRepositorio.contarCotizacionesAsociadas(id),
-      this.tareasRepositorio.contarOrdenesCompraAsociadas(id),
+      this.tareasRepositorio.contarOrdenesPagoAsociadas(id),
     ]);
 
-    if (cotizacionesAsociadas > 0 || ordenesCompraAsociadas > 0) {
+    if (cotizacionesAsociadas > 0 || ordenesPagoAsociadas > 0) {
       throw new UnprocessableEntityException({
         error: 'TAREA_CON_REGISTROS_ASOCIADOS',
         mensaje:

@@ -39,6 +39,6 @@ export class RubrosRepositorio implements IRubrosRepositorio {
   }
 
   async contarSolicitudesAsociadas(rubroId: string): Promise<number> {
-    return this.prisma.solicitudCompra.count({ where: { rubroId } });
+    return this.prisma.ordenCompra.count({ where: { rubroId } });
   }
 }

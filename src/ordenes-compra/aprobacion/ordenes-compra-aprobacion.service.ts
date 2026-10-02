@@ -12,13 +12,13 @@ import { ACCIONES_AUDITORIA } from '../../auditoria/acciones-auditoria.constante
 import { AuditoriaService } from '../../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../../comun/interfaces/usuario-autenticado.interface';
 import { RespuestaOrdenCompraDto } from '../dtos/respuesta-orden-compra.dto';
-import { EVENTOS } from '../eventos/eventos.constantes';
+import { EVENTOS_ORDEN_COMPRA } from '../eventos/eventos.constantes';
 import type { EventoOrdenCompraEstadoCambiado } from '../eventos/orden-compra-estado-cambiado.evento';
 import { ORDENES_COMPRA_REPOSITORIO } from '../interfaces/ordenes-compra-repositorio.interface';
 import type { IOrdenesCompraRepositorio } from '../interfaces/ordenes-compra-repositorio.interface';
 import { mapearRespuestaOrdenCompra } from '../ordenes-compra.mapper';
-import { RespuestaHistorialEstadoOCDto } from './dtos/respuesta-historial-estado-oc.dto';
-import { TRANSICIONES_VALIDAS_OC } from './transiciones-oc';
+import { RespuestaHistorialOrdenCompraDto } from './dtos/respuesta-historial-orden-compra.dto';
+import { TRANSICIONES_VALIDAS_ORDEN_COMPRA } from './transiciones-orden-compra';
 
 @Injectable()
 export class OrdenesCompraAprobacionService {
@@ -33,9 +33,9 @@ export class OrdenesCompraAprobacionService {
     id: string,
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
+    const solicitud = await this.obtenerSolicitudOFallar(id);
     const resultado = await this.ejecutarTransicion(
-      orden,
+      solicitud,
       EstadoOC.PENDIENTE,
       usuario,
     );
@@ -54,10 +54,10 @@ export class OrdenesCompraAprobacionService {
     id: string,
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
-    this.validarEncargadoDelSector(orden, usuario);
+    const solicitud = await this.obtenerSolicitudOFallar(id);
+    this.validarEncargadoDelSector(solicitud, usuario);
     const resultado = await this.ejecutarTransicion(
-      orden,
+      solicitud,
       EstadoOC.APROBADO,
       usuario,
     );
@@ -77,10 +77,10 @@ export class OrdenesCompraAprobacionService {
     usuario: UsuarioAutenticado,
     motivo: string,
   ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
-    this.validarEncargadoDelSector(orden, usuario);
+    const solicitud = await this.obtenerSolicitudOFallar(id);
+    this.validarEncargadoDelSector(solicitud, usuario);
     const resultado = await this.ejecutarTransicion(
-      orden,
+      solicitud,
       EstadoOC.RECHAZADO,
       usuario,
       motivo,
@@ -96,86 +96,19 @@ export class OrdenesCompraAprobacionService {
     return resultado;
   }
 
-  async observarPago(
-    id: string,
-    usuario: UsuarioAutenticado,
-    motivo: string,
-  ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
-    const resultado = await this.ejecutarTransicion(
-      orden,
-      EstadoOC.PAGO_OBSERVADO,
-      usuario,
-      motivo,
-    );
-
-    await this.registrarAuditoriaTransicion(
-      ACCIONES_AUDITORIA.OBSERVAR_PAGO_ORDEN_COMPRA,
-      'Observó el pago de',
-      resultado,
-      usuario,
-    );
-
-    return resultado;
-  }
-
-  async resolverObservacion(
-    id: string,
-    usuario: UsuarioAutenticado,
-    motivo?: string,
-  ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
-    const resultado = await this.ejecutarTransicion(
-      orden,
-      EstadoOC.APROBADO,
-      usuario,
-      motivo,
-    );
-
-    await this.registrarAuditoriaTransicion(
-      ACCIONES_AUDITORIA.RESOLVER_OBSERVACION_ORDEN_COMPRA,
-      'Resolvió la observación de pago de',
-      resultado,
-      usuario,
-    );
-
-    return resultado;
-  }
-
-  async confirmarPago(
-    id: string,
-    usuario: UsuarioAutenticado,
-  ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
-    const resultado = await this.ejecutarTransicion(
-      orden,
-      EstadoOC.PAGADO,
-      usuario,
-    );
-
-    await this.registrarAuditoriaTransicion(
-      ACCIONES_AUDITORIA.CONFIRMAR_PAGO_ORDEN_COMPRA,
-      'Confirmó el pago de',
-      resultado,
-      usuario,
-    );
-
-    return resultado;
-  }
-
   async anular(
     id: string,
     usuario: UsuarioAutenticado,
     motivo: string,
   ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
+    const solicitud = await this.obtenerSolicitudOFallar(id);
 
     if (usuario.rol === RolUsuario.ENCARGADO) {
-      this.validarEncargadoDelSector(orden, usuario);
+      this.validarEncargadoDelSector(solicitud, usuario);
     }
 
     const resultado = await this.ejecutarTransicion(
-      orden,
+      solicitud,
       EstadoOC.ANULADO,
       usuario,
       motivo,
@@ -191,50 +124,10 @@ export class OrdenesCompraAprobacionService {
     return resultado;
   }
 
-  async marcarEnConsulta(
+  async listarHistorial(
     id: string,
-    usuario: UsuarioAutenticado,
-  ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
-    const resultado = await this.ejecutarTransicion(
-      orden,
-      EstadoOC.EN_CONSULTA,
-      usuario,
-    );
-
-    await this.registrarAuditoriaTransicion(
-      ACCIONES_AUDITORIA.MARCAR_EN_CONSULTA_ORDEN_COMPRA,
-      'Marcó en consulta',
-      resultado,
-      usuario,
-    );
-
-    return resultado;
-  }
-
-  async responderConsulta(
-    id: string,
-    usuario: UsuarioAutenticado,
-  ): Promise<RespuestaOrdenCompraDto> {
-    const orden = await this.obtenerOrdenOFallar(id);
-    const resultado = await this.ejecutarTransicion(
-      orden,
-      EstadoOC.PENDIENTE,
-      usuario,
-    );
-
-    await this.registrarAuditoriaTransicion(
-      ACCIONES_AUDITORIA.RESPONDER_CONSULTA_ORDEN_COMPRA,
-      'Respondió la consulta de',
-      resultado,
-      usuario,
-    );
-
-    return resultado;
-  }
-
-  async listarHistorial(id: string): Promise<RespuestaHistorialEstadoOCDto[]> {
-    await this.obtenerOrdenOFallar(id);
+  ): Promise<RespuestaHistorialOrdenCompraDto[]> {
+    await this.obtenerSolicitudOFallar(id);
     const historial = await this.ordenesCompraRepositorio.buscarHistorial(id);
 
     return historial.map((entrada) => ({
@@ -248,10 +141,10 @@ export class OrdenesCompraAprobacionService {
   }
 
   private validarEncargadoDelSector(
-    orden: OrdenCompraModel,
+    solicitud: OrdenCompraModel,
     usuario: UsuarioAutenticado,
   ): void {
-    if (!usuario.sectoresEncargado.includes(orden.sectorId)) {
+    if (!usuario.sectoresEncargado.includes(solicitud.sectorId)) {
       throw new ForbiddenException({
         error: 'SIN_PERMISO_SOBRE_SECTOR',
         mensaje: 'No tenés permiso sobre el sector de esta orden de compra',
@@ -260,31 +153,33 @@ export class OrdenesCompraAprobacionService {
   }
 
   private async ejecutarTransicion(
-    orden: OrdenCompraModel,
+    solicitud: OrdenCompraModel,
     estadoNuevo: EstadoOC,
     usuario: UsuarioAutenticado,
     motivo?: string,
   ): Promise<RespuestaOrdenCompraDto> {
-    const transicionesPermitidas = TRANSICIONES_VALIDAS_OC[orden.estado];
+    const transicionesPermitidas =
+      TRANSICIONES_VALIDAS_ORDEN_COMPRA[solicitud.estado];
 
     if (!transicionesPermitidas.includes(estadoNuevo)) {
       throw new ConflictException({
         error: 'TRANSICION_INVALIDA',
-        mensaje: `No se puede pasar de ${orden.estado} a ${estadoNuevo}`,
+        mensaje: `No se puede pasar de ${solicitud.estado} a ${estadoNuevo}`,
       });
     }
 
-    const estadoAnterior = orden.estado;
+    const estadoAnterior = solicitud.estado;
 
-    const ordenActualizada = await this.ordenesCompraRepositorio.cambiarEstado(
-      orden.id,
-      estadoAnterior,
-      estadoNuevo,
-      usuario.id,
-      motivo,
-    );
+    const solicitudActualizada =
+      await this.ordenesCompraRepositorio.cambiarEstado(
+        solicitud.id,
+        estadoAnterior,
+        estadoNuevo,
+        usuario.id,
+        motivo,
+      );
 
-    if (!ordenActualizada) {
+    if (!solicitudActualizada) {
       throw new ConflictException({
         error: 'TRANSICION_INVALIDA',
         mensaje:
@@ -293,33 +188,33 @@ export class OrdenesCompraAprobacionService {
     }
 
     this.emitirCambioDeEstado(
-      ordenActualizada,
+      solicitudActualizada,
       estadoAnterior,
       usuario.id,
       motivo,
     );
 
-    return mapearRespuestaOrdenCompra(ordenActualizada);
+    return mapearRespuestaOrdenCompra(solicitudActualizada);
   }
 
   private emitirCambioDeEstado(
-    orden: OrdenCompraModel,
+    solicitud: OrdenCompraModel,
     estadoAnterior: EstadoOC,
     usuarioId: string,
     motivo?: string,
   ): void {
     const evento: EventoOrdenCompraEstadoCambiado = {
-      ordenCompraId: orden.id,
-      numero: orden.numero,
+      ordenCompraId: solicitud.id,
+      numero: solicitud.numero,
       estadoAnterior,
-      estadoNuevo: orden.estado,
-      sectorId: orden.sectorId,
-      solicitanteId: orden.solicitanteId,
+      estadoNuevo: solicitud.estado,
+      sectorId: solicitud.sectorId,
+      solicitanteId: solicitud.solicitanteId,
       usuarioId,
       motivo: motivo ?? null,
     };
 
-    this.emisorEventos.emit(EVENTOS.ORDEN_COMPRA_ESTADO_CAMBIADO, evento);
+    this.emisorEventos.emit(EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO, evento);
   }
 
   private async registrarAuditoriaTransicion(
@@ -338,16 +233,16 @@ export class OrdenesCompraAprobacionService {
     });
   }
 
-  private async obtenerOrdenOFallar(id: string): Promise<OrdenCompraModel> {
-    const orden = await this.ordenesCompraRepositorio.buscarPorId(id);
+  private async obtenerSolicitudOFallar(id: string): Promise<OrdenCompraModel> {
+    const solicitud = await this.ordenesCompraRepositorio.buscarPorId(id);
 
-    if (!orden) {
+    if (!solicitud) {
       throw new NotFoundException({
         error: 'ORDEN_COMPRA_NO_ENCONTRADA',
         mensaje: 'No existe una orden de compra con ese ID',
       });
     }
 
-    return orden;
+    return solicitud;
   }
 }

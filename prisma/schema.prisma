@@ -18,37 +18,37 @@ enum RolUsuario {
 }
 
 model Sector {
-  id                String            @id @default(uuid())
-  nombre            String            @unique
-  usuarios          Usuario[]
-  encargados        Usuario[]         @relation("SectorEncargados")
-  proyectos         Proyecto[]
-  ordenesCompra     OrdenCompra[]
-  solicitudesCompra SolicitudCompra[]
-  creadoEn          DateTime          @default(now()) @map("creado_en")
-  actualizadoEn     DateTime          @updatedAt @map("actualizado_en")
+  id            String       @id @default(uuid())
+  nombre        String       @unique
+  usuarios      Usuario[]
+  encargados    Usuario[]    @relation("SectorEncargados")
+  proyectos     Proyecto[]
+  ordenesPago   OrdenPago[]
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime     @default(now()) @map("creado_en")
+  actualizadoEn DateTime     @updatedAt @map("actualizado_en")
 
   @@map("sectores")
 }
 
 model Usuario {
-  id                        String                           @id @default(uuid())
-  nombre                    String
-  email                     String                           @unique
-  contrasenaHash            String                           @map("contrasena_hash")
-  rol                       RolUsuario
-  activo                    Boolean                          @default(true)
-  sectorId                  String?                          @map("sector_id")
-  sector                    Sector?                          @relation(fields: [sectorId], references: [id])
-  sectoresEncargado         Sector[]                         @relation("SectorEncargados")
-  historialEstadosOC        HistorialEstadoOC[]
-  ordenesCompraSolicitadas  OrdenCompra[]
-  solicitudesCompra         SolicitudCompra[]
-  historialEstadosSolicitud HistorialEstadoSolicitudCompra[]
-  comentarios               Comentario[]
-  auditorias                Auditoria[]
-  creadoEn                  DateTime                         @default(now()) @map("creado_en")
-  actualizadoEn             DateTime                         @updatedAt @map("actualizado_en")
+  id                     String              @id @default(uuid())
+  nombre                 String
+  email                  String              @unique
+  contrasenaHash         String              @map("contrasena_hash")
+  rol                    RolUsuario
+  activo                 Boolean             @default(true)
+  sectorId               String?             @map("sector_id")
+  sector                 Sector?             @relation(fields: [sectorId], references: [id])
+  sectoresEncargado      Sector[]            @relation("SectorEncargados")
+  historialEstadosOP     HistorialEstadoOP[]
+  ordenesPagoSolicitadas OrdenPago[]
+  ordenesCompra          OrdenCompra[]
+  historialEstadosOC     HistorialEstadoOC[]
+  comentarios            Comentario[]
+  auditorias             Auditoria[]
+  creadoEn               DateTime            @default(now()) @map("creado_en")
+  actualizadoEn          DateTime            @updatedAt @map("actualizado_en")
 
   @@map("usuarios")
 }
@@ -62,34 +62,34 @@ enum TipoCuentaBancaria {
 }
 
 model Cliente {
-  id                String            @id @default(uuid())
-  nombre            String
-  rut               String            @unique
-  email             String?
-  telefono          String?
-  proyectos         Proyecto[]
-  ordenesCompra     OrdenCompra[]
-  solicitudesCompra SolicitudCompra[]
-  creadoEn          DateTime          @default(now()) @map("creado_en")
-  actualizadoEn     DateTime          @updatedAt @map("actualizado_en")
+  id            String        @id @default(uuid())
+  nombre        String
+  rut           String        @unique
+  email         String?
+  telefono      String?
+  proyectos     Proyecto[]
+  ordenesPago   OrdenPago[]
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
 
   @@map("clientes")
 }
 
 model Proveedor {
-  id                String             @id @default(uuid())
-  nombre            String
-  rut               String             @unique
-  email             String?
-  telefono          String?
-  banco             String
-  tipoCuenta        TipoCuentaBancaria @map("tipo_cuenta")
-  numeroCuenta      String             @map("numero_cuenta")
-  cotizaciones      Cotizacion[]
-  ordenesCompra     OrdenCompra[]
-  solicitudesCompra SolicitudCompra[]
-  creadoEn          DateTime           @default(now()) @map("creado_en")
-  actualizadoEn     DateTime           @updatedAt @map("actualizado_en")
+  id            String             @id @default(uuid())
+  nombre        String
+  rut           String             @unique
+  email         String?
+  telefono      String?
+  banco         String
+  tipoCuenta    TipoCuentaBancaria @map("tipo_cuenta")
+  numeroCuenta  String             @map("numero_cuenta")
+  cotizaciones  Cotizacion[]
+  ordenesPago   OrdenPago[]
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime           @default(now()) @map("creado_en")
+  actualizadoEn DateTime           @updatedAt @map("actualizado_en")
 
   @@map("proveedores")
 }
@@ -123,53 +123,53 @@ model TipoCambio {
 }
 
 model Proyecto {
-  id                String            @id @default(uuid())
-  nombre            String
-  clienteId         String            @map("cliente_id")
-  cliente           Cliente           @relation(fields: [clienteId], references: [id])
-  sectorId          String?           @map("sector_id")
-  sector            Sector?           @relation(fields: [sectorId], references: [id])
-  tareas            Tarea[]
-  cotizaciones      Cotizacion[]
-  ordenesCompra     OrdenCompra[]
-  solicitudesCompra SolicitudCompra[]
-  creadoEn          DateTime          @default(now()) @map("creado_en")
-  actualizadoEn     DateTime          @updatedAt @map("actualizado_en")
+  id            String        @id @default(uuid())
+  nombre        String
+  clienteId     String        @map("cliente_id")
+  cliente       Cliente       @relation(fields: [clienteId], references: [id])
+  sectorId      String?       @map("sector_id")
+  sector        Sector?       @relation(fields: [sectorId], references: [id])
+  tareas        Tarea[]
+  cotizaciones  Cotizacion[]
+  ordenesPago   OrdenPago[]
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
 
   @@map("proyectos")
 }
 
 model Tarea {
-  id                String            @id @default(uuid())
-  proyectoId        String            @map("proyecto_id")
-  proyecto          Proyecto          @relation(fields: [proyectoId], references: [id])
-  nombre            String
-  cotizaciones      Cotizacion[]
-  ordenesCompra     OrdenCompra[]
-  solicitudesCompra SolicitudCompra[]
-  creadoEn          DateTime          @default(now()) @map("creado_en")
-  actualizadoEn     DateTime          @updatedAt @map("actualizado_en")
+  id            String        @id @default(uuid())
+  proyectoId    String        @map("proyecto_id")
+  proyecto      Proyecto      @relation(fields: [proyectoId], references: [id])
+  nombre        String
+  cotizaciones  Cotizacion[]
+  ordenesPago   OrdenPago[]
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
 
   @@map("tareas")
 }
 
 model Cotizacion {
-  id              String           @id @default(uuid())
-  proyectoId      String           @map("proyecto_id")
-  proyecto        Proyecto         @relation(fields: [proyectoId], references: [id])
-  tareaId         String           @map("tarea_id")
-  tarea           Tarea            @relation(fields: [tareaId], references: [id])
-  proveedorId     String           @map("proveedor_id")
-  proveedor       Proveedor        @relation(fields: [proveedorId], references: [id])
-  montoTotal      Decimal          @map("monto_total") @db.Decimal(14, 2)
-  moneda          Moneda
-  ivaIncluido     Boolean          @default(false) @map("iva_incluido")
-  estado          EstadoCotizacion @default(ACTIVA)
-  archivoPdfRuta  String?          @map("archivo_pdf_ruta")
-  ordenesCompra   OrdenCompra[]
-  solicitudCompra SolicitudCompra?
-  creadoEn        DateTime         @default(now()) @map("creado_en")
-  actualizadoEn   DateTime         @updatedAt @map("actualizado_en")
+  id             String           @id @default(uuid())
+  proyectoId     String           @map("proyecto_id")
+  proyecto       Proyecto         @relation(fields: [proyectoId], references: [id])
+  tareaId        String           @map("tarea_id")
+  tarea          Tarea            @relation(fields: [tareaId], references: [id])
+  proveedorId    String           @map("proveedor_id")
+  proveedor      Proveedor        @relation(fields: [proveedorId], references: [id])
+  montoTotal     Decimal          @map("monto_total") @db.Decimal(14, 2)
+  moneda         Moneda
+  ivaIncluido    Boolean          @default(false) @map("iva_incluido")
+  estado         EstadoCotizacion @default(ACTIVA)
+  archivoPdfRuta String?          @map("archivo_pdf_ruta")
+  ordenesPago    OrdenPago[]
+  ordenCompra    OrdenCompra?
+  creadoEn       DateTime         @default(now()) @map("creado_en")
+  actualizadoEn  DateTime         @updatedAt @map("actualizado_en")
 
   @@map("cotizaciones")
 }
@@ -191,7 +191,7 @@ enum FormaPago {
   @@map("forma_pago")
 }
 
-enum EstadoOC {
+enum EstadoOP {
   BORRADOR
   PENDIENTE
   EN_CONSULTA
@@ -201,79 +201,81 @@ enum EstadoOC {
   PAGADO
   ANULADO
 
-  @@map("estado_oc")
+  @@map("estado_op")
 }
 
-enum EstadoSolicitudCompra {
+enum EstadoOC {
   BORRADOR
   PENDIENTE
   APROBADO
   RECHAZADO
   ANULADO
 
-  @@map("estado_solicitud_compra")
+  @@map("estado_oc")
 }
 
-model OrdenCompra {
-  id                String              @id @default(uuid())
-  numero            Int                 @unique @default(autoincrement())
-  tipo              TipoOC
-  fecha             DateTime
-  solicitanteId     String              @map("solicitante_id")
-  solicitante       Usuario             @relation(fields: [solicitanteId], references: [id])
-  sectorId          String              @map("sector_id")
-  sector            Sector              @relation(fields: [sectorId], references: [id])
-  proveedorId       String              @map("proveedor_id")
-  proveedor         Proveedor           @relation(fields: [proveedorId], references: [id])
-  clienteId         String?             @map("cliente_id")
-  cliente           Cliente?            @relation(fields: [clienteId], references: [id])
-  proyectoId        String?             @map("proyecto_id")
-  proyecto          Proyecto?           @relation(fields: [proyectoId], references: [id])
-  tareaId           String?             @map("tarea_id")
-  tarea             Tarea?              @relation(fields: [tareaId], references: [id])
-  cotizacionId      String?             @map("cotizacion_id")
-  cotizacion        Cotizacion?         @relation(fields: [cotizacionId], references: [id])
-  solicitudCompraId String?             @map("solicitud_compra_id")
-  solicitudCompra   SolicitudCompra?    @relation(fields: [solicitudCompraId], references: [id])
-  moneda            Moneda
-  monto             Decimal             @map("monto") @db.Decimal(14, 2)
-  concepto          String
-  formaPago         FormaPago           @map("forma_pago")
-  pagaIva           Boolean             @map("paga_iva")
-  ivaIncluido       Boolean             @map("iva_incluido")
-  observaciones     String?
-  facturaPdfRuta    String?             @map("factura_pdf_ruta")
-  estado            EstadoOC            @default(BORRADOR)
-  historialEstados  HistorialEstadoOC[]
-  comentarios       Comentario[]
-  creadoEn          DateTime            @default(now()) @map("creado_en")
-  actualizadoEn     DateTime            @updatedAt @map("actualizado_en")
+// Orden de Pago (OP): código OrdenPago, tabla ordenes_pago, rutas /ordenes-pago.
+// Nace de una Orden de Compra (OrdenCompra) aprobada (relación ordenCompra).
+model OrdenPago {
+  id               String              @id @default(uuid())
+  numero           Int                 @unique @default(autoincrement())
+  tipo             TipoOC
+  fecha            DateTime
+  solicitanteId    String              @map("solicitante_id")
+  solicitante      Usuario             @relation(fields: [solicitanteId], references: [id])
+  sectorId         String              @map("sector_id")
+  sector           Sector              @relation(fields: [sectorId], references: [id])
+  proveedorId      String              @map("proveedor_id")
+  proveedor        Proveedor           @relation(fields: [proveedorId], references: [id])
+  clienteId        String?             @map("cliente_id")
+  cliente          Cliente?            @relation(fields: [clienteId], references: [id])
+  proyectoId       String?             @map("proyecto_id")
+  proyecto         Proyecto?           @relation(fields: [proyectoId], references: [id])
+  tareaId          String?             @map("tarea_id")
+  tarea            Tarea?              @relation(fields: [tareaId], references: [id])
+  cotizacionId     String?             @map("cotizacion_id")
+  cotizacion       Cotizacion?         @relation(fields: [cotizacionId], references: [id])
+  ordenCompraId    String?             @map("orden_compra_id")
+  ordenCompra      OrdenCompra?        @relation(fields: [ordenCompraId], references: [id])
+  moneda           Moneda
+  monto            Decimal             @map("monto") @db.Decimal(14, 2)
+  concepto         String
+  formaPago        FormaPago           @map("forma_pago")
+  pagaIva          Boolean             @map("paga_iva")
+  ivaIncluido      Boolean             @map("iva_incluido")
+  observaciones    String?
+  facturaPdfRuta   String?             @map("factura_pdf_ruta")
+  estado           EstadoOP            @default(BORRADOR)
+  historialEstados HistorialEstadoOP[]
+  comentarios      Comentario[]
+  creadoEn         DateTime            @default(now()) @map("creado_en")
+  actualizadoEn    DateTime            @updatedAt @map("actualizado_en")
 
-  @@map("ordenes_compra")
+  @@map("ordenes_pago")
 }
 
-model HistorialEstadoOC {
-  id             String      @id @default(uuid())
-  ordenCompraId  String      @map("orden_compra_id")
-  ordenCompra    OrdenCompra @relation(fields: [ordenCompraId], references: [id])
-  estadoAnterior EstadoOC    @map("estado_anterior")
-  estadoNuevo    EstadoOC    @map("estado_nuevo")
-  usuarioId      String      @map("usuario_id")
-  usuario        Usuario     @relation(fields: [usuarioId], references: [id])
+model HistorialEstadoOP {
+  id             String    @id @default(uuid())
+  ordenPagoId    String    @map("orden_pago_id")
+  ordenPago      OrdenPago @relation(fields: [ordenPagoId], references: [id])
+  estadoAnterior EstadoOP  @map("estado_anterior")
+  estadoNuevo    EstadoOP  @map("estado_nuevo")
+  usuarioId      String    @map("usuario_id")
+  usuario        Usuario   @relation(fields: [usuarioId], references: [id])
   motivo         String?
-  creadoEn       DateTime    @default(now()) @map("creado_en")
+  creadoEn       DateTime  @default(now()) @map("creado_en")
 
-  @@map("historial_estado_oc")
+  @@map("historial_estado_op")
 }
 
 model Comentario {
-  id            String      @id @default(uuid())
-  ordenCompraId String      @map("orden_compra_id")
-  ordenCompra   OrdenCompra @relation(fields: [ordenCompraId], references: [id])
-  autorId       String      @map("autor_id")
-  autor         Usuario     @relation(fields: [autorId], references: [id])
+  id            String    @id @default(uuid())
+  ordenPagoId   String    @map("orden_pago_id")
+  ordenPago     OrdenPago @relation(fields: [ordenPagoId], references: [id])
+  autorId       String    @map("autor_id")
+  autor         Usuario   @relation(fields: [autorId], references: [id])
   texto         String
-  creadoEn      DateTime    @default(now()) @map("creado_en")
+  creadoEn      DateTime  @default(now()) @map("creado_en")
 
   @@map("comentarios")
 }
@@ -295,70 +297,71 @@ model Auditoria {
 // Catálogo global de rubros (Equipos, Instalación, Monitoreo, ...). "Otros" en
 // la UI permite crear uno nuevo que queda disponible para todas las OC.
 model Rubro {
-  id                String            @id @default(uuid())
-  nombre            String            @unique
-  activo            Boolean           @default(true)
-  solicitudesCompra SolicitudCompra[]
-  creadoEn          DateTime          @default(now()) @map("creado_en")
-  actualizadoEn     DateTime          @updatedAt @map("actualizado_en")
+  id            String        @id @default(uuid())
+  nombre        String        @unique
+  activo        Boolean       @default(true)
+  ordenesCompra OrdenCompra[]
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  actualizadoEn DateTime      @updatedAt @map("actualizado_en")
 
   @@map("rubros")
 }
 
-// Orden de Compra (OC): entidad previa al pago, la aprueba el ENCARGADO del
-// sector. Al crearse genera 1 Cotización (1:1) y reutiliza/crea la Tarea del
-// rubro. De una OC aprobada se derivan luego las Órdenes de Pago (Fase 2).
-model SolicitudCompra {
-  id               String                           @id @default(uuid())
-  numero           Int                              @unique @default(autoincrement())
-  tipo             TipoOC
-  fecha            DateTime                         @default(now())
-  solicitanteId    String                           @map("solicitante_id")
-  solicitante      Usuario                          @relation(fields: [solicitanteId], references: [id])
-  sectorId         String                           @map("sector_id")
-  sector           Sector                           @relation(fields: [sectorId], references: [id])
-  proveedorId      String                           @map("proveedor_id")
-  proveedor        Proveedor                        @relation(fields: [proveedorId], references: [id])
-  clienteId        String?                          @map("cliente_id")
-  cliente          Cliente?                         @relation(fields: [clienteId], references: [id])
-  proyectoId       String                           @map("proyecto_id")
-  proyecto         Proyecto                         @relation(fields: [proyectoId], references: [id])
-  rubroId          String                           @map("rubro_id")
-  rubro            Rubro                            @relation(fields: [rubroId], references: [id])
-  tareaId          String                           @map("tarea_id")
-  tarea            Tarea                            @relation(fields: [tareaId], references: [id])
-  cotizacionId     String                           @unique @map("cotizacion_id")
-  cotizacion       Cotizacion                       @relation(fields: [cotizacionId], references: [id])
-  moneda           Moneda
-  monto            Decimal                          @db.Decimal(14, 2)
-  concepto         String
-  pagaIva          Boolean                          @map("paga_iva")
-  ivaIncluido      Boolean                          @map("iva_incluido")
-  observaciones    String?
-  archivoPdfRuta   String                           @map("archivo_pdf_ruta")
-  estado           EstadoSolicitudCompra            @default(BORRADOR)
+// Orden de Compra (OC): código OrdenCompra, tabla ordenes_compra, rutas
+// /ordenes-compra. Entidad previa al pago, la aprueba el ENCARGADO del sector.
+// Al crearse genera 1 Cotización (1:1) y reutiliza/crea la Tarea del rubro. De
+// una OC aprobada se derivan luego las Órdenes de Pago (OrdenPago).
+model OrdenCompra {
+  id                 String              @id @default(uuid())
+  numero             Int                 @unique @default(autoincrement())
+  tipo               TipoOC
+  fecha              DateTime            @default(now())
+  solicitanteId      String              @map("solicitante_id")
+  solicitante        Usuario             @relation(fields: [solicitanteId], references: [id])
+  sectorId           String              @map("sector_id")
+  sector             Sector              @relation(fields: [sectorId], references: [id])
+  proveedorId        String              @map("proveedor_id")
+  proveedor          Proveedor           @relation(fields: [proveedorId], references: [id])
+  clienteId          String?             @map("cliente_id")
+  cliente            Cliente?            @relation(fields: [clienteId], references: [id])
+  proyectoId         String              @map("proyecto_id")
+  proyecto           Proyecto            @relation(fields: [proyectoId], references: [id])
+  rubroId            String              @map("rubro_id")
+  rubro              Rubro               @relation(fields: [rubroId], references: [id])
+  tareaId            String              @map("tarea_id")
+  tarea              Tarea               @relation(fields: [tareaId], references: [id])
+  cotizacionId       String              @unique @map("cotizacion_id")
+  cotizacion         Cotizacion          @relation(fields: [cotizacionId], references: [id])
+  moneda             Moneda
+  monto              Decimal             @db.Decimal(14, 2)
+  concepto           String
+  pagaIva            Boolean             @map("paga_iva")
+  ivaIncluido        Boolean             @map("iva_incluido")
+  observaciones      String?
+  archivoPdfRuta     String              @map("archivo_pdf_ruta")
+  estado             EstadoOC            @default(BORRADOR)
   // Pago único: al aprobar esta OC se genera automáticamente una Orden de Pago por el
-  // total, con esta forma de pago. Ver src/ordenes-compra/oyentes/solicitud-compra-aprobada.oyente.ts
-  esPagoUnico        Boolean   @default(false) @map("es_pago_unico")
-  pagoUnicoFormaPago FormaPago? @map("pago_unico_forma_pago")
-  ordenesPago      OrdenCompra[]
-  historialEstados HistorialEstadoSolicitudCompra[]
-  creadoEn         DateTime                         @default(now()) @map("creado_en")
-  actualizadoEn    DateTime                         @updatedAt @map("actualizado_en")
+  // total, con esta forma de pago. Ver src/ordenes-compra/oyentes/orden-compra-aprobada.oyente.ts
+  esPagoUnico        Boolean             @default(false) @map("es_pago_unico")
+  pagoUnicoFormaPago FormaPago?          @map("pago_unico_forma_pago")
+  ordenesPago        OrdenPago[]
+  historialEstados   HistorialEstadoOC[]
+  creadoEn           DateTime            @default(now()) @map("creado_en")
+  actualizadoEn      DateTime            @updatedAt @map("actualizado_en")
 
-  @@map("solicitudes_compra")
+  @@map("ordenes_compra")
 }
 
-model HistorialEstadoSolicitudCompra {
-  id                String                @id @default(uuid())
-  solicitudCompraId String                @map("solicitud_compra_id")
-  solicitudCompra   SolicitudCompra       @relation(fields: [solicitudCompraId], references: [id])
-  estadoAnterior    EstadoSolicitudCompra @map("estado_anterior")
-  estadoNuevo       EstadoSolicitudCompra @map("estado_nuevo")
-  usuarioId         String                @map("usuario_id")
-  usuario           Usuario               @relation(fields: [usuarioId], references: [id])
-  motivo            String?
-  creadoEn          DateTime              @default(now()) @map("creado_en")
+model HistorialEstadoOC {
+  id             String      @id @default(uuid())
+  ordenCompraId  String      @map("orden_compra_id")
+  ordenCompra    OrdenCompra @relation(fields: [ordenCompraId], references: [id])
+  estadoAnterior EstadoOC    @map("estado_anterior")
+  estadoNuevo    EstadoOC    @map("estado_nuevo")
+  usuarioId      String      @map("usuario_id")
+  usuario        Usuario     @relation(fields: [usuarioId], references: [id])
+  motivo         String?
+  creadoEn       DateTime    @default(now()) @map("creado_en")
 
-  @@map("historial_estado_solicitud_compra")
+  @@map("historial_estado_oc")
 }

@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
-import { Moneda, TipoOC, FormaPago, EstadoOC, EstadoCotizacion } from '../generated/prisma/enums';
+import { Moneda, TipoOC, FormaPago, EstadoOP, EstadoCotizacion } from '../generated/prisma/enums';
 
 // Primer lote de datos transaccionales reales (Proyecto→Tarea→Cotización→
-// OrdenCompra), extraído y validado desde
+// OrdenPago), extraído y validado desde
 // Resumen_Proyectos_Osmosis_y_Bombas_de_Calor.xlsx el 2026-09-16. Ver
 // contexto-gestion-interna-backend.md y el plan de esa sesión para el
 // detalle del mapeo. La hoja "Resumen" del Excel no se usó como fuente de
@@ -143,7 +143,7 @@ async function obtenerOCrearCotizacionActiva(
   return creada.id;
 }
 
-async function crearOrdenCompraPagada(
+async function crearOrdenPagoPagada(
   cotizacionId: string,
   proyectoId: string,
   tareaId: string,
@@ -157,13 +157,13 @@ async function crearOrdenCompraPagada(
   fecha: string,
   observaciones: string,
 ): Promise<void> {
-  const yaExiste = await prisma.ordenCompra.findFirst({
+  const yaExiste = await prisma.ordenPago.findFirst({
     where: { cotizacionId, monto, fecha: new Date(fecha) },
   });
   if (yaExiste) return;
 
   await prisma.$transaction(async (tx) => {
-    const orden = await tx.ordenCompra.create({
+    const orden = await tx.ordenPago.create({
       data: {
         tipo: TipoOC.SERVICIO,
         fecha: new Date(fecha),
@@ -181,14 +181,14 @@ async function crearOrdenCompraPagada(
         pagaIva: true,
         ivaIncluido: true,
         observaciones,
-        estado: EstadoOC.PAGADO,
+        estado: EstadoOP.PAGADO,
       },
     });
-    await tx.historialEstadoOC.create({
+    await tx.historialEstadoOP.create({
       data: {
-        ordenCompraId: orden.id,
-        estadoAnterior: EstadoOC.BORRADOR,
-        estadoNuevo: EstadoOC.PAGADO,
+        ordenPagoId: orden.id,
+        estadoAnterior: EstadoOP.BORRADOR,
+        estadoNuevo: EstadoOP.PAGADO,
         usuarioId: solicitanteId,
         motivo: MOTIVO_HISTORIAL,
         creadoEn: new Date(fecha),
@@ -244,7 +244,7 @@ async function main(): Promise<void> {
           : '';
         const observaciones = `Ref. ${tareaJson.ref}${numeroFactura}${notaOriginal}${aviso}`.trim();
 
-        await crearOrdenCompraPagada(
+        await crearOrdenPagoPagada(
           cotizacionId,
           proyectoId,
           tareaId,

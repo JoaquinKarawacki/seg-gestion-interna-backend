@@ -3,12 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
 import { RolUsuario } from '../../../generated/prisma/enums';
 import type { UsuarioModel } from '../../../generated/prisma/models';
-import { EVENTOS } from '../../ordenes-compra/eventos/eventos.constantes';
+import { EVENTOS_ORDEN_COMPRA } from '../../ordenes-compra/eventos/eventos.constantes';
 import type { EventoOrdenCompraEstadoCambiado } from '../../ordenes-compra/eventos/orden-compra-estado-cambiado.evento';
 import { USUARIOS_REPOSITORIO } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import type { IUsuariosRepositorio } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import { CorreoService } from '../correo.service';
-import { obtenerPlantilla, TipoDestinatario } from '../plantillas-orden-compra';
+import {
+  obtenerPlantillaSolicitud,
+  TipoDestinatarioSolicitud,
+} from '../plantillas-orden-compra';
 
 @Injectable()
 export class OrdenCompraEstadoCambiadoOyente {
@@ -21,11 +24,11 @@ export class OrdenCompraEstadoCambiadoOyente {
     private readonly configService: ConfigService,
   ) {}
 
-  @OnEvent(EVENTOS.ORDEN_COMPRA_ESTADO_CAMBIADO)
-  async cuandoCambiaEstadoOrdenCompra(
+  @OnEvent(EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO)
+  async cuandoCambiaEstado(
     evento: EventoOrdenCompraEstadoCambiado,
   ): Promise<void> {
-    const plantilla = obtenerPlantilla(evento);
+    const plantilla = obtenerPlantillaSolicitud(evento);
 
     if (!plantilla) {
       this.logger.warn(
@@ -34,11 +37,8 @@ export class OrdenCompraEstadoCambiadoOyente {
       return;
     }
 
-    // Todo el manejo del evento es fail-soft: como se dispara con emit() (no
-    // emitAsync()) y no hay un handler de unhandledRejection en main.ts, una
-    // excepción sin atrapar acá (no solo en el envío del mail, también en la
-    // resolución de destinatarios) tumbaría el proceso entero, no solo esta
-    // notificación puntual.
+    // Fail-soft: se emite con emit() (fire-and-forget); una excepción sin
+    // atrapar acá tumbaría el proceso, así que se loguea y no se relanza.
     try {
       const destinatarios = await this.resolverEmails(
         plantilla.destinatarios,
@@ -63,7 +63,7 @@ export class OrdenCompraEstadoCambiadoOyente {
   }
 
   private async resolverEmails(
-    tipos: TipoDestinatario[],
+    tipos: TipoDestinatarioSolicitud[],
     evento: EventoOrdenCompraEstadoCambiado,
   ): Promise<string[]> {
     const emails = new Set<string>();
@@ -77,7 +77,7 @@ export class OrdenCompraEstadoCambiadoOyente {
   }
 
   private async buscarUsuariosPorTipo(
-    tipo: TipoDestinatario,
+    tipo: TipoDestinatarioSolicitud,
     evento: EventoOrdenCompraEstadoCambiado,
   ): Promise<UsuarioModel[]> {
     if (tipo === 'SOLICITANTE') {
@@ -87,14 +87,10 @@ export class OrdenCompraEstadoCambiadoOyente {
       return solicitante ? [solicitante] : [];
     }
 
-    if (tipo === 'ENCARGADO_SECTOR') {
-      return this.usuariosRepositorio.buscarActivosPorRol(
-        RolUsuario.ENCARGADO,
-        evento.sectorId,
-      );
-    }
-
-    return this.usuariosRepositorio.buscarActivosPorRol(RolUsuario.PAGOS);
+    return this.usuariosRepositorio.buscarActivosPorRol(
+      RolUsuario.ENCARGADO,
+      evento.sectorId,
+    );
   }
 
   private obtenerEmailsEnCopia(): string[] {

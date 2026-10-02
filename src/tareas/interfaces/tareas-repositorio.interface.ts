@@ -19,5 +19,5 @@ export interface ITareasRepositorio extends IRepositorioBase<
 > {
   buscarPorProyecto(proyectoId: string): Promise<TareaModel[]>;
   contarCotizacionesAsociadas(tareaId: string): Promise<number>;
-  contarOrdenesCompraAsociadas(tareaId: string): Promise<number>;
+  contarOrdenesPagoAsociadas(tareaId: string): Promise<number>;
 }

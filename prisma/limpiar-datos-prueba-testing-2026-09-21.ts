@@ -8,7 +8,7 @@ import { PrismaClient } from '../generated/prisma/client';
 // prueba (todos nombrados "ZZZ ... TEST BORRAR"), OC #37 llevada hasta
 // APROBADO y luego ANULADA (nunca PAGADA, no afectó totales reales).
 // IDs fijos a propósito (no por nombre) para no arriesgar borrar datos reales.
-const ORDENES_COMPRA = [
+const ORDENES_PAGO = [
   '1352b74c-6e67-46ff-9c11-55d8f1b7cd62', // #37 "TEST BORRAR ... - carga de prueba antes de habilitar el sistema al equipo"
 ];
 const COTIZACIONES = [
@@ -32,16 +32,16 @@ const prisma = new PrismaClient({ adapter: adaptador });
 
 async function main(): Promise<void> {
   const resultado = await prisma.$transaction(async (tx) => {
-    const comentarios = await tx.comentario.deleteMany({ where: { ordenCompraId: { in: ORDENES_COMPRA } } });
-    const historial = await tx.historialEstadoOC.deleteMany({ where: { ordenCompraId: { in: ORDENES_COMPRA } } });
-    const ordenesCompra = await tx.ordenCompra.deleteMany({ where: { id: { in: ORDENES_COMPRA } } });
+    const comentarios = await tx.comentario.deleteMany({ where: { ordenPagoId: { in: ORDENES_PAGO } } });
+    const historial = await tx.historialEstadoOP.deleteMany({ where: { ordenPagoId: { in: ORDENES_PAGO } } });
+    const ordenesPago = await tx.ordenPago.deleteMany({ where: { id: { in: ORDENES_PAGO } } });
     const cotizaciones = await tx.cotizacion.deleteMany({ where: { id: { in: COTIZACIONES } } });
     const tareas = await tx.tarea.deleteMany({ where: { id: { in: TAREAS } } });
     const proyectos = await tx.proyecto.deleteMany({ where: { id: { in: PROYECTOS } } });
     const clientes = await tx.cliente.deleteMany({ where: { id: { in: CLIENTES } } });
     const proveedores = await tx.proveedor.deleteMany({ where: { id: { in: PROVEEDORES } } });
 
-    return { comentarios, historial, ordenesCompra, cotizaciones, tareas, proyectos, clientes, proveedores };
+    return { comentarios, historial, ordenesPago, cotizaciones, tareas, proyectos, clientes, proveedores };
   });
 
   console.log('Borrado completo:', resultado);

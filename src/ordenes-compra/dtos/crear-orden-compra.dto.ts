@@ -1,7 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
-  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -12,14 +11,11 @@ import {
 } from 'class-validator';
 import { FormaPago, Moneda, TipoOC } from '../../../generated/prisma/enums';
 
-const convertirATexto = (valor: unknown) => valor === true || valor === 'true';
+const aBooleano = (valor: unknown) => valor === true || valor === 'true';
 
 export class CrearOrdenCompraDto {
   @IsEnum(TipoOC)
   tipo!: TipoOC;
-
-  @IsDateString()
-  fecha!: string;
 
   @IsUUID()
   sectorId!: string;
@@ -27,13 +23,19 @@ export class CrearOrdenCompraDto {
   @IsUUID()
   proveedorId!: string;
 
+  @IsUUID()
+  proyectoId!: string;
+
+  // Rubro: se elige uno existente (rubroId) o se crea uno nuevo por nombre
+  // (rubroNombre, caso "Otros"). El service valida que venga al menos uno.
   @IsOptional()
   @IsUUID()
-  cotizacionId?: string;
+  rubroId?: string;
 
   @IsOptional()
-  @IsUUID()
-  solicitudCompraId?: string;
+  @IsString()
+  @IsNotEmpty()
+  rubroNombre?: string;
 
   @IsEnum(Moneda)
   moneda!: Moneda;
@@ -47,14 +49,11 @@ export class CrearOrdenCompraDto {
   @IsNotEmpty()
   concepto!: string;
 
-  @IsEnum(FormaPago)
-  formaPago!: FormaPago;
-
-  @Transform(({ value }) => convertirATexto(value))
+  @Transform(({ value }) => aBooleano(value))
   @IsBoolean()
   pagaIva!: boolean;
 
-  @Transform(({ value }) => convertirATexto(value))
+  @Transform(({ value }) => aBooleano(value))
   @IsBoolean()
   ivaIncluido!: boolean;
 
@@ -62,12 +61,15 @@ export class CrearOrdenCompraDto {
   @IsString()
   observaciones?: string;
 
-  // Override explícito de la alarma de monto: cuando el monto supera el de la
-  // orden de compra vinculada, el backend bloquea con 422 MONTO_EXCEDE_COTIZACION;
-  // el frontend muestra la advertencia y reenvía con este flag en true para
-  // confirmar y permitir el exceso.
-  @Transform(({ value }) => convertirATexto(value))
+  // Pago único: si es true, al aprobar la OC se genera sola una Orden de Pago por el
+  // total con `pagoUnicoFormaPago`. El service valida que la forma de pago venga cuando
+  // esPagoUnico es true (FORMA_PAGO_REQUERIDA_PAGO_UNICO).
+  @Transform(({ value }) => aBooleano(value))
   @IsOptional()
   @IsBoolean()
-  confirmarExcesoMonto?: boolean;
+  esPagoUnico?: boolean;
+
+  @IsOptional()
+  @IsEnum(FormaPago)
+  pagoUnicoFormaPago?: FormaPago;
 }

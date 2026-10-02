@@ -82,9 +82,9 @@ export class ClientesService {
   async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
     const cliente = await this.obtenerClienteOFallar(id);
 
-    const [proyectosAsociados, ordenesCompraAsociadas] = await Promise.all([
+    const [proyectosAsociados, ordenesPagoAsociadas] = await Promise.all([
       this.clientesRepositorio.contarProyectosAsociados(id),
-      this.clientesRepositorio.contarOrdenesCompraAsociadas(id),
+      this.clientesRepositorio.contarOrdenesPagoAsociadas(id),
     ]);
 
     if (proyectosAsociados > 0) {
@@ -95,9 +95,9 @@ export class ClientesService {
       });
     }
 
-    if (ordenesCompraAsociadas > 0) {
+    if (ordenesPagoAsociadas > 0) {
       throw new UnprocessableEntityException({
-        error: 'CLIENTE_CON_ORDENES_COMPRA_ASOCIADAS',
+        error: 'CLIENTE_CON_ORDENES_PAGO_ASOCIADAS',
         mensaje:
           'No se puede eliminar el cliente porque tiene órdenes de compra asociadas',
       });

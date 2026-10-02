@@ -23,7 +23,7 @@ import { RespuestaComentarioDto } from './dtos/respuesta-comentario.dto';
 
 type SolicitudAutenticada = Request & { user: UsuarioAutenticado };
 
-@Controller('ordenes-compra')
+@Controller('ordenes-pago')
 @UseGuards(JwtGuardia, RolesGuardia)
 export class ComentariosController {
   constructor(private readonly comentariosService: ComentariosService) {}

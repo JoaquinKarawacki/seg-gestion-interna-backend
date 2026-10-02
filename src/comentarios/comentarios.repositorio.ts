@@ -14,9 +14,9 @@ export class ComentariosRepositorio implements IComentariosRepositorio {
     return this.prisma.comentario.create({ data: datos });
   }
 
-  async buscarPorOrden(ordenCompraId: string): Promise<ComentarioModel[]> {
+  async buscarPorOrden(ordenPagoId: string): Promise<ComentarioModel[]> {
     return this.prisma.comentario.findMany({
-      where: { ordenCompraId },
+      where: { ordenPagoId },
       orderBy: { creadoEn: 'asc' },
     });
   }

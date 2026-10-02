@@ -45,7 +45,7 @@ export class TareasRepositorio implements ITareasRepositorio {
     return this.prisma.cotizacion.count({ where: { tareaId } });
   }
 
-  async contarOrdenesCompraAsociadas(tareaId: string): Promise<number> {
-    return this.prisma.ordenCompra.count({ where: { tareaId } });
+  async contarOrdenesPagoAsociadas(tareaId: string): Promise<number> {
+    return this.prisma.ordenPago.count({ where: { tareaId } });
   }
 }

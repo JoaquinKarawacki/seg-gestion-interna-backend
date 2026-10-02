@@ -1,6 +1,6 @@
 export class RespuestaComentarioDto {
   id!: string;
-  ordenCompraId!: string;
+  ordenPagoId!: string;
   autorId!: string;
   texto!: string;
   creadoEn!: Date;

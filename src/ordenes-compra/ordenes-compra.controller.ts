@@ -9,7 +9,6 @@ import {
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
-  Patch,
   Post,
   Query,
   Req,
@@ -28,7 +27,6 @@ import {
   RespuestaExitosa,
   RespuestaLista,
 } from '../comun/tipos/respuesta-api.tipo';
-import { ActualizarOrdenCompraDto } from './dtos/actualizar-orden-compra.dto';
 import { CrearOrdenCompraDto } from './dtos/crear-orden-compra.dto';
 import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
 import { OrdenesCompraService } from './ordenes-compra.service';
@@ -48,7 +46,6 @@ export class OrdenesCompraController {
   @Get()
   async listar(
     @Query('proyectoId') proyectoId?: string,
-    @Query('cotizacionId') cotizacionId?: string,
     @Query('estado') estado?: EstadoOC,
     @Query('sectorId') sectorId?: string,
     @Query('solicitanteId') solicitanteId?: string,
@@ -66,14 +63,13 @@ export class OrdenesCompraController {
         Number.parseInt(porPaginaQuery ?? '', 10) || POR_PAGINA_DEFECTO,
       ),
     );
-    // "sectorId" acepta una lista separada por comas (ej. un encargado de
-    // varios sectores viendo "mis pendientes de aprobación" en el dashboard).
+    // "sectorId" acepta lista separada por comas (encargado de varios sectores).
     const sectorIds = sectorId?.includes(',')
       ? sectorId.split(',').filter(Boolean)
       : sectorId;
 
     const { datos, total } = await this.ordenesCompraService.listar(
-      { proyectoId, cotizacionId, estado, sectorId: sectorIds, solicitanteId },
+      { proyectoId, estado, sectorId: sectorIds, solicitanteId },
       { pagina, porPagina },
     );
 
@@ -88,10 +84,10 @@ export class OrdenesCompraController {
     return { datos, mensaje: 'Orden de compra obtenida correctamente' };
   }
 
-  @Get(':id/factura')
-  async descargarFactura(@Param('id') id: string): Promise<StreamableFile> {
+  @Get(':id/adjunto')
+  async descargarAdjunto(@Param('id') id: string): Promise<StreamableFile> {
     const { buffer, nombreArchivo } =
-      await this.ordenesCompraService.descargarFactura(id);
+      await this.ordenesCompraService.descargarAdjunto(id);
     return new StreamableFile(buffer, {
       type: 'application/pdf',
       disposition: `inline; filename="${nombreArchivo}"`,
@@ -99,7 +95,7 @@ export class OrdenesCompraController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('factura'))
+  @UseInterceptors(FileInterceptor('adjunto'))
   async crear(
     @Body() dto: CrearOrdenCompraDto,
     @Req() solicitud: SolicitudAutenticada,
@@ -109,55 +105,17 @@ export class OrdenesCompraController {
           new FileTypeValidator({ fileType: 'application/pdf' }),
           new MaxFileSizeValidator({ maxSize: TAMANIO_MAXIMO_ARCHIVO_BYTES }),
         ],
-        fileIsRequired: false,
+        fileIsRequired: true,
       }),
     )
-    factura?: Express.Multer.File,
+    adjunto: Express.Multer.File,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
     const datos = await this.ordenesCompraService.crear(
       dto,
       solicitud.user,
-      factura,
+      adjunto,
     );
     return { datos, mensaje: 'Orden de compra creada correctamente' };
-  }
-
-  @Patch(':id')
-  async actualizar(
-    @Param('id') id: string,
-    @Body() dto: ActualizarOrdenCompraDto,
-    @Req() solicitud: SolicitudAutenticada,
-  ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraService.actualizar(
-      id,
-      dto,
-      solicitud.user,
-    );
-    return { datos, mensaje: 'Orden de compra actualizada correctamente' };
-  }
-
-  @Patch(':id/factura')
-  @UseInterceptors(FileInterceptor('factura'))
-  async adjuntarFactura(
-    @Param('id') id: string,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({ fileType: 'application/pdf' }),
-          new MaxFileSizeValidator({ maxSize: TAMANIO_MAXIMO_ARCHIVO_BYTES }),
-        ],
-        fileIsRequired: true,
-      }),
-    )
-    factura: Express.Multer.File,
-    @Req() solicitud: SolicitudAutenticada,
-  ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
-    const datos = await this.ordenesCompraService.adjuntarFactura(
-      id,
-      factura,
-      solicitud.user,
-    );
-    return { datos, mensaje: 'Factura adjuntada correctamente' };
   }
 
   @Delete(':id')

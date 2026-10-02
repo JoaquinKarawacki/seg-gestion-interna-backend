@@ -9,51 +9,33 @@ import {
   HistorialEstadoOCModel,
   OrdenCompraModel,
 } from '../../../generated/prisma/models';
-import { IRepositorioBase } from '../../comun/interfaces/repositorio-base.interface';
 
 export const ORDENES_COMPRA_REPOSITORIO = Symbol('IOrdenesCompraRepositorio');
 
-export interface DatosCrearOrdenCompra {
+// Datos para crear una OC junto con su Cotización (1:1) y su Tarea (reutilizada
+// por rubro en el proyecto), todo en una sola transacción.
+export interface DatosCrearSolicitudConCotizacion {
   tipo: TipoOC;
-  fecha: Date;
   solicitanteId: string;
   sectorId: string;
   proveedorId: string;
   clienteId: string | null;
-  proyectoId: string | null;
-  tareaId: string | null;
-  cotizacionId: string | null;
-  solicitudCompraId?: string | null;
+  proyectoId: string;
+  rubroId: string;
+  rubroNombre: string;
   moneda: Moneda;
   monto: Prisma.Decimal;
   concepto: string;
-  formaPago: FormaPago;
   pagaIva: boolean;
   ivaIncluido: boolean;
-  observaciones?: string | null;
-  facturaPdfRuta?: string | null;
-}
-
-export interface DatosActualizarOrdenCompra {
-  tipo?: TipoOC;
-  fecha?: Date;
-  sectorId?: string;
-  proveedorId?: string;
-  moneda?: Moneda;
-  concepto?: string;
-  formaPago?: FormaPago;
-  pagaIva?: boolean;
-  ivaIncluido?: boolean;
-  observaciones?: string | null;
-  facturaPdfRuta?: string | null;
+  observaciones: string | null;
+  archivoPdfRuta: string;
+  esPagoUnico: boolean;
+  pagoUnicoFormaPago: FormaPago | null;
 }
 
 export interface FiltrosOrdenCompra {
   proyectoId?: string;
-  cotizacionId?: string;
-  // OPs generadas desde una OC (SolicitudCompra). Se usa para la idempotencia del
-  // pago único: contar las OPs ya ligadas a una OC puntual.
-  solicitudCompraId?: string;
   estado?: EstadoOC;
   sectorId?: string | string[];
   solicitanteId?: string;
@@ -64,12 +46,11 @@ export interface PaginacionOrdenCompra {
   porPagina: number;
 }
 
-export interface IOrdenesCompraRepositorio extends IRepositorioBase<
-  OrdenCompraModel,
-  DatosCrearOrdenCompra,
-  DatosActualizarOrdenCompra
-> {
-  sumarMontoPorCotizacion(cotizacionId: string): Promise<Prisma.Decimal>;
+export interface IOrdenesCompraRepositorio {
+  buscarPorId(id: string): Promise<OrdenCompraModel | null>;
+  crearConCotizacionYTarea(
+    datos: DatosCrearSolicitudConCotizacion,
+  ): Promise<OrdenCompraModel>;
   cambiarEstado(
     id: string,
     estadoAnterior: EstadoOC,
@@ -78,7 +59,7 @@ export interface IOrdenesCompraRepositorio extends IRepositorioBase<
     motivo?: string | null,
   ): Promise<OrdenCompraModel | null>;
   buscarHistorial(ordenCompraId: string): Promise<HistorialEstadoOCModel[]>;
-  contarComentariosAsociados(ordenCompraId: string): Promise<number>;
+  eliminar(id: string): Promise<void>;
   buscarConFiltros(
     filtros: FiltrosOrdenCompra,
     paginacion: PaginacionOrdenCompra,

@@ -81,11 +81,11 @@ export class ProyectosService {
   async eliminar(id: string, usuarioActual: UsuarioAutenticado): Promise<void> {
     const proyecto = await this.obtenerProyectoOFallar(id);
 
-    const [cotizacionesAsociadas, tareasAsociadas, ordenesCompraAsociadas] =
+    const [cotizacionesAsociadas, tareasAsociadas, ordenesPagoAsociadas] =
       await Promise.all([
         this.proyectosRepositorio.contarCotizacionesAsociadas(id),
         this.proyectosRepositorio.contarTareasAsociadas(id),
-        this.proyectosRepositorio.contarOrdenesCompraAsociadas(id),
+        this.proyectosRepositorio.contarOrdenesPagoAsociadas(id),
       ]);
 
     if (cotizacionesAsociadas > 0) {
@@ -104,9 +104,9 @@ export class ProyectosService {
       });
     }
 
-    if (ordenesCompraAsociadas > 0) {
+    if (ordenesPagoAsociadas > 0) {
       throw new UnprocessableEntityException({
-        error: 'PROYECTO_CON_ORDENES_COMPRA_ASOCIADAS',
+        error: 'PROYECTO_CON_ORDENES_PAGO_ASOCIADAS',
         mensaje:
           'No se puede eliminar el proyecto porque tiene órdenes de compra asociadas',
       });

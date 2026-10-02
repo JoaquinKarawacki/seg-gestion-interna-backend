@@ -17,5 +17,5 @@ export interface ISectoresRepositorio extends IRepositorioBase<
   DatosActualizarSector
 > {
   contarUsuariosAsignados(sectorId: string): Promise<number>;
-  contarOrdenesCompraAsociadas(sectorId: string): Promise<number>;
+  contarOrdenesPagoAsociadas(sectorId: string): Promise<number>;
 }
