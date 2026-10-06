@@ -1,5 +1,11 @@
 import { EstadoOP } from '../../generated/prisma/enums';
 import type { EventoOrdenPagoEstadoCambiado } from '../ordenes-pago/eventos/orden-pago-estado-cambiado.evento';
+import {
+  construirBoton,
+  construirCuerpo,
+  DatoCorreo,
+  formatearMontoCorreo,
+} from './plantilla-base';
 
 export type TipoDestinatario = 'SOLICITANTE' | 'ENCARGADO_SECTOR' | 'ROL_PAGOS';
 
@@ -11,59 +17,85 @@ export interface PlantillaNotificacion {
 
 export function obtenerPlantilla(
   evento: EventoOrdenPagoEstadoCambiado,
+  baseUrl = '',
 ): PlantillaNotificacion | null {
-  const numeroOC = evento.numero;
-  const motivoHtml = evento.motivo ? ` Motivo: ${evento.motivo}.` : '';
+  const numero = evento.numero;
+  const motivoTexto = evento.motivo ? ` Motivo: ${evento.motivo}.` : '';
+  const titulo = `Orden de pago #${numero}`;
+  const datos: DatoCorreo[] = [
+    {
+      etiqueta: 'Monto',
+      valor: formatearMontoCorreo(evento.monto, evento.moneda),
+    },
+    { etiqueta: 'Concepto', valor: evento.concepto },
+  ];
+  const boton = construirBoton(
+    baseUrl,
+    `/ordenes-pago/${evento.ordenPagoId}`,
+    'Ver orden de pago',
+  );
+
+  function armar(
+    destinatarios: TipoDestinatario[],
+    asunto: string,
+    intro: string,
+  ): PlantillaNotificacion {
+    return {
+      destinatarios,
+      asunto,
+      cuerpo: construirCuerpo({ titulo, intro, datos, boton }),
+    };
+  }
 
   switch (evento.estadoNuevo) {
     case EstadoOP.PENDIENTE:
-      return {
-        destinatarios: ['ENCARGADO_SECTOR'],
-        asunto: `OC #${numeroOC}: pendiente de tu aprobación`,
-        cuerpo: `<p>La orden de compra #${numeroOC} está pendiente de tu aprobación.</p>`,
-      };
+      return armar(
+        ['ENCARGADO_SECTOR'],
+        `Orden de pago #${numero}: pendiente de tu aprobación`,
+        'Tenés una orden de pago pendiente de tu aprobación.',
+      );
     case EstadoOP.EN_CONSULTA:
-      return {
-        destinatarios: ['SOLICITANTE'],
-        asunto: `OC #${numeroOC}: tenés una consulta pendiente`,
-        cuerpo: `<p>El encargado dejó una consulta sobre la orden de compra #${numeroOC}.</p>`,
-      };
+      return armar(
+        ['SOLICITANTE'],
+        `Orden de pago #${numero}: tenés una consulta pendiente`,
+        'El encargado dejó una consulta sobre la orden de pago.',
+      );
     case EstadoOP.APROBADO:
       return evento.estadoAnterior === EstadoOP.PAGO_OBSERVADO
-        ? {
-            destinatarios: ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-            asunto: `OC #${numeroOC}: observación de pago resuelta`,
-            cuerpo: `<p>Se resolvió la observación de pago de la orden de compra #${numeroOC}.${motivoHtml}</p>`,
-          }
-        : {
-            destinatarios: ['ROL_PAGOS'],
-            asunto: `OC #${numeroOC}: aprobada, lista para pago`,
-            cuerpo: `<p>La orden de compra #${numeroOC} fue aprobada y está lista para pago.</p>`,
-          };
+        ? armar(
+            ['SOLICITANTE', 'ENCARGADO_SECTOR'],
+            `Orden de pago #${numero}: observación de pago resuelta`,
+            `Se resolvió la observación de pago de la orden de pago.${motivoTexto}`,
+          )
+        : armar(
+            ['ROL_PAGOS'],
+            `Orden de pago #${numero}: aprobada, lista para pago`,
+            'La orden de pago fue aprobada y está lista para pago.',
+          );
     case EstadoOP.RECHAZADO:
-      return {
-        destinatarios: ['SOLICITANTE'],
-        asunto: `OC #${numeroOC}: rechazada`,
-        cuerpo: `<p>La orden de compra #${numeroOC} fue rechazada.${motivoHtml}</p>`,
-      };
+      return armar(
+        ['SOLICITANTE'],
+        `Orden de pago #${numero}: rechazada`,
+        `La orden de pago fue rechazada.${motivoTexto}`,
+      );
     case EstadoOP.PAGO_OBSERVADO:
-      return {
-        destinatarios: ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-        asunto: `OC #${numeroOC}: pago observado`,
-        cuerpo: `<p>Se observó el pago de la orden de compra #${numeroOC}.${motivoHtml}</p>`,
-      };
+      return armar(
+        ['SOLICITANTE', 'ENCARGADO_SECTOR'],
+        `Orden de pago #${numero}: pago observado`,
+        `Se observó el pago de la orden de pago.${motivoTexto}`,
+      );
     case EstadoOP.PAGADO:
-      return {
-        destinatarios: ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-        asunto: `OC #${numeroOC}: pago confirmado`,
-        cuerpo: `<p>Se confirmó el pago de la orden de compra #${numeroOC}.</p>`,
-      };
+      return armar(
+        ['SOLICITANTE', 'ENCARGADO_SECTOR'],
+        `Orden de pago #${numero}: pago confirmado`,
+        'Se confirmó el pago de la orden de pago.',
+      );
     case EstadoOP.ANULADO:
-      return {
-        destinatarios: ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-        asunto: `OC #${numeroOC}: anulada`,
-        cuerpo: `<p>La orden de compra #${numeroOC} fue anulada.${motivoHtml}</p>`,
-      };
+      return armar(
+        ['SOLICITANTE', 'ENCARGADO_SECTOR'],
+        `Orden de pago #${numero}: anulada`,
+        `La orden de pago fue anulada.${motivoTexto}`,
+      );
     default:
       return null;
   }

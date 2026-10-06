@@ -25,7 +25,8 @@ export class OrdenPagoEstadoCambiadoOyente {
   async cuandoCambiaEstadoOrdenPago(
     evento: EventoOrdenPagoEstadoCambiado,
   ): Promise<void> {
-    const plantilla = obtenerPlantilla(evento);
+    const baseUrl = this.configService.get<string>('FRONTEND_URL', '');
+    const plantilla = obtenerPlantilla(evento, baseUrl);
 
     if (!plantilla) {
       this.logger.warn(

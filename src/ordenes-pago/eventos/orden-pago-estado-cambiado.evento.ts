@@ -1,4 +1,4 @@
-import { EstadoOP } from '../../../generated/prisma/enums';
+import { EstadoOP, Moneda } from '../../../generated/prisma/enums';
 
 export interface EventoOrdenPagoEstadoCambiado {
   ordenPagoId: string;
@@ -9,4 +9,7 @@ export interface EventoOrdenPagoEstadoCambiado {
   solicitanteId: string;
   usuarioId: string;
   motivo: string | null;
+  monto: string;
+  moneda: Moneda;
+  concepto: string;
 }

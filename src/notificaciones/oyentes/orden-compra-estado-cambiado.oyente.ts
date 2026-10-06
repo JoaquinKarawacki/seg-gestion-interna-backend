@@ -28,7 +28,8 @@ export class OrdenCompraEstadoCambiadoOyente {
   async cuandoCambiaEstado(
     evento: EventoOrdenCompraEstadoCambiado,
   ): Promise<void> {
-    const plantilla = obtenerPlantillaSolicitud(evento);
+    const baseUrl = this.configService.get<string>('FRONTEND_URL', '');
+    const plantilla = obtenerPlantillaSolicitud(evento, baseUrl);
 
     if (!plantilla) {
       this.logger.warn(

@@ -212,6 +212,9 @@ export class OrdenesCompraAprobacionService {
       solicitanteId: solicitud.solicitanteId,
       usuarioId,
       motivo: motivo ?? null,
+      monto: solicitud.monto.toString(),
+      moneda: solicitud.moneda,
+      concepto: solicitud.concepto,
     };
 
     this.emisorEventos.emit(EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO, evento);

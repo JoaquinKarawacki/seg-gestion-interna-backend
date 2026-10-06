@@ -317,6 +317,9 @@ export class OrdenesPagoAprobacionService {
       solicitanteId: orden.solicitanteId,
       usuarioId,
       motivo: motivo ?? null,
+      monto: orden.monto.toString(),
+      moneda: orden.moneda,
+      concepto: orden.concepto,
     };
 
     this.emisorEventos.emit(EVENTOS.ORDEN_PAGO_ESTADO_CAMBIADO, evento);
