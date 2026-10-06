@@ -7,7 +7,19 @@ import { Moneda, RolUsuario } from '../generated/prisma/enums';
 const RONDAS_SALT = 10;
 const CONTRASENA_DE_PRUEBA = 'Cambiar123!';
 
-const RUBROS_BASE = ['Equipos', 'Instalación', 'Monitoreo'];
+const RUBROS_BASE = [
+  'Climatización',
+  'Agua',
+  'Energía térmica',
+  'Aire comprimido',
+  'Iluminación',
+  'Motores',
+  'Efluentes',
+  'Transporte',
+  'Monitoreo',
+  'Equipos',
+  'Instalación',
+];
 
 const USUARIOS_DE_PRUEBA = [
   {
