@@ -193,6 +193,7 @@ export class ProyectosService {
   private mapearRespuesta(proyecto: ProyectoModel): RespuestaProyectoDto {
     return {
       id: proyecto.id,
+      numero: proyecto.numero,
       nombre: proyecto.nombre,
       clienteId: proyecto.clienteId,
       sectorId: proyecto.sectorId,
