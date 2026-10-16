@@ -106,10 +106,16 @@ async function resolverSolicitanteId(): Promise<string> {
   return usuario.id;
 }
 
+// OPC sintética para los proyectos históricos importados (previos al sistema de
+// códigos del Generador). Cada proyecto recibe un PI correlativo: 99999PI01, etc.
+let contadorCodigoInversion = 0;
+
 async function obtenerOCrearProyecto(nombre: string, clienteId: string, sectorId: string): Promise<string> {
   const existente = await prisma.proyecto.findFirst({ where: { nombre, clienteId } });
   if (existente) return existente.id;
-  const creado = await prisma.proyecto.create({ data: { nombre, clienteId, sectorId } });
+  contadorCodigoInversion += 1;
+  const codigoInversion = `99999PI${String(contadorCodigoInversion).padStart(2, '0')}`;
+  const creado = await prisma.proyecto.create({ data: { codigoInversion, nombre, clienteId, sectorId } });
   return creado.id;
 }
 

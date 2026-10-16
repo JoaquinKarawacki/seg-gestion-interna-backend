@@ -124,7 +124,7 @@ model TipoCambio {
 
 model Proyecto {
   id            String        @id @default(uuid())
-  numero        Int           @unique @default(autoincrement())
+  codigoInversion String      @unique @map("codigo_inversion")
   nombre        String
   clienteId     String        @map("cliente_id")
   cliente       Cliente       @relation(fields: [clienteId], references: [id])
