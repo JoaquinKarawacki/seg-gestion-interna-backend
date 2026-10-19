@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { EstadoOP, EstadoOC, RolUsuario } from '../../generated/prisma/enums';
-import type { OrdenPagoModel } from '../../generated/prisma/models';
+import type {
+  OrdenCompraModel,
+  OrdenPagoModel,
+} from '../../generated/prisma/models';
 import { ALMACENAMIENTO } from '../almacenamiento/puertos/almacenamiento.puerto';
 import type {
   ArchivoAlmacenado,
@@ -93,15 +96,19 @@ export class OrdenesPagoService {
     usuario: UsuarioAutenticado,
     factura?: Express.Multer.File,
   ): Promise<RespuestaOrdenPagoDto> {
-    // Si la OP se genera desde una orden de compra (OrdenCompra) aprobada,
-    // la cotización efectiva es la de esa OC (relación 1:1); si no, se usa la
-    // que venga en el DTO.
-    const cotizacionId = await this.resolverCotizacion(dto);
-    const jerarquia = await this.derivarJerarquia(cotizacionId ?? undefined);
+    // La OP siempre nace de una orden de compra (OrdenCompra) APROBADA: de ella
+    // se heredan tipo, sector, proveedor, moneda, IVA incluido y la cotización
+    // (relación 1:1), y de la cotización se deriva proyecto/cliente/tarea. El
+    // usuario solo ajusta monto, concepto, forma de pago, si paga IVA y la factura.
+    const ordenCompra = await this.resolverOrdenCompraAprobada(
+      dto.ordenCompraId,
+    );
+    const cotizacionId = ordenCompra.cotizacionId;
+    const jerarquia = await this.derivarJerarquia(cotizacionId);
     const monto = new Prisma.Decimal(dto.monto);
 
     await this.cadenaValidacionOP.ejecutar({
-      proveedorId: dto.proveedorId,
+      proveedorId: ordenCompra.proveedorId,
       cotizacionId,
       monto,
       confirmarExcesoMonto: dto.confirmarExcesoMonto ?? false,
@@ -118,22 +125,22 @@ export class OrdenesPagoService {
     try {
       const orden = await this.ejecutarOMapearReferenciaInvalida(() =>
         this.ordenesPagoRepositorio.crear({
-          tipo: dto.tipo,
+          tipo: ordenCompra.tipo,
           fecha: new Date(dto.fecha),
           solicitanteId: usuario.id,
-          sectorId: dto.sectorId,
-          proveedorId: dto.proveedorId,
+          sectorId: ordenCompra.sectorId,
+          proveedorId: ordenCompra.proveedorId,
           clienteId: jerarquia.clienteId,
           proyectoId: jerarquia.proyectoId,
           tareaId: jerarquia.tareaId,
           cotizacionId,
-          ordenCompraId: dto.ordenCompraId ?? null,
-          moneda: dto.moneda,
+          ordenCompraId: ordenCompra.id,
+          moneda: ordenCompra.moneda,
           monto,
           concepto: dto.concepto,
           formaPago: dto.formaPago,
           pagaIva: dto.pagaIva,
-          ivaIncluido: dto.ivaIncluido,
+          ivaIncluido: ordenCompra.ivaIncluido,
           observaciones: dto.observaciones ?? null,
           facturaPdfRuta: facturaGuardada?.referencia ?? null,
         }),
@@ -143,11 +150,7 @@ export class OrdenesPagoService {
         usuarioId: usuario.id,
         usuarioEmail: usuario.email,
         accion: ACCIONES_AUDITORIA.CREAR_ORDEN_PAGO,
-        descripcion: `Creó la orden de compra #${orden.numero}${
-          dto.ordenCompraId
-            ? ' (generada desde una orden de compra aprobada)'
-            : ''
-        }${
+        descripcion: `Creó la orden de pago #${orden.numero} desde la orden de compra #${ordenCompra.numero}${
           dto.confirmarExcesoMonto ? ' con confirmación de exceso de monto' : ''
         }`,
         entidad: 'OrdenPago',
@@ -289,30 +292,24 @@ export class OrdenesPagoService {
   }
 
   /**
-   * Determina qué cotización usar al crear una Orden de Pago.
-   * - Sin `ordenCompraId`: flujo clásico, se usa la cotización del DTO (o null).
-   * - Con `ordenCompraId`: la OP se genera desde una Orden de Compra; se valida
-   *   que exista y esté APROBADA, y se devuelve su cotización (relación 1:1).
+   * Carga la orden de compra (OrdenCompra) desde la que nace la OP y valida que
+   * exista y esté APROBADA. Devuelve la OC completa para heredar sus datos
+   * (tipo, sector, proveedor, moneda, IVA incluido y cotización).
    */
-  private async resolverCotizacion(
-    dto: CrearOrdenPagoDto,
-  ): Promise<string | null> {
-    if (!dto.ordenCompraId) {
-      return dto.cotizacionId ?? null;
-    }
+  private async resolverOrdenCompraAprobada(
+    ordenCompraId: string,
+  ): Promise<OrdenCompraModel> {
+    const ordenCompra =
+      await this.ordenesCompraRepositorio.buscarPorId(ordenCompraId);
 
-    const solicitud = await this.ordenesCompraRepositorio.buscarPorId(
-      dto.ordenCompraId,
-    );
-
-    if (!solicitud) {
+    if (!ordenCompra) {
       throw new NotFoundException({
         error: 'ORDEN_COMPRA_NO_ENCONTRADA',
         mensaje: 'No existe una orden de compra con ese ID',
       });
     }
 
-    if (solicitud.estado !== EstadoOC.APROBADO) {
+    if (ordenCompra.estado !== EstadoOC.APROBADO) {
       throw new UnprocessableEntityException({
         error: 'OC_NO_APROBADA',
         mensaje:
@@ -320,7 +317,7 @@ export class OrdenesPagoService {
       });
     }
 
-    return solicitud.cotizacionId;
+    return ordenCompra;
   }
 
   private async derivarJerarquia(

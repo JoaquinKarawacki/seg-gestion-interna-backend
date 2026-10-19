@@ -73,18 +73,15 @@ export class OrdenCompraAprobadaOyente {
 
       const autor = await this.resolverAutor(solicitud.solicitanteId);
 
+      // tipo/sector/proveedor/moneda/IVA incluido los deriva el service desde la
+      // misma OC; acá solo se pasa lo que el flujo de pago único define.
       const dto: CrearOrdenPagoDto = {
-        tipo: solicitud.tipo,
-        fecha: new Date().toISOString(),
-        sectorId: solicitud.sectorId,
-        proveedorId: solicitud.proveedorId,
         ordenCompraId: solicitud.id,
-        moneda: solicitud.moneda,
+        fecha: new Date().toISOString(),
         monto: solicitud.monto.toNumber(),
         concepto: solicitud.concepto,
         formaPago: solicitud.pagoUnicoFormaPago,
         pagaIva: solicitud.pagaIva,
-        ivaIncluido: solicitud.ivaIncluido,
         observaciones: solicitud.observaciones ?? undefined,
       };
 

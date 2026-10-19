@@ -10,33 +10,20 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { FormaPago, Moneda, TipoOC } from '../../../generated/prisma/enums';
+import { FormaPago } from '../../../generated/prisma/enums';
 
 const convertirATexto = (valor: unknown) => valor === true || valor === 'true';
 
 export class CrearOrdenPagoDto {
-  @IsEnum(TipoOC)
-  tipo!: TipoOC;
+  // Toda orden de pago nace de una orden de compra (OrdenCompra) APROBADA. De la
+  // OC se heredan tipo, sector, proveedor, moneda, IVA incluido y la cotización
+  // (y de la cotización, proyecto/cliente/tarea); acá solo viaja lo que el usuario
+  // ajusta pago a pago.
+  @IsUUID()
+  ordenCompraId!: string;
 
   @IsDateString()
   fecha!: string;
-
-  @IsUUID()
-  sectorId!: string;
-
-  @IsUUID()
-  proveedorId!: string;
-
-  @IsOptional()
-  @IsUUID()
-  cotizacionId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  ordenCompraId?: string;
-
-  @IsEnum(Moneda)
-  moneda!: Moneda;
 
   @Type(() => Number)
   @IsNumber()
@@ -54,18 +41,13 @@ export class CrearOrdenPagoDto {
   @IsBoolean()
   pagaIva!: boolean;
 
-  @Transform(({ value }) => convertirATexto(value))
-  @IsBoolean()
-  ivaIncluido!: boolean;
-
   @IsOptional()
   @IsString()
   observaciones?: string;
 
-  // Override explícito de la alarma de monto: cuando el monto supera el de la
-  // orden de compra vinculada, el backend bloquea con 422 MONTO_EXCEDE_COTIZACION;
-  // el frontend muestra la advertencia y reenvía con este flag en true para
-  // confirmar y permitir el exceso.
+  // Override explícito de la alarma de monto: cuando el monto supera lo disponible
+  // de la cotización, el backend bloquea con 422 MONTO_EXCEDE_COTIZACION; el
+  // frontend muestra la advertencia y reenvía con este flag en true para confirmar.
   @Transform(({ value }) => convertirATexto(value))
   @IsOptional()
   @IsBoolean()
