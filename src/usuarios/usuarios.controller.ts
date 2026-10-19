@@ -43,8 +43,10 @@ export class UsuariosController {
     return { datos: null, mensaje: 'Contraseña actualizada correctamente' };
   }
 
+  // Listado accesible a cualquier usuario autenticado (no solo ADMIN): el historial
+  // de OC/OP necesita resolver usuarioId -> nombre para todos los roles. Solo expone
+  // el directorio (sin credenciales); crear/editar/borrar y GET :id siguen ADMIN.
   @Get()
-  @Roles(RolUsuario.ADMIN)
   async listar(): Promise<RespuestaLista<RespuestaUsuarioDto>> {
     const datos = await this.usuariosService.listar();
     return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
