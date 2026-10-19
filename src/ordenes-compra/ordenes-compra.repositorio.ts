@@ -9,6 +9,7 @@ import {
   DatosCrearSolicitudConCotizacion,
   FiltrosOrdenCompra,
   IOrdenesCompraRepositorio,
+  OrdenCompraDetalle,
   PaginacionOrdenCompra,
 } from './interfaces/ordenes-compra-repositorio.interface';
 
@@ -27,6 +28,21 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
 
   async buscarPorId(id: string): Promise<OrdenCompraModel | null> {
     return this.prisma.ordenCompra.findUnique({ where: { id } });
+  }
+
+  // OC con relaciones para el mail de notificación (proyecto + cliente, proveedor,
+  // rubro, sector y solicitante).
+  async buscarDetalle(id: string): Promise<OrdenCompraDetalle | null> {
+    return this.prisma.ordenCompra.findUnique({
+      where: { id },
+      include: {
+        proyecto: { include: { cliente: true } },
+        proveedor: true,
+        rubro: true,
+        sector: true,
+        solicitante: true,
+      },
+    });
   }
 
   // Crea, en una sola transacción, la Tarea del rubro (reutilizándola si ya

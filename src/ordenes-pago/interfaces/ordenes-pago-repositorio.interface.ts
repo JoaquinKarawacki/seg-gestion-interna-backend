@@ -13,6 +13,18 @@ import { IRepositorioBase } from '../../comun/interfaces/repositorio-base.interf
 
 export const ORDENES_PAGO_REPOSITORIO = Symbol('IOrdenesPagoRepositorio');
 
+// OP con las relaciones que necesita el mail de notificación (cuerpo completo).
+// El proyecto es opcional (puede faltar en OPs viejas sin OC de origen).
+export type OrdenPagoDetalle = Prisma.OrdenPagoGetPayload<{
+  include: {
+    proyecto: { include: { cliente: true } };
+    proveedor: true;
+    sector: true;
+    solicitante: true;
+    ordenCompra: true;
+  };
+}>;
+
 export interface DatosCrearOrdenPago {
   tipo: TipoOC;
   fecha: Date;
@@ -69,6 +81,7 @@ export interface IOrdenesPagoRepositorio extends IRepositorioBase<
   DatosCrearOrdenPago,
   DatosActualizarOrdenPago
 > {
+  buscarDetalle(id: string): Promise<OrdenPagoDetalle | null>;
   sumarMontoPorCotizacion(cotizacionId: string): Promise<Prisma.Decimal>;
   cambiarEstado(
     id: string,

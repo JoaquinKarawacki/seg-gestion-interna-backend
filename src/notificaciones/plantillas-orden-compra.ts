@@ -1,11 +1,18 @@
 import { EstadoOC } from '../../generated/prisma/enums';
 import type { EventoOrdenCompraEstadoCambiado } from '../ordenes-compra/eventos/orden-compra-estado-cambiado.evento';
+import type { OrdenCompraDetalle } from '../ordenes-compra/interfaces/ordenes-compra-repositorio.interface';
 import {
   construirBoton,
   construirCuerpo,
   DatoCorreo,
   formatearMontoCorreo,
 } from './plantilla-base';
+import {
+  ETIQUETAS_ESTADO_OC,
+  ETIQUETAS_TIPO,
+  etiquetaSiNo,
+  formatearFechaCorreo,
+} from './etiquetas-correo';
 
 export type TipoDestinatarioSolicitud = 'SOLICITANTE' | 'ENCARGADO_SECTOR';
 
@@ -15,21 +22,44 @@ export interface PlantillaNotificacionSolicitud {
   cuerpo: string;
 }
 
-// Una plantilla por transición: un solo mail por acción, sin atomizar.
+// Una plantilla por transición: un solo mail por acción, con la OC completa en el
+// cuerpo. El asunto identifica el proyecto, cliente y la OC (+ el estado nuevo).
 export function obtenerPlantillaSolicitud(
   evento: EventoOrdenCompraEstadoCambiado,
+  oc: OrdenCompraDetalle,
   baseUrl = '',
 ): PlantillaNotificacionSolicitud | null {
   const numero = evento.numero;
   const motivoTexto = evento.motivo ? ` Motivo: ${evento.motivo}.` : '';
+  const proyecto = oc.proyecto;
+  const clienteNombre = proyecto.cliente?.nombre ?? '—';
   const titulo = `Orden de compra #${numero}`;
+
+  const asunto =
+    `#${proyecto.numero} - ${proyecto.nombre} - ${clienteNombre} - ` +
+    `Orden de compra #${numero} · ${ETIQUETAS_ESTADO_OC[evento.estadoNuevo]}`;
+
   const datos: DatoCorreo[] = [
+    { etiqueta: 'Proyecto', valor: `#${proyecto.numero} - ${proyecto.nombre}` },
+    { etiqueta: 'Cliente', valor: clienteNombre },
+    { etiqueta: 'Proveedor', valor: oc.proveedor.nombre },
+    { etiqueta: 'Sector', valor: oc.sector.nombre },
+    { etiqueta: 'Tipo', valor: ETIQUETAS_TIPO[oc.tipo] },
+    { etiqueta: 'Rubro', valor: oc.rubro.nombre },
+    { etiqueta: 'Fecha', valor: formatearFechaCorreo(oc.fecha) },
     {
       etiqueta: 'Monto',
-      valor: formatearMontoCorreo(evento.monto, evento.moneda),
+      valor: formatearMontoCorreo(oc.monto.toString(), oc.moneda),
     },
-    { etiqueta: 'Concepto', valor: evento.concepto },
+    { etiqueta: '¿Paga IVA?', valor: etiquetaSiNo(oc.pagaIva) },
+    { etiqueta: 'Concepto', valor: oc.concepto },
+    { etiqueta: 'Estado', valor: ETIQUETAS_ESTADO_OC[oc.estado] },
+    { etiqueta: 'Solicitante', valor: oc.solicitante.email },
   ];
+  if (oc.observaciones) {
+    datos.push({ etiqueta: 'Observaciones', valor: oc.observaciones });
+  }
+
   const boton = construirBoton(
     baseUrl,
     `/ordenes-compra/${evento.ordenCompraId}`,
@@ -38,7 +68,6 @@ export function obtenerPlantillaSolicitud(
 
   function armar(
     destinatarios: TipoDestinatarioSolicitud[],
-    asunto: string,
     intro: string,
   ): PlantillaNotificacionSolicitud {
     return {
@@ -52,25 +81,21 @@ export function obtenerPlantillaSolicitud(
     case EstadoOC.PENDIENTE:
       return armar(
         ['ENCARGADO_SECTOR'],
-        `Orden de compra #${numero}: pendiente de tu aprobación`,
         'Tenés una orden de compra pendiente de tu aprobación.',
       );
     case EstadoOC.APROBADO:
       return armar(
         ['SOLICITANTE'],
-        `Orden de compra #${numero}: aprobada`,
         'La orden de compra fue aprobada. Ya podés generar la orden de pago correspondiente.',
       );
     case EstadoOC.RECHAZADO:
       return armar(
         ['SOLICITANTE'],
-        `Orden de compra #${numero}: rechazada`,
         `La orden de compra fue rechazada.${motivoTexto}`,
       );
     case EstadoOC.ANULADO:
       return armar(
         ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-        `Orden de compra #${numero}: anulada`,
         `La orden de compra fue anulada.${motivoTexto}`,
       );
     default:

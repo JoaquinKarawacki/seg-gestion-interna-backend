@@ -11,6 +11,7 @@ import {
   DatosCrearOrdenPago,
   FiltrosOrdenPago,
   IOrdenesPagoRepositorio,
+  OrdenPagoDetalle,
   PaginacionOrdenPago,
 } from './interfaces/ordenes-pago-repositorio.interface';
 
@@ -29,6 +30,21 @@ export class OrdenesPagoRepositorio implements IOrdenesPagoRepositorio {
 
   async buscarPorId(id: string): Promise<OrdenPagoModel | null> {
     return this.prisma.ordenPago.findUnique({ where: { id } });
+  }
+
+  // OP con relaciones para el mail de notificación (proyecto + cliente, proveedor,
+  // sector, solicitante y la OC de origen).
+  async buscarDetalle(id: string): Promise<OrdenPagoDetalle | null> {
+    return this.prisma.ordenPago.findUnique({
+      where: { id },
+      include: {
+        proyecto: { include: { cliente: true } },
+        proveedor: true,
+        sector: true,
+        solicitante: true,
+        ordenCompra: true,
+      },
+    });
   }
 
   async buscarTodos(): Promise<OrdenPagoModel[]> {

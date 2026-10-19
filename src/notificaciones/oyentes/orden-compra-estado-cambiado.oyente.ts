@@ -5,6 +5,8 @@ import { RolUsuario } from '../../../generated/prisma/enums';
 import type { UsuarioModel } from '../../../generated/prisma/models';
 import { EVENTOS_ORDEN_COMPRA } from '../../ordenes-compra/eventos/eventos.constantes';
 import type { EventoOrdenCompraEstadoCambiado } from '../../ordenes-compra/eventos/orden-compra-estado-cambiado.evento';
+import { ORDENES_COMPRA_REPOSITORIO } from '../../ordenes-compra/interfaces/ordenes-compra-repositorio.interface';
+import type { IOrdenesCompraRepositorio } from '../../ordenes-compra/interfaces/ordenes-compra-repositorio.interface';
 import { USUARIOS_REPOSITORIO } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import type { IUsuariosRepositorio } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import { CorreoService } from '../correo.service';
@@ -20,6 +22,8 @@ export class OrdenCompraEstadoCambiadoOyente {
   constructor(
     @Inject(USUARIOS_REPOSITORIO)
     private readonly usuariosRepositorio: IUsuariosRepositorio,
+    @Inject(ORDENES_COMPRA_REPOSITORIO)
+    private readonly ordenesCompraRepositorio: IOrdenesCompraRepositorio,
     private readonly correoService: CorreoService,
     private readonly configService: ConfigService,
   ) {}
@@ -29,18 +33,29 @@ export class OrdenCompraEstadoCambiadoOyente {
     evento: EventoOrdenCompraEstadoCambiado,
   ): Promise<void> {
     const baseUrl = this.configService.get<string>('FRONTEND_URL', '');
-    const plantilla = obtenerPlantillaSolicitud(evento, baseUrl);
-
-    if (!plantilla) {
-      this.logger.warn(
-        `Sin plantilla de notificación para el estado ${evento.estadoNuevo}`,
-      );
-      return;
-    }
 
     // Fail-soft: se emite con emit() (fire-and-forget); una excepción sin
-    // atrapar acá tumbaría el proceso, así que se loguea y no se relanza.
+    // atrapar acá (incluida la carga de la OC) tumbaría el proceso, así que se
+    // loguea y no se relanza.
     try {
+      const oc = await this.ordenesCompraRepositorio.buscarDetalle(
+        evento.ordenCompraId,
+      );
+      if (!oc) {
+        this.logger.warn(
+          `No se encontró la orden de compra ${evento.ordenCompraId} para notificar`,
+        );
+        return;
+      }
+
+      const plantilla = obtenerPlantillaSolicitud(evento, oc, baseUrl);
+      if (!plantilla) {
+        this.logger.warn(
+          `Sin plantilla de notificación para el estado ${evento.estadoNuevo}`,
+        );
+        return;
+      }
+
       const destinatarios = await this.resolverEmails(
         plantilla.destinatarios,
         evento,

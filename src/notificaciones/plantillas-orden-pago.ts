@@ -1,11 +1,19 @@
 import { EstadoOP } from '../../generated/prisma/enums';
 import type { EventoOrdenPagoEstadoCambiado } from '../ordenes-pago/eventos/orden-pago-estado-cambiado.evento';
+import type { OrdenPagoDetalle } from '../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
 import {
   construirBoton,
   construirCuerpo,
   DatoCorreo,
   formatearMontoCorreo,
 } from './plantilla-base';
+import {
+  ETIQUETAS_ESTADO_OP,
+  ETIQUETAS_FORMA_PAGO,
+  ETIQUETAS_TIPO,
+  etiquetaSiNo,
+  formatearFechaCorreo,
+} from './etiquetas-correo';
 
 export type TipoDestinatario = 'SOLICITANTE' | 'ENCARGADO_SECTOR' | 'ROL_PAGOS';
 
@@ -17,18 +25,56 @@ export interface PlantillaNotificacion {
 
 export function obtenerPlantilla(
   evento: EventoOrdenPagoEstadoCambiado,
+  op: OrdenPagoDetalle,
   baseUrl = '',
 ): PlantillaNotificacion | null {
   const numero = evento.numero;
   const motivoTexto = evento.motivo ? ` Motivo: ${evento.motivo}.` : '';
+  const proyecto = op.proyecto;
+  const estadoLabel = ETIQUETAS_ESTADO_OP[evento.estadoNuevo];
   const titulo = `Orden de pago #${numero}`;
-  const datos: DatoCorreo[] = [
-    {
-      etiqueta: 'Monto',
-      valor: formatearMontoCorreo(evento.monto, evento.moneda),
-    },
-    { etiqueta: 'Concepto', valor: evento.concepto },
-  ];
+
+  // Toda OP nace de una OC (que tiene proyecto). El fallback sin proyecto cubre
+  // OPs viejas sueltas.
+  const asunto = proyecto
+    ? `#${proyecto.numero} - ${proyecto.nombre} - ${proyecto.cliente?.nombre ?? '—'} - ` +
+      `Orden de pago #${numero} · ${estadoLabel}`
+    : `Orden de pago #${numero} · ${estadoLabel}`;
+
+  const datos: DatoCorreo[] = [];
+  if (proyecto) {
+    datos.push({
+      etiqueta: 'Proyecto',
+      valor: `#${proyecto.numero} - ${proyecto.nombre}`,
+    });
+    datos.push({ etiqueta: 'Cliente', valor: proyecto.cliente?.nombre ?? '—' });
+  }
+  datos.push({ etiqueta: 'Proveedor', valor: op.proveedor.nombre });
+  datos.push({ etiqueta: 'Sector', valor: op.sector.nombre });
+  datos.push({ etiqueta: 'Tipo', valor: ETIQUETAS_TIPO[op.tipo] });
+  datos.push({
+    etiqueta: 'Forma de pago',
+    valor: ETIQUETAS_FORMA_PAGO[op.formaPago],
+  });
+  datos.push({ etiqueta: 'Fecha', valor: formatearFechaCorreo(op.fecha) });
+  datos.push({
+    etiqueta: 'Monto',
+    valor: formatearMontoCorreo(op.monto.toString(), op.moneda),
+  });
+  datos.push({ etiqueta: '¿Paga IVA?', valor: etiquetaSiNo(op.pagaIva) });
+  datos.push({ etiqueta: 'Concepto', valor: op.concepto });
+  if (op.ordenCompra) {
+    datos.push({
+      etiqueta: 'Orden de compra',
+      valor: `#${op.ordenCompra.numero}`,
+    });
+  }
+  datos.push({ etiqueta: 'Estado', valor: estadoLabel });
+  datos.push({ etiqueta: 'Solicitante', valor: op.solicitante.email });
+  if (op.observaciones) {
+    datos.push({ etiqueta: 'Observaciones', valor: op.observaciones });
+  }
+
   const boton = construirBoton(
     baseUrl,
     `/ordenes-pago/${evento.ordenPagoId}`,
@@ -37,7 +83,6 @@ export function obtenerPlantilla(
 
   function armar(
     destinatarios: TipoDestinatario[],
-    asunto: string,
     intro: string,
   ): PlantillaNotificacion {
     return {
@@ -51,49 +96,41 @@ export function obtenerPlantilla(
     case EstadoOP.PENDIENTE:
       return armar(
         ['ENCARGADO_SECTOR'],
-        `Orden de pago #${numero}: pendiente de tu aprobación`,
         'Tenés una orden de pago pendiente de tu aprobación.',
       );
     case EstadoOP.EN_CONSULTA:
       return armar(
         ['SOLICITANTE'],
-        `Orden de pago #${numero}: tenés una consulta pendiente`,
         'El encargado dejó una consulta sobre la orden de pago.',
       );
     case EstadoOP.APROBADO:
       return evento.estadoAnterior === EstadoOP.PAGO_OBSERVADO
         ? armar(
             ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-            `Orden de pago #${numero}: observación de pago resuelta`,
             `Se resolvió la observación de pago de la orden de pago.${motivoTexto}`,
           )
         : armar(
             ['ROL_PAGOS'],
-            `Orden de pago #${numero}: aprobada, lista para pago`,
             'La orden de pago fue aprobada y está lista para pago.',
           );
     case EstadoOP.RECHAZADO:
       return armar(
         ['SOLICITANTE'],
-        `Orden de pago #${numero}: rechazada`,
         `La orden de pago fue rechazada.${motivoTexto}`,
       );
     case EstadoOP.PAGO_OBSERVADO:
       return armar(
         ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-        `Orden de pago #${numero}: pago observado`,
         `Se observó el pago de la orden de pago.${motivoTexto}`,
       );
     case EstadoOP.PAGADO:
       return armar(
         ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-        `Orden de pago #${numero}: pago confirmado`,
         'Se confirmó el pago de la orden de pago.',
       );
     case EstadoOP.ANULADO:
       return armar(
         ['SOLICITANTE', 'ENCARGADO_SECTOR'],
-        `Orden de pago #${numero}: anulada`,
         `La orden de pago fue anulada.${motivoTexto}`,
       );
     default:

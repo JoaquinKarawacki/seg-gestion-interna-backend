@@ -5,6 +5,8 @@ import { RolUsuario } from '../../../generated/prisma/enums';
 import type { UsuarioModel } from '../../../generated/prisma/models';
 import { EVENTOS } from '../../ordenes-pago/eventos/eventos.constantes';
 import type { EventoOrdenPagoEstadoCambiado } from '../../ordenes-pago/eventos/orden-pago-estado-cambiado.evento';
+import { ORDENES_PAGO_REPOSITORIO } from '../../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
+import type { IOrdenesPagoRepositorio } from '../../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
 import { USUARIOS_REPOSITORIO } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import type { IUsuariosRepositorio } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import { CorreoService } from '../correo.service';
@@ -17,6 +19,8 @@ export class OrdenPagoEstadoCambiadoOyente {
   constructor(
     @Inject(USUARIOS_REPOSITORIO)
     private readonly usuariosRepositorio: IUsuariosRepositorio,
+    @Inject(ORDENES_PAGO_REPOSITORIO)
+    private readonly ordenesPagoRepositorio: IOrdenesPagoRepositorio,
     private readonly correoService: CorreoService,
     private readonly configService: ConfigService,
   ) {}
@@ -26,21 +30,31 @@ export class OrdenPagoEstadoCambiadoOyente {
     evento: EventoOrdenPagoEstadoCambiado,
   ): Promise<void> {
     const baseUrl = this.configService.get<string>('FRONTEND_URL', '');
-    const plantilla = obtenerPlantilla(evento, baseUrl);
-
-    if (!plantilla) {
-      this.logger.warn(
-        `Sin plantilla de notificación para el estado ${evento.estadoNuevo}`,
-      );
-      return;
-    }
 
     // Todo el manejo del evento es fail-soft: como se dispara con emit() (no
     // emitAsync()) y no hay un handler de unhandledRejection en main.ts, una
-    // excepción sin atrapar acá (no solo en el envío del mail, también en la
-    // resolución de destinatarios) tumbaría el proceso entero, no solo esta
-    // notificación puntual.
+    // excepción sin atrapar acá (incluida la carga de la OP, la resolución de
+    // destinatarios o el envío del mail) tumbaría el proceso entero, no solo
+    // esta notificación puntual.
     try {
+      const op = await this.ordenesPagoRepositorio.buscarDetalle(
+        evento.ordenPagoId,
+      );
+      if (!op) {
+        this.logger.warn(
+          `No se encontró la orden de pago ${evento.ordenPagoId} para notificar`,
+        );
+        return;
+      }
+
+      const plantilla = obtenerPlantilla(evento, op, baseUrl);
+      if (!plantilla) {
+        this.logger.warn(
+          `Sin plantilla de notificación para el estado ${evento.estadoNuevo}`,
+        );
+        return;
+      }
+
       const destinatarios = await this.resolverEmails(
         plantilla.destinatarios,
         evento,

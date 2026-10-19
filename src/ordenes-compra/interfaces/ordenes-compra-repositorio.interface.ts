@@ -12,6 +12,17 @@ import {
 
 export const ORDENES_COMPRA_REPOSITORIO = Symbol('IOrdenesCompraRepositorio');
 
+// OC con las relaciones que necesita el mail de notificación (cuerpo completo).
+export type OrdenCompraDetalle = Prisma.OrdenCompraGetPayload<{
+  include: {
+    proyecto: { include: { cliente: true } };
+    proveedor: true;
+    rubro: true;
+    sector: true;
+    solicitante: true;
+  };
+}>;
+
 // Datos para crear una OC junto con su Cotización (1:1) y su Tarea (reutilizada
 // por rubro en el proyecto), todo en una sola transacción.
 export interface DatosCrearSolicitudConCotizacion {
@@ -48,6 +59,7 @@ export interface PaginacionOrdenCompra {
 
 export interface IOrdenesCompraRepositorio {
   buscarPorId(id: string): Promise<OrdenCompraModel | null>;
+  buscarDetalle(id: string): Promise<OrdenCompraDetalle | null>;
   crearConCotizacionYTarea(
     datos: DatosCrearSolicitudConCotizacion,
   ): Promise<OrdenCompraModel>;
