@@ -688,7 +688,9 @@ DATABASE_URL=<public_url> npx tsx prisma/seed.ts
 
 **Gotcha de build**: el `tsc`/`nest build` de este repo compila a `dist/src/main.js`, no `dist/main.js`, porque hay archivos `.ts` fuera de `src/` (`prisma.config.ts`, `prisma/seed.ts`) que fuerzan a TypeScript a inferir `rootDir` como la raíz del proyecto. `package.json`'s `start:prod` ya está ajustado a `node dist/src/main`.
 
-**`prisma migrate deploy` NO corre automáticamente en el boot** (a diferencia de lo que decía antes este documento) — contra el Postgres real de Railway (template `postgres-ssl`), algo en la cadena `npx prisma migrate deploy && npm run start:prod` impide que el server llegue a levantar. Se sacó del `startCommand`. **Cualquier migración nueva de Prisma hay que aplicarla a mano** contra producción.
+**⚠️ Actualización 2026-10-02: las migraciones SÍ corren solas ahora** vía el `CMD` del Dockerfile (`sh -c "npx prisma migrate deploy && npm run start:prod"`) — ver la sección "Fase 2 OC→OP…" → "Deploy" al final del documento. Lo que sigue es el estado histórico previo, cuando había que aplicarlas a mano.
+
+**(Histórico) `prisma migrate deploy` NO corre automáticamente en el boot** (a diferencia de lo que decía antes este documento) — contra el Postgres real de Railway (template `postgres-ssl`), algo en la cadena `npx prisma migrate deploy && npm run start:prod` impide que el server llegue a levantar. Se sacó del `startCommand`. **Cualquier migración nueva de Prisma hay que aplicarla a mano** contra producción.
 
 **Método recomendado (verificado 2026-09-14, ver incidente de `PropuestaInversion` parte 2 abajo)**: `railway ssh --service backend` para entrar al contenedor ya corriendo, y ahí dentro `npx prisma migrate deploy` — usa el `DATABASE_URL` interno que el servicio backend ya tiene seteado, sin exponer la base públicamente ni tocar el `startCommand`. El Postgres de este proyecto (template `postgres-ssl`) **no expone una variable `DATABASE_PUBLIC_URL`** (confirmado con `railway variables --service Postgres`, solo trae `DATABASE_URL`/`PGHOST`/`PGPORT`/etc. internos) — la alternativa de "TCP proxy temporal apuntando a `DATABASE_PUBLIC_URL`" que sugería antes este documento no aplica tal cual a este proyecto salvo que se cree un TCP proxy público a mano (`railway tcp-proxy`) primero. La otra alternativa que sigue existiendo pero es la más riesgosa es reagregar `prisma migrate deploy &&` al `startCommand` por un solo deploy y revertir después — **no usar salvo último recurso**, ver el incidente real más abajo.
 
@@ -724,7 +726,9 @@ Un solo proyecto Railway (`gestion-interna-seg`) con 3 servicios: `backend`, `fr
 | PAGOS | `pagos@segingenieria.com` |
 | SOLICITANTE | `solicitante@segingenieria.com` |
 
-**Pendiente — notificaciones por mail no están activas en producción todavía.** El código (`src/notificaciones/`) ya está completo y funciona contra Microsoft Graph (Outlook/365 real, no un mock) vía client credentials de una app de Azure AD, pero en Railway no están seteadas `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `EMAIL_REMITENTE` ni `EMAILS_EN_COPIA`. Sin esas variables, `CorreoService.enviar()` falla silenciosamente (try/catch que solo logea, a propósito no rompe la transición de estado que lo disparó) — hoy no sale ningún mail real. Para activarlo:
+**✅ RESUELTO (2026-10) — las notificaciones por mail YA están activas en producción.** Las variables `AZURE_*`/`EMAIL_REMITENTE`/`EMAILS_EN_COPIA` fueron seteadas en Railway y hoy salen mails reales (ver la sección "Fase 2 OC→OP…" → "Mails de notificación"). Lo que sigue es el estado histórico de cuándo estaban apagadas; se deja como referencia del setup de Azure.
+
+**(Histórico) Pendiente — notificaciones por mail no están activas en producción todavía.** El código (`src/notificaciones/`) ya está completo y funciona contra Microsoft Graph (Outlook/365 real, no un mock) vía client credentials de una app de Azure AD, pero en Railway no están seteadas `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `EMAIL_REMITENTE` ni `EMAILS_EN_COPIA`. Sin esas variables, `CorreoService.enviar()` falla silenciosamente (try/catch que solo logea, a propósito no rompe la transición de estado que lo disparó) — hoy no sale ningún mail real. Para activarlo:
 1. Alguien con acceso al admin de Azure AD/Microsoft 365 de la empresa tiene que registrar una app con permiso de **aplicación** `Mail.Send` (con consentimiento de admin) y elegir la casilla desde la que se manda.
 2. Con tenant id / client id / client secret / casilla remitente, setear esas 4-5 variables en el servicio `backend` de Railway (`railway variable set --service backend ...`).
 3. Una vez seteadas, no hace falta tocar código — el disparo ya está armado (cubre exactamente el caso de "el encargado comenta una OC pendiente → EN_CONSULTA → mail al solicitante" y "el solicitante responde → PENDIENTE → mail al encargado del sector", además de aprobar/rechazar/pagar/anular).
@@ -1001,6 +1005,65 @@ Cambio grande de dominio: se introduce una entidad NUEVA **"Orden de Compra" (OC
 **Diferido a propósito en Fase 1**: la **edición** de una OC (editaría/desincronizaría la cotización enlazada) — se usa eliminar+recrear en BORRADOR.
 
 **Fase 2 (próxima sesión, no implementada)**: OC aprobada → botón "Crear Orden de Pago" con datos precargados (vía el FK `solicitudCompraId`); "Pago único" (crear OC+OP en un flujo, caso SEG eMove); **alarma monto OP > monto OC** (advertencia/confirmación/bloqueo, a decidir).
+
+---
+
+## Fase 2 OC→OP, rename físico OC/OP, y ajustes (2026-10-01 → 2026-10-19)
+
+Continuación directa de la sección anterior (Orden de Compra, Fase 1). Documenta **todo lo posterior al 2026-09-30**. Varias cosas de la sección Fase 1 y de secciones más viejas quedaron superadas acá — **cuando haya conflicto, esta sección gana.**
+
+### Rename físico OC/OP — la confusión de nombres de Fase 1 ya no existe (2026-10-02, commit `b3bd806`, migración `20261002190000_rename_oc_op_swap`)
+
+Se hizo el swap físico de nombres que la Fase 1 había evitado. **La tabla "para evitar confusión de nombres" de la sección anterior YA NO APLICA** — ahora el código coincide con el negocio:
+
+| Concepto de negocio | Modelo | Tabla | Rutas | Carpeta backend | Enum estado |
+|---|---|---|---|---|---|
+| **Orden de Compra** (OC, previa al pago) | `OrdenCompra` | `ordenes_compra` | `/ordenes-compra` | `src/ordenes-compra/` | `EstadoOC` (BORRADOR/PENDIENTE/APROBADO/RECHAZADO/ANULADO) |
+| **Orden de Pago** (OP, el pago) | `OrdenPago` | `ordenes_pago` | `/ordenes-pago` | `src/ordenes-pago/` | `EstadoOP` (los 8 de siempre, con PAGO_OBSERVADO/PAGADO) |
+
+- La migración es **solo renombres, preserva datos** (orden anti-colisión: primero `ordenes_compra`(OP)→`ordenes_pago`, recién ahí `solicitudes_compra`→`ordenes_compra`). Renombró además enums (`estado_oc`→`estado_op`, `estado_solicitud_compra`→`estado_oc`), historiales (`historial_estado_oc`→`historial_estado_op`, `historial_estado_solicitud_compra`→`historial_estado_oc`) y FKs (`ordenes_pago.orden_compra_id` ex `solicitud_compra_id`; `comentarios.orden_pago_id`; `historial_estado_oc.orden_compra_id`).
+- Carpetas: el módulo rico que era `ordenes-compra` (con `aprobacion/`, `validaciones/`, `oyentes/`, `eventos/`) pasó a `src/ordenes-pago/`; lo que era `solicitudes-compra` pasó a `src/ordenes-compra/`. Mismo swap espejo en el frontend (ver su contexto).
+- **Ojo al leer código o doc viejos**: de acá en adelante "OC" = orden de compra de verdad; "OP" = la que antes se llamaba OC.
+
+### OP nace de una OC aprobada (commits `6ceeb19`/`39b6d77`/`ed66237`)
+
+Cambió el modelo de creación de la Orden de Pago: **toda OP nace de una OC APROBADA**, ya no se crea suelta ni eligiendo cotización a mano.
+- `CrearOrdenPagoDto` solo lleva: `ordenCompraId` (obligatorio), `fecha`, `monto`, `concepto`, `formaPago`, `pagaIva`, `observaciones?`, `confirmarExcesoMonto?`. **Todo lo demás se hereda server-side de la OC**: `tipo`, `sectorId`, `proveedorId`, `moneda`, `ivaIncluido` y la `cotizacionId` (y de la cotización, `proyectoId`/`clienteId`/`tareaId`). El usuario solo ajusta lo que varía pago a pago.
+- Varias OP pueden colgar de la misma OC/cotización (pagos parciales), acotadas por el eslabón de monto (ver "Alarma de monto").
+
+### Pago único (commit `39b6d77`, migración `20261002181510_agregar_pago_unico`)
+
+Caso SEG eMove: una OC que se paga de una sola vez, sin armar la OP a mano.
+- `OrdenCompra` gana `esPagoUnico: Boolean @default(false)` y `pagoUnicoFormaPago: FormaPago?`. `CrearOrdenCompraDto` los acepta; el service exige la forma de pago cuando `esPagoUnico` (422 `FORMA_PAGO_REQUERIDA_PAGO_UNICO`).
+- **Auto-generación por evento** — `OrdenCompraAprobadaOyente` (`src/ordenes-pago/oyentes/orden-compra-aprobada.oyente.ts`): al pasar la OC a `APROBADO`, si es pago único, crea sola la OP por el total con `pagoUnicoFormaPago` y la auto-envía a PENDIENTE. Patrón Observer sobre el evento de transición de la OC (igual que las notificaciones).
+  - **Fail-soft**: todo en try/catch que loguea y no relanza (el `emit()` es síncrono, una excepción tumbaría el proceso). Si falla, queda el fallback del botón manual "Crear Orden de Pago" de la OC aprobada.
+  - **Idempotente**: antes de crear, cuenta OP existentes por `ordenCompraId`; si ya hay, no genera otra (protege contra reproceso del evento).
+  - El **autor** de la OP generada es el solicitante de la OC.
+
+### Alarma de monto OP > saldo de la cotización (commit `6ceeb19`) — resuelve el "a decidir" de Fase 1
+
+El eslabón `ValidarMontoNoExcedeCotizacion` pasó de bloqueo duro a **bloqueo con override explícito**: si el monto de la OP supera el saldo disponible de la cotización, el backend responde 422 `MONTO_EXCEDE_COTIZACION`; el frontend muestra la advertencia y **reenvía con `confirmarExcesoMonto: true`** para confirmar y dejar pasar. La suma sigue excluyendo OP en estado `ANULADO`.
+
+### Mails de notificación — enriquecidos y ACTIVOS en producción (commits `fc5edf8`/`c3090de`)
+
+- Los mails ahora llevan **la orden completa en el cuerpo** y un **asunto identificable** (número + concepto), para OC y OP. Plantillas separadas: `plantillas-orden-compra.ts` y `plantillas-orden-pago.ts` (`src/notificaciones/`), con `plantilla-base.ts` y `etiquetas-correo.ts` compartidas. Un oyente por entidad en `notificaciones/oyentes/` (`orden-compra-estado-cambiado.oyente.ts`, `orden-pago-estado-cambiado.oyente.ts`).
+- **Las notificaciones por mail YA funcionan en producción** (confirmado por el usuario, 2026-10): las variables `AZURE_*`/`EMAIL_REMITENTE`/`EMAILS_EN_COPIA` están seteadas en Railway y `CorreoService.enviar()` manda mails reales vía Microsoft Graph. **Esto supersede la nota "Pendiente — notificaciones por mail no están activas" de la sección "Despliegue actual en producción".**
+
+### Proyecto: número secuencial #N (commit `f21e73c`, migración `20261007120000_agregar_numero_proyecto`)
+
+`Proyecto` gana `numero Int @unique @default(autoincrement())` (secuencia `proyectos_numero_seq`). La migración backfillea los existentes 1..N determinísticamente por `creado_en` y deja la secuencia posicionada después del máximo. Se usa como código visible `#N` (el frontend lo muestra en tabla, detalle y en los selectores de OC/OP).
+
+### Seed: taxonomía real de rubros (commit `5f37257`)
+
+`RUBROS_BASE` en `seed.ts` dejó de ser el placeholder Equipos/Instalación/Monitoreo de Fase 1 y pasó a la taxonomía real de SEG (11): **Climatización, Agua, Energía térmica, Aire comprimido, Iluminación, Motores, Efluentes, Transporte, Monitoreo, Equipos, Instalación**. "Otros" sigue sin seedearse (es la opción de UI que crea un rubro por nombre, findOrCreate desde el flujo de OC).
+
+### GET /usuarios abierto a cualquier autenticado (commit `ca1dc55`)
+
+`GET /usuarios` dejó de ser `@Roles(ADMIN)` — ahora lo lista cualquier usuario autenticado, porque los historiales de OC/OP necesitan resolver nombres y antes los roles no-ADMIN recibían 403. El resto del CRUD de usuarios sigue ADMIN-only. **Esto invalida el gotcha de `useMapaUsuarios()` → 403 documentado en el contexto del frontend (Fase 3).**
+
+### Deploy: las migraciones ahora corren solas vía el CMD del Dockerfile (commits `2060f99`/`8bf81cb`)
+
+**Cambió el procedimiento de migraciones en Railway** (supersede la sección "Comandos de Railway" que decía "aplicar a mano"): se **removió** el `startCommand` de `railway.json` y el `Dockerfile` ahora tiene `CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]`. Correr la cadena `&&` desde el CMD del Dockerfile (con `sh -c`) **sí funciona** — el síntoma histórico de "el proceso muere después del `&&`" era específico del `startCommand` de Railway, no del CMD del contenedor. Con esto **cada deploy aplica las migraciones pendientes automáticamente**; ya no hace falta el rodeo de `railway ssh --service backend` + `migrate deploy` salvo para tapar un gap puntual. Si un deploy futuro volviera a fallar por esto, el fallback sigue siendo el método ssh documentado más arriba.
 
 ---
 
