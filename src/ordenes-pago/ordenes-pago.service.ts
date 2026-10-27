@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { EstadoOP, EstadoOC, RolUsuario } from '../../generated/prisma/enums';
+import { tieneRol } from '../comun/autorizacion/roles.util';
 import type {
   OrdenCompraModel,
   OrdenPagoModel,
@@ -375,7 +376,7 @@ export class OrdenesPagoService {
   ): void {
     const esElSolicitante = usuario.id === orden.solicitanteId;
     const esDelMismoSector = usuario.sectoresEncargado.includes(orden.sectorId);
-    const esAdmin = usuario.rol === RolUsuario.ADMIN;
+    const esAdmin = tieneRol(usuario, RolUsuario.ADMIN);
 
     if (!esElSolicitante && !esDelMismoSector && !esAdmin) {
       throw new ForbiddenException({

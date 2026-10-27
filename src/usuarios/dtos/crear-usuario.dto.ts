@@ -1,5 +1,6 @@
 import {
   IsArray,
+  ArrayNotEmpty,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -20,8 +21,10 @@ export class CrearUsuarioDto {
   @MinLength(8)
   contrasena!: string;
 
-  @IsEnum(RolUsuario)
-  rol!: RolUsuario;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(RolUsuario, { each: true })
+  roles!: RolUsuario[];
 
   @IsOptional()
   @IsUUID()

@@ -1,5 +1,6 @@
 import {
   IsArray,
+  ArrayNotEmpty,
   IsBoolean,
   IsEmail,
   IsEnum,
@@ -19,8 +20,10 @@ export class ActualizarUsuarioDto {
   email?: string;
 
   @IsOptional()
-  @IsEnum(RolUsuario)
-  rol?: RolUsuario;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(RolUsuario, { each: true })
+  roles?: RolUsuario[];
 
   @IsOptional()
   @IsUUID()

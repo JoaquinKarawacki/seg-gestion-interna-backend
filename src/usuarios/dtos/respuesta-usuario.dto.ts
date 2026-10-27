@@ -4,7 +4,7 @@ export class RespuestaUsuarioDto {
   id!: string;
   nombre!: string;
   email!: string;
-  rol!: RolUsuario;
+  roles!: RolUsuario[];
   activo!: boolean;
   sectorId!: string | null;
   sectoresEncargadoIds!: string[];

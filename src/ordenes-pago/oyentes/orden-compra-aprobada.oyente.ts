@@ -117,7 +117,7 @@ export class OrdenCompraAprobadaOyente {
     return {
       id: usuario.id,
       email: usuario.email,
-      rol: usuario.rol,
+      roles: usuario.roles,
       sectorId: usuario.sectorId,
       sectoresEncargado: [],
     };

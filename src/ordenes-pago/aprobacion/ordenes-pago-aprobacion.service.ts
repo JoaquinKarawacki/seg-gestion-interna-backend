@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EstadoOP, RolUsuario } from '../../../generated/prisma/enums';
+import { tieneRol } from '../../comun/autorizacion/roles.util';
 import type { OrdenPagoModel } from '../../../generated/prisma/models';
 import { ACCIONES_AUDITORIA } from '../../auditoria/acciones-auditoria.constantes';
 import { AuditoriaService } from '../../auditoria/auditoria.service';
@@ -170,7 +171,7 @@ export class OrdenesPagoAprobacionService {
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
 
-    if (usuario.rol === RolUsuario.ENCARGADO) {
+    if (tieneRol(usuario, RolUsuario.ENCARGADO)) {
       this.validarEncargadoDelSector(orden, usuario);
     }
 

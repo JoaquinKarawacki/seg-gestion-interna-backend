@@ -1,5 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EstadoOP, RolUsuario } from '../../generated/prisma/enums';
+import { tieneRol } from '../comun/autorizacion/roles.util';
 import type {
   ComentarioModel,
   OrdenPagoModel,
@@ -66,7 +67,7 @@ export class ComentariosService {
     usuario: UsuarioAutenticado,
   ): Promise<void> {
     const esEncargadoDelSector =
-      usuario.rol === RolUsuario.ENCARGADO &&
+      tieneRol(usuario, RolUsuario.ENCARGADO) &&
       usuario.sectoresEncargado.includes(orden.sectorId);
     const esElSolicitante = usuario.id === orden.solicitanteId;
 
