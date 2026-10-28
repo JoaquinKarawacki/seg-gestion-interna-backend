@@ -4,12 +4,19 @@ import {
   EstadoOC,
   EstadoOP,
   FormaPago,
+  TipoCuentaBancaria,
   TipoOC,
 } from '../../generated/prisma/enums';
 
 export const ETIQUETAS_TIPO: Record<TipoOC, string> = {
   ARTICULO: 'Artículo',
   SERVICIO: 'Servicio',
+};
+
+export const ETIQUETAS_TIPO_CUENTA: Record<TipoCuentaBancaria, string> = {
+  CAJA_AHORRO: 'Caja de ahorro',
+  CUENTA_CORRIENTE: 'Cuenta corriente',
+  EXTERIOR: 'Cuenta exterior',
 };
 
 export const ETIQUETAS_FORMA_PAGO: Record<FormaPago, string> = {
