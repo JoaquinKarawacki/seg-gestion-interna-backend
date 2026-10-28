@@ -12,7 +12,7 @@ export interface DatosCrearUsuario {
   nombre: string;
   email: string;
   contrasenaHash: string;
-  rol: RolUsuario;
+  roles: RolUsuario[];
   sectorId?: string | null;
   sectoresEncargadoIds?: string[];
 }
@@ -20,7 +20,7 @@ export interface DatosCrearUsuario {
 export interface DatosActualizarUsuario {
   nombre?: string;
   email?: string;
-  rol?: RolUsuario;
+  roles?: RolUsuario[];
   sectorId?: string | null;
   activo?: boolean;
   contrasenaHash?: string;

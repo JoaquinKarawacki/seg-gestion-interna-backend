@@ -10,6 +10,7 @@ import type { IOrdenesCompraRepositorio } from '../../ordenes-compra/interfaces/
 import { USUARIOS_REPOSITORIO } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import type { IUsuariosRepositorio } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import { CorreoService } from '../correo.service';
+import { obtenerEmailsEnCopiaPorSector } from '../emails-copia-por-sector';
 import {
   obtenerPlantillaSolicitud,
   TipoDestinatarioSolicitud,
@@ -60,7 +61,7 @@ export class OrdenCompraEstadoCambiadoOyente {
         plantilla.destinatarios,
         evento,
       );
-      const emailsEnCopia = this.obtenerEmailsEnCopia();
+      const emailsEnCopia = obtenerEmailsEnCopiaPorSector(oc.sector.nombre);
       const destinatariosFinales = [
         ...new Set([...destinatarios, ...emailsEnCopia]),
       ];
@@ -107,13 +108,5 @@ export class OrdenCompraEstadoCambiadoOyente {
       RolUsuario.ENCARGADO,
       evento.sectorId,
     );
-  }
-
-  private obtenerEmailsEnCopia(): string[] {
-    const lista = this.configService.get<string>('EMAILS_EN_COPIA', '');
-    return lista
-      .split(',')
-      .map((email) => email.trim())
-      .filter(Boolean);
   }
 }

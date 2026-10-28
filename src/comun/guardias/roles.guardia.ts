@@ -28,7 +28,11 @@ export class RolesGuardia implements CanActivate {
       .switchToHttp()
       .getRequest<Request & { user: UsuarioAutenticado }>();
 
-    if (!rolesRequeridos.includes(solicitud.user.rol)) {
+    const tienePermiso = rolesRequeridos.some((rol) =>
+      solicitud.user.roles.includes(rol),
+    );
+
+    if (!tienePermiso) {
       throw new ForbiddenException({
         error: 'SIN_PERMISO',
         mensaje: 'No tenés permiso para realizar esta acción',

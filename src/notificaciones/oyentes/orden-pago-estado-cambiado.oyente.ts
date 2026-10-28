@@ -10,6 +10,7 @@ import type { IOrdenesPagoRepositorio } from '../../ordenes-pago/interfaces/orde
 import { USUARIOS_REPOSITORIO } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import type { IUsuariosRepositorio } from '../../usuarios/interfaces/usuarios-repositorio.interface';
 import { CorreoService } from '../correo.service';
+import { obtenerEmailsEnCopiaPorSector } from '../emails-copia-por-sector';
 import { obtenerPlantilla, TipoDestinatario } from '../plantillas-orden-pago';
 
 @Injectable()
@@ -59,7 +60,7 @@ export class OrdenPagoEstadoCambiadoOyente {
         plantilla.destinatarios,
         evento,
       );
-      const emailsEnCopia = this.obtenerEmailsEnCopia();
+      const emailsEnCopia = obtenerEmailsEnCopiaPorSector(op.sector.nombre);
       const destinatariosFinales = [
         ...new Set([...destinatarios, ...emailsEnCopia]),
       ];
@@ -110,13 +111,5 @@ export class OrdenPagoEstadoCambiadoOyente {
     }
 
     return this.usuariosRepositorio.buscarActivosPorRol(RolUsuario.PAGOS);
-  }
-
-  private obtenerEmailsEnCopia(): string[] {
-    const lista = this.configService.get<string>('EMAILS_EN_COPIA', '');
-    return lista
-      .split(',')
-      .map((email) => email.trim())
-      .filter(Boolean);
   }
 }

@@ -36,7 +36,7 @@ model Usuario {
   nombre                 String
   email                  String              @unique
   contrasenaHash         String              @map("contrasena_hash")
-  rol                    RolUsuario
+  roles                  RolUsuario[]
   activo                 Boolean             @default(true)
   sectorId               String?             @map("sector_id")
   sector                 Sector?             @relation(fields: [sectorId], references: [id])

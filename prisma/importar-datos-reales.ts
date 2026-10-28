@@ -30,7 +30,8 @@ interface DatoUsuario {
   sector: string;
   nombre: string;
   email: string;
-  rol: RolUsuario;
+  rol?: RolUsuario;
+  roles?: RolUsuario[];
 }
 
 function leerJson<T>(archivo: string): T {
@@ -68,7 +69,7 @@ async function cargarUsuarios(idPorSector: Map<string, string>): Promise<void> {
         nombre: usuario.nombre,
         email: usuario.email,
         contrasenaHash,
-        rol: usuario.rol,
+        roles: usuario.roles ?? (usuario.rol ? [usuario.rol] : []),
         sectorId: idPorSector.get(usuario.sector),
       },
     });

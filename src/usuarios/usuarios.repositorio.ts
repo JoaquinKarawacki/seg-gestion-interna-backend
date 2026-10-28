@@ -46,7 +46,7 @@ export class UsuariosRepositorio implements IUsuariosRepositorio {
   ): Promise<UsuarioModel[]> {
     return this.prisma.usuario.findMany({
       where: {
-        rol,
+        roles: { has: rol },
         activo: true,
         ...(sectorId ? { sectoresEncargado: { some: { id: sectorId } } } : {}),
       },

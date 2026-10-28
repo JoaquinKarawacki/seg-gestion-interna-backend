@@ -75,7 +75,7 @@ export class AuthService {
     const payload: PayloadJwt = {
       sub: usuario.id,
       email: usuario.email,
-      rol: usuario.rol,
+      roles: usuario.roles,
       sectorId: usuario.sectorId,
       sectoresEncargado: usuario.sectoresEncargado.map((s) => s.id),
     };
@@ -90,7 +90,7 @@ export class AuthService {
       id: usuario.id,
       nombre: usuario.nombre,
       email: usuario.email,
-      rol: usuario.rol,
+      roles: usuario.roles,
     };
   }
 }

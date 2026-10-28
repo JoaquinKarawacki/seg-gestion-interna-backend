@@ -25,22 +25,22 @@ const USUARIOS_DE_PRUEBA = [
   {
     nombre: 'Solicitante de Prueba',
     email: 'solicitante@segingenieria.com',
-    rol: RolUsuario.SOLICITANTE,
+    roles: [RolUsuario.SOLICITANTE],
   },
   {
     nombre: 'Encargado de Prueba',
     email: 'encargado@segingenieria.com',
-    rol: RolUsuario.ENCARGADO,
+    roles: [RolUsuario.ENCARGADO],
   },
   {
     nombre: 'Pagos de Prueba',
     email: 'pagos@segingenieria.com',
-    rol: RolUsuario.PAGOS,
+    roles: [RolUsuario.PAGOS],
   },
   {
     nombre: 'Admin de Prueba',
     email: 'admin@segingenieria.com',
-    rol: RolUsuario.ADMIN,
+    roles: [RolUsuario.ADMIN],
   },
 ];
 

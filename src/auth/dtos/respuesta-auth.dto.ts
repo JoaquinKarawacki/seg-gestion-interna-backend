@@ -4,7 +4,7 @@ export class UsuarioAutenticadoDto {
   id!: string;
   nombre!: string;
   email!: string;
-  rol!: RolUsuario;
+  roles!: RolUsuario[];
 }
 
 export class RespuestaAuthDto {

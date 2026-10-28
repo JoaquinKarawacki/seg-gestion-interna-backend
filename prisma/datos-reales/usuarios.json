@@ -9,7 +9,7 @@
     "sector": "ADMINISTRACION",
     "nombre": "Franco Rodriguez",
     "email": "rodriguez@segingenieria.com",
-    "rol": "PAGOS"
+    "roles": ["ENCARGADO", "PAGOS"]
   },
   {
     "sector": "ADMINISTRACION",
