@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Inject,
   Injectable,
   NotFoundException,
@@ -16,6 +17,7 @@ import { PROYECTOS_REPOSITORIO } from './interfaces/proyectos-repositorio.interf
 import type { IProyectosRepositorio } from './interfaces/proyectos-repositorio.interface';
 
 const CODIGO_REFERENCIA_INVALIDA = 'P2003';
+const CODIGO_UNICIDAD_VIOLADA = 'P2002';
 
 @Injectable()
 export class ProyectosService {
@@ -145,6 +147,16 @@ export class ProyectosService {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === CODIGO_UNICIDAD_VIOLADA
+      ) {
+        throw new ConflictException({
+          error: 'CODIGO_INVERSION_DUPLICADO',
+          mensaje: 'Ya existe un proyecto con ese código de inversión',
+        });
+      }
+
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === CODIGO_REFERENCIA_INVALIDA
       ) {
         if (this.esViolacionDeSectorId(error.meta)) {
@@ -193,7 +205,7 @@ export class ProyectosService {
   private mapearRespuesta(proyecto: ProyectoModel): RespuestaProyectoDto {
     return {
       id: proyecto.id,
-      numero: proyecto.numero,
+      codigoInversion: proyecto.codigoInversion,
       nombre: proyecto.nombre,
       clienteId: proyecto.clienteId,
       sectorId: proyecto.sectorId,

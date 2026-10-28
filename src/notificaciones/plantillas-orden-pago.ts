@@ -38,7 +38,7 @@ export function obtenerPlantilla(
   // Toda OP nace de una OC (que tiene proyecto). El fallback sin proyecto cubre
   // OPs viejas sueltas.
   const asunto = proyecto
-    ? `#${proyecto.numero} - ${proyecto.nombre} - ${proyecto.cliente?.nombre ?? '—'} - ` +
+    ? `${proyecto.codigoInversion} - ${proyecto.nombre} - ${proyecto.cliente?.nombre ?? '—'} - ` +
       `Orden de pago #${numero} · ${estadoLabel}`
     : `Orden de pago #${numero} · ${estadoLabel}`;
 
@@ -46,7 +46,7 @@ export function obtenerPlantilla(
   if (proyecto) {
     datos.push({
       etiqueta: 'Proyecto',
-      valor: `#${proyecto.numero} - ${proyecto.nombre}`,
+      valor: `${proyecto.codigoInversion} - ${proyecto.nombre}`,
     });
     datos.push({ etiqueta: 'Cliente', valor: proyecto.cliente?.nombre ?? '—' });
   }
