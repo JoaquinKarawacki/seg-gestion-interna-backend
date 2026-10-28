@@ -8,6 +8,7 @@ import { AuthModulo } from './auth/auth.modulo';
 import { ClientesModulo } from './clientes/clientes.modulo';
 import { ComentariosModulo } from './comentarios/comentarios.modulo';
 import { CotizacionesModulo } from './cotizaciones/cotizaciones.modulo';
+import { ExportacionPagosModulo } from './exportacion-pagos/exportacion-pagos.modulo';
 import { NotificacionesModulo } from './notificaciones/notificaciones.modulo';
 import { OrdenesPagoModulo } from './ordenes-pago/ordenes-pago.modulo';
 import { PrismaModulo } from './prisma/prisma.modulo';
@@ -37,6 +38,7 @@ import { TiposCambioModulo } from './tipos-cambio/tipos-cambio.modulo';
     RubrosModulo,
     OrdenesCompraModulo,
     OrdenesPagoModulo,
+    ExportacionPagosModulo,
     ComentariosModulo,
     NotificacionesModulo,
     TiposCambioModulo,
