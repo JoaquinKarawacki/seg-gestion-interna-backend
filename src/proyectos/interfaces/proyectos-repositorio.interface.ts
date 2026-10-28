@@ -4,6 +4,7 @@ import { IRepositorioBase } from '../../comun/interfaces/repositorio-base.interf
 export const PROYECTOS_REPOSITORIO = Symbol('IProyectosRepositorio');
 
 export interface DatosCrearProyecto {
+  codigoInversion: string;
   nombre: string;
   clienteId: string;
   sectorId?: string;

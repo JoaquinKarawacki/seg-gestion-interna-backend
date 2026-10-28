@@ -1,6 +1,6 @@
 export class RespuestaProyectoDto {
   id!: string;
-  numero!: number;
+  codigoInversion!: string;
   nombre!: string;
   clienteId!: string;
   sectorId!: string | null;

@@ -36,11 +36,14 @@ export function obtenerPlantillaSolicitud(
   const titulo = `Orden de compra #${numero}`;
 
   const asunto =
-    `#${proyecto.numero} - ${proyecto.nombre} - ${clienteNombre} - ` +
+    `${proyecto.codigoInversion} - ${proyecto.nombre} - ${clienteNombre} - ` +
     `Orden de compra #${numero} · ${ETIQUETAS_ESTADO_OC[evento.estadoNuevo]}`;
 
   const datos: DatoCorreo[] = [
-    { etiqueta: 'Proyecto', valor: `#${proyecto.numero} - ${proyecto.nombre}` },
+    {
+      etiqueta: 'Proyecto',
+      valor: `${proyecto.codigoInversion} - ${proyecto.nombre}`,
+    },
     { etiqueta: 'Cliente', valor: clienteNombre },
     { etiqueta: 'Proveedor', valor: oc.proveedor.nombre },
     { etiqueta: 'Sector', valor: oc.sector.nombre },

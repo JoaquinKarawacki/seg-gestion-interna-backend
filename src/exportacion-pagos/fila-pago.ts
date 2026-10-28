@@ -67,7 +67,7 @@ export function mapearFilaPago(orden: OrdenPagoParaPago): FilaPago {
     tipo: ETIQUETAS_TIPO[orden.tipo],
     concepto: orden.concepto,
     proyecto: orden.proyecto
-      ? `#${orden.proyecto.numero} - ${orden.proyecto.nombre}`
+      ? `${orden.proyecto.codigoInversion} - ${orden.proyecto.nombre}`
       : '—',
     cliente: orden.proyecto?.cliente?.nombre ?? '—',
     sector: orden.sector.nombre,
