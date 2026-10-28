@@ -12,6 +12,7 @@ import {
   FiltrosOrdenPago,
   IOrdenesPagoRepositorio,
   OrdenPagoDetalle,
+  OrdenPagoParaPago,
   PaginacionOrdenPago,
 } from './interfaces/ordenes-pago-repositorio.interface';
 
@@ -49,6 +50,25 @@ export class OrdenesPagoRepositorio implements IOrdenesPagoRepositorio {
 
   async buscarTodos(): Promise<OrdenPagoModel[]> {
     return this.prisma.ordenPago.findMany({ orderBy: { numero: 'desc' } });
+  }
+
+  // OPs en estado APROBADO (las "para pagar"), con todas las relaciones que
+  // consume el Excel de pagos, en una sola query (sin N+1). Ordenadas por número
+  // ascendente para que el archivo salga estable. Los campos escalares de la OP
+  // (forma de pago, monto, moneda, concepto, etc.) vienen siempre, sin include.
+  async buscarAprobadasParaPago(): Promise<OrdenPagoParaPago[]> {
+    return this.prisma.ordenPago.findMany({
+      where: { estado: EstadoOP.APROBADO },
+      orderBy: { numero: 'asc' },
+      include: {
+        proveedor: true,
+        sector: true,
+        solicitante: true,
+        proyecto: { include: { cliente: true } },
+        ordenCompra: true,
+        historialEstados: { include: { usuario: true } },
+      },
+    });
   }
 
   async crear(datos: DatosCrearOrdenPago): Promise<OrdenPagoModel> {
