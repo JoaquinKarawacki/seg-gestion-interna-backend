@@ -1,4 +1,4 @@
-import { EstadoOP } from '../../generated/prisma/enums';
+import { EstadoOP, FormaPago } from '../../generated/prisma/enums';
 import type { EventoOrdenPagoEstadoCambiado } from '../ordenes-pago/eventos/orden-pago-estado-cambiado.evento';
 import type { OrdenPagoDetalle } from '../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
 import {
@@ -11,6 +11,7 @@ import {
   ETIQUETAS_ESTADO_OP,
   ETIQUETAS_FORMA_PAGO,
   ETIQUETAS_TIPO,
+  ETIQUETAS_TIPO_CUENTA,
   etiquetaSiNo,
   formatearFechaCorreo,
 } from './etiquetas-correo';
@@ -81,14 +82,48 @@ export function obtenerPlantilla(
     'Ver orden de pago',
   );
 
+  // Datos bancarios del proveedor para que el rol PAGOS pueda hacer la
+  // transferencia desde el propio mail. Solo tienen sentido cuando la forma de
+  // pago es transferencia bancaria; si al proveedor le faltan (texto vacío), se
+  // avisa en lugar de mostrar datos en blanco.
+  const esTransferencia = op.formaPago === FormaPago.TRANSFERENCIA_BANCARIA;
+
+  function datosBancariosProveedor(): DatoCorreo[] {
+    const banco = op.proveedor.banco?.trim() ?? '';
+    const numeroCuenta = op.proveedor.numeroCuenta?.trim() ?? '';
+    if (!banco || !numeroCuenta) {
+      return [
+        {
+          etiqueta: 'Datos bancarios',
+          valor:
+            'Faltan los datos bancarios de este proveedor. Completalos en la sección Proveedores.',
+        },
+      ];
+    }
+    return [
+      { etiqueta: 'Banco', valor: banco },
+      {
+        etiqueta: 'Tipo de cuenta',
+        valor: ETIQUETAS_TIPO_CUENTA[op.proveedor.tipoCuenta],
+      },
+      { etiqueta: 'Número de cuenta', valor: numeroCuenta },
+    ];
+  }
+
   function armar(
     destinatarios: TipoDestinatario[],
     intro: string,
   ): PlantillaNotificacion {
+    // El bloque bancario va únicamente en el mail que recibe el rol PAGOS (el de
+    // "aprobada, lista para pago"), no en los avisos a solicitante/encargado.
+    const datosCuerpo =
+      esTransferencia && destinatarios.includes('ROL_PAGOS')
+        ? [...datos, ...datosBancariosProveedor()]
+        : datos;
     return {
       destinatarios,
       asunto,
-      cuerpo: construirCuerpo({ titulo, intro, datos, boton }),
+      cuerpo: construirCuerpo({ titulo, intro, datos: datosCuerpo, boton }),
     };
   }
 
