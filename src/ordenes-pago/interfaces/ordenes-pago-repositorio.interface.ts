@@ -47,7 +47,6 @@ export interface DatosCrearOrdenPago {
   proveedorId: string;
   clienteId: string | null;
   proyectoId: string | null;
-  tareaId: string | null;
   cotizacionId: string | null;
   ordenCompraId?: string | null;
   moneda: Moneda;

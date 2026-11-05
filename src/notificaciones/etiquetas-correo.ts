@@ -1,6 +1,7 @@
 // Etiquetas y formateadores legibles para los cuerpos de los mails (OC y OP).
 // Espejan los textos de la UI (lib/ordenes-*/presentacion.ts del frontend).
 import {
+  CategoriaOrdenCompra,
   EstadoOC,
   EstadoOP,
   FormaPago,
@@ -11,6 +12,16 @@ import {
 export const ETIQUETAS_TIPO: Record<TipoOC, string> = {
   ARTICULO: 'Artículo',
   SERVICIO: 'Servicio',
+};
+
+export const ETIQUETAS_CATEGORIA: Record<CategoriaOrdenCompra, string> = {
+  PROYECTOS_ESCO: 'Proyectos ESCO',
+  PRODUCTOS_STOCK: 'Productos - Stock',
+  PRODUCTOS_REPOSICION: 'Productos - Reposición',
+  INTERNO_SEG: 'Interno SEG',
+  OTROS: 'Otros',
+  SEG_GREENPOWER: 'SEG Greenpower',
+  SEG_HELIOTEC: 'SEG Heliotec',
 };
 
 export const ETIQUETAS_TIPO_CUENTA: Record<TipoCuentaBancaria, string> = {

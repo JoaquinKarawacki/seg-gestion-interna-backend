@@ -8,6 +8,7 @@ import {
   formatearMontoCorreo,
 } from './plantilla-base';
 import {
+  ETIQUETAS_CATEGORIA,
   ETIQUETAS_ESTADO_OC,
   ETIQUETAS_TIPO,
   etiquetaSiNo,
@@ -31,24 +32,33 @@ export function obtenerPlantillaSolicitud(
 ): PlantillaNotificacionSolicitud | null {
   const numero = evento.numero;
   const motivoTexto = evento.motivo ? ` Motivo: ${evento.motivo}.` : '';
+  // `proyecto` puede ser null: solo las OC de categoría con proyecto (ESCO) lo tienen.
   const proyecto = oc.proyecto;
-  const clienteNombre = proyecto.cliente?.nombre ?? '—';
+  const categoriaTexto = ETIQUETAS_CATEGORIA[oc.categoria];
+  const estadoTexto = ETIQUETAS_ESTADO_OC[evento.estadoNuevo];
   const titulo = `Orden de compra #${numero}`;
 
-  const asunto =
-    `${proyecto.codigoInversion} - ${proyecto.nombre} - ${clienteNombre} - ` +
-    `Orden de compra #${numero} · ${ETIQUETAS_ESTADO_OC[evento.estadoNuevo]}`;
+  const asunto = proyecto
+    ? `${proyecto.codigoInversion} - ${proyecto.nombre} - ${proyecto.cliente?.nombre ?? '—'} - ` +
+      `Orden de compra #${numero} · ${estadoTexto}`
+    : `${categoriaTexto} - Orden de compra #${numero} · ${estadoTexto}`;
 
   const datos: DatoCorreo[] = [
-    {
-      etiqueta: 'Proyecto',
-      valor: `${proyecto.codigoInversion} - ${proyecto.nombre}`,
-    },
-    { etiqueta: 'Cliente', valor: clienteNombre },
+    { etiqueta: 'Categoría', valor: categoriaTexto },
+  ];
+  if (proyecto) {
+    datos.push(
+      {
+        etiqueta: 'Proyecto',
+        valor: `${proyecto.codigoInversion} - ${proyecto.nombre}`,
+      },
+      { etiqueta: 'Cliente', valor: proyecto.cliente?.nombre ?? '—' },
+    );
+  }
+  datos.push(
     { etiqueta: 'Proveedor', valor: oc.proveedor.nombre },
     { etiqueta: 'Sector', valor: oc.sector.nombre },
     { etiqueta: 'Tipo', valor: ETIQUETAS_TIPO[oc.tipo] },
-    { etiqueta: 'Rubro', valor: oc.rubro.nombre },
     { etiqueta: 'Fecha', valor: formatearFechaCorreo(oc.fecha) },
     {
       etiqueta: 'Monto',
@@ -58,7 +68,7 @@ export function obtenerPlantillaSolicitud(
     { etiqueta: 'Concepto', valor: oc.concepto },
     { etiqueta: 'Estado', valor: ETIQUETAS_ESTADO_OC[oc.estado] },
     { etiqueta: 'Solicitante', valor: oc.solicitante.email },
-  ];
+  );
   if (oc.observaciones) {
     datos.push({ etiqueta: 'Observaciones', valor: oc.observaciones });
   }

@@ -3,12 +3,10 @@ import { EstadoCotizacion, Moneda } from '../../../generated/prisma/enums';
 // Cotización enriquecida para la pantalla de búsqueda/reutilización.
 export class RespuestaCotizacionBusquedaDto {
   id!: string;
-  proyectoId!: string;
-  proyectoNombre!: string;
+  proyectoId!: string | null;
+  proyectoNombre!: string | null;
   proveedorId!: string;
   proveedorNombre!: string;
-  tareaId!: string;
-  rubroNombre!: string;
   montoTotal!: string;
   moneda!: Moneda;
   ivaIncluido!: boolean;

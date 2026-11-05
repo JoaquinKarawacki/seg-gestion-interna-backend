@@ -51,7 +51,6 @@ export interface ArchivoDescargado {
 interface JerarquiaDerivada {
   clienteId: string | null;
   proyectoId: string | null;
-  tareaId: string | null;
 }
 
 @Injectable()
@@ -104,6 +103,8 @@ export class OrdenesPagoService {
     const ordenCompra = await this.resolverOrdenCompraAprobada(
       dto.ordenCompraId,
     );
+    // La OC puede no tener cotización (categorías sin proyecto): en ese caso la
+    // OP hereda jerarquía nula y la cadena de monto no topea contra nada.
     const cotizacionId = ordenCompra.cotizacionId;
     const jerarquia = await this.derivarJerarquia(cotizacionId);
     const monto = new Prisma.Decimal(dto.monto);
@@ -133,7 +134,6 @@ export class OrdenesPagoService {
           proveedorId: ordenCompra.proveedorId,
           clienteId: jerarquia.clienteId,
           proyectoId: jerarquia.proyectoId,
-          tareaId: jerarquia.tareaId,
           cotizacionId,
           ordenCompraId: ordenCompra.id,
           moneda: ordenCompra.moneda,
@@ -322,10 +322,10 @@ export class OrdenesPagoService {
   }
 
   private async derivarJerarquia(
-    cotizacionId?: string,
+    cotizacionId?: string | null,
   ): Promise<JerarquiaDerivada> {
     if (!cotizacionId) {
-      return { clienteId: null, proyectoId: null, tareaId: null };
+      return { clienteId: null, proyectoId: null };
     }
 
     const cotizacion =
@@ -338,14 +338,14 @@ export class OrdenesPagoService {
       });
     }
 
-    const proyecto = await this.proyectosRepositorio.buscarPorId(
-      cotizacion.proyectoId,
-    );
+    // La cotización puede no tener proyecto (OC de categoría sin proyecto).
+    const proyecto = cotizacion.proyectoId
+      ? await this.proyectosRepositorio.buscarPorId(cotizacion.proyectoId)
+      : null;
 
     return {
       clienteId: proyecto?.clienteId ?? null,
       proyectoId: cotizacion.proyectoId,
-      tareaId: cotizacion.tareaId,
     };
   }
 

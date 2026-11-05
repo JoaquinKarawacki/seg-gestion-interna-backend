@@ -105,10 +105,13 @@ export class OrdenesCompraController {
           new FileTypeValidator({ fileType: 'application/pdf' }),
           new MaxFileSizeValidator({ maxSize: TAMANIO_MAXIMO_ARCHIVO_BYTES }),
         ],
-        fileIsRequired: true,
+        // El PDF es obligatorio solo si el monto sin IVA >= 1000 USD; esa regla
+        // la valida el service. Acá el archivo es opcional (si viene, se validan
+        // tipo y tamaño).
+        fileIsRequired: false,
       }),
     )
-    adjunto: Express.Multer.File,
+    adjunto?: Express.Multer.File,
   ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
     const datos = await this.ordenesCompraService.crear(
       dto,

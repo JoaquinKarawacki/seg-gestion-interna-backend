@@ -1,4 +1,5 @@
 import {
+  CategoriaOrdenCompra,
   EstadoOC,
   FormaPago,
   Moneda,
@@ -8,15 +9,14 @@ import {
 export class RespuestaOrdenCompraDto {
   id!: string;
   numero!: number;
+  categoria!: CategoriaOrdenCompra;
   tipo!: TipoOC;
   fecha!: Date;
   solicitanteId!: string;
   sectorId!: string;
   proveedorId!: string;
   clienteId!: string | null;
-  proyectoId!: string;
-  rubroId!: string;
-  tareaId!: string;
+  proyectoId!: string | null;
   cotizacionId!: string;
   moneda!: Moneda;
   monto!: string;
@@ -24,7 +24,7 @@ export class RespuestaOrdenCompraDto {
   pagaIva!: boolean;
   ivaIncluido!: boolean;
   observaciones!: string | null;
-  archivoPdfRuta!: string;
+  archivoPdfRuta!: string | null;
   estado!: EstadoOC;
   esPagoUnico!: boolean;
   pagoUnicoFormaPago!: FormaPago | null;
