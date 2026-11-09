@@ -165,6 +165,7 @@ model Cotizacion {
 enum TipoOC {
   ARTICULO
   SERVICIO
+  OTROS
 
   @@map("tipo_oc")
 }

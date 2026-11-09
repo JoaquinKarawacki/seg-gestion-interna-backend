@@ -12,6 +12,7 @@ import {
 export const ETIQUETAS_TIPO: Record<TipoOC, string> = {
   ARTICULO: 'Artículo',
   SERVICIO: 'Servicio',
+  OTROS: 'Otros',
 };
 
 export const ETIQUETAS_CATEGORIA: Record<CategoriaOrdenCompra, string> = {
