@@ -15,6 +15,8 @@ const GESTION = [
 const ADMINISTRACION_Y_VENTAS = [
   'rodriguez@segingenieria.com',
   'mgonzalez@segingenieria.com',
+  'marichal@segingenieria.com',
+  'albornoz@segingenieria.com',
 ];
 
 const EMAILS_COPIA_POR_SECTOR: Record<string, string[]> = {
