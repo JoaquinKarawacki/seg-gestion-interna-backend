@@ -9,6 +9,7 @@ import {
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -28,6 +29,7 @@ import {
   RespuestaLista,
 } from '../comun/tipos/respuesta-api.tipo';
 import { CrearOrdenCompraDto } from './dtos/crear-orden-compra.dto';
+import { ModificarOrdenCompraDto } from './dtos/modificar-orden-compra.dto';
 import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
 import { OrdenesCompraService } from './ordenes-compra.service';
 
@@ -119,6 +121,23 @@ export class OrdenesCompraController {
       adjunto,
     );
     return { datos, mensaje: 'Orden de compra creada correctamente' };
+  }
+
+  @Patch(':id')
+  async modificar(
+    @Param('id') id: string,
+    @Body() dto: ModificarOrdenCompraDto,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<RespuestaExitosa<RespuestaOrdenCompraDto>> {
+    const datos = await this.ordenesCompraService.modificar(
+      id,
+      dto,
+      solicitud.user,
+    );
+    return {
+      datos,
+      mensaje: 'Orden de compra editada y reenviada a aprobación',
+    };
   }
 
   @Delete(':id')

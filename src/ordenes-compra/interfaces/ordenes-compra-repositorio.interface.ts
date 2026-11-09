@@ -57,6 +57,26 @@ export interface DatosCrearOrdenCompra {
   pagoUnicoFormaPago: FormaPago | null;
 }
 
+// Campos editables de una OC aprobada (categoría, proyecto, cliente, cotización y
+// sector quedan fijos: definen la estructura y el circuito de aprobación).
+export interface DatosModificarOrdenCompra {
+  tipo: TipoOC;
+  proveedorId: string;
+  moneda: Moneda;
+  monto: Prisma.Decimal;
+  concepto: string;
+  pagaIva: boolean;
+  ivaIncluido: boolean;
+  observaciones: string | null;
+}
+
+// Resultado de editar y reenviar a aprobación. El repositorio no lanza
+// excepciones HTTP: comunica el motivo y el service decide el código.
+export type ResultadoModificarReaprobar =
+  | { estado: 'OK'; orden: OrdenCompraModel }
+  | { estado: 'TIENE_ORDENES_PAGO' }
+  | { estado: 'CONFLICTO_ESTADO' };
+
 export interface FiltrosOrdenCompra {
   proyectoId?: string;
   estado?: EstadoOC;
@@ -90,4 +110,12 @@ export interface IOrdenesCompraRepositorio {
   // Todas las OC salvo las que no representan una compra vigente (borradores sin
   // enviar y anuladas). Trae las relaciones necesarias para el Excel.
   buscarParaExportar(): Promise<OrdenCompraExportable[]>;
+  // Edita una OC aprobada y la reenvía a aprobación (APROBADO -> PENDIENTE), todo
+  // en una transacción: bloquea si tiene OPs vivas y usa compare-and-swap sobre el
+  // estado para evitar condiciones de carrera.
+  modificarYReaprobar(
+    id: string,
+    datos: DatosModificarOrdenCompra,
+    usuarioId: string,
+  ): Promise<ResultadoModificarReaprobar>;
 }

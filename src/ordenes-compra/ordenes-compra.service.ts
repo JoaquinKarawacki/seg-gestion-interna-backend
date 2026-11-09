@@ -6,6 +6,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '../../generated/prisma/client';
 import { EstadoOC, Moneda, RolUsuario } from '../../generated/prisma/enums';
 import { tieneRol } from '../comun/autorizacion/roles.util';
@@ -27,11 +28,14 @@ import type { IProyectosRepositorio } from '../proyectos/interfaces/proyectos-re
 import { TIPOS_CAMBIO_REPOSITORIO } from '../tipos-cambio/interfaces/tipos-cambio-repositorio.interface';
 import type { ITiposCambioRepositorio } from '../tipos-cambio/interfaces/tipos-cambio-repositorio.interface';
 import { CrearOrdenCompraDto } from './dtos/crear-orden-compra.dto';
+import { ModificarOrdenCompraDto } from './dtos/modificar-orden-compra.dto';
 import {
   calcularMontoNeto,
   requiereProyecto,
   UMBRAL_PDF_USD,
 } from './ordenes-compra.constantes';
+import { construirEventoOrdenCompraEstadoCambiado } from './eventos/construir-evento-estado-cambiado';
+import { EVENTOS_ORDEN_COMPRA } from './eventos/eventos.constantes';
 import { RespuestaOrdenCompraDto } from './dtos/respuesta-orden-compra.dto';
 import {
   FiltrosOrdenCompra,
@@ -43,6 +47,15 @@ import { mapearRespuestaOrdenCompra } from './ordenes-compra.mapper';
 
 const CARPETA_ARCHIVOS = 'ordenes-compra';
 const CODIGO_REFERENCIA_INVALIDA = 'P2003';
+
+// Datos mínimos para calcular el monto neto en USD (sirve tanto para el alta como
+// para la edición, sin acoplar la validación a un DTO puntual).
+interface DatosCalculoMonto {
+  monto: number;
+  pagaIva: boolean;
+  ivaIncluido: boolean;
+  moneda: Moneda;
+}
 
 @Injectable()
 export class OrdenesCompraService {
@@ -56,6 +69,7 @@ export class OrdenesCompraService {
     @Inject(ALMACENAMIENTO)
     private readonly almacenamiento: IAlmacenamiento,
     private readonly auditoriaService: AuditoriaService,
+    private readonly emisorEventos: EventEmitter2,
   ) {}
 
   async listar(
@@ -86,7 +100,7 @@ export class OrdenesCompraService {
     adjunto?: Express.Multer.File,
   ): Promise<RespuestaOrdenCompraDto> {
     this.validarPagoUnico(dto);
-    await this.validarAdjuntoSegunMonto(dto, adjunto);
+    await this.validarAdjuntoSegunMonto(dto, Boolean(adjunto));
 
     const adjuntoGuardado = adjunto
       ? await this.almacenamiento.guardar(
@@ -121,6 +135,82 @@ export class OrdenesCompraService {
     }
   }
 
+  // Edita una OC aprobada y la reenvía a aprobación. Solo el solicitante, el
+  // encargado del sector o un admin pueden hacerlo (validarPertenencia). El
+  // aprobador se re-notifica solo: el evento de paso a PENDIENTE dispara el mail.
+  async modificar(
+    id: string,
+    dto: ModificarOrdenCompraDto,
+    usuario: UsuarioAutenticado,
+  ): Promise<RespuestaOrdenCompraDto> {
+    const solicitud = await this.obtenerSolicitudOFallar(id);
+    this.validarPertenencia(solicitud, usuario);
+    this.validarEsAprobada(solicitud);
+    await this.validarAdjuntoSegunMonto(dto, Boolean(solicitud.archivoPdfRuta));
+
+    const resultado = await this.ordenesCompraRepositorio.modificarYReaprobar(
+      id,
+      {
+        tipo: dto.tipo,
+        proveedorId: dto.proveedorId,
+        moneda: dto.moneda,
+        monto: new Prisma.Decimal(dto.monto),
+        concepto: dto.concepto,
+        pagaIva: dto.pagaIva,
+        ivaIncluido: dto.ivaIncluido,
+        observaciones: dto.observaciones ?? null,
+      },
+      usuario.id,
+    );
+
+    if (resultado.estado === 'TIENE_ORDENES_PAGO') {
+      throw new ConflictException({
+        error: 'ORDEN_COMPRA_CON_ORDENES_PAGO',
+        mensaje:
+          'No se puede editar: la orden de compra ya tiene órdenes de pago asociadas',
+      });
+    }
+
+    if (resultado.estado === 'CONFLICTO_ESTADO') {
+      throw new ConflictException({
+        error: 'TRANSICION_INVALIDA',
+        mensaje:
+          'La orden de compra fue modificada por otra acción mientras tanto — volvé a revisarla antes de reintentar',
+      });
+    }
+
+    const orden = resultado.orden;
+    this.emisorEventos.emit(
+      EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO,
+      construirEventoOrdenCompraEstadoCambiado(
+        orden,
+        EstadoOC.APROBADO,
+        usuario.id,
+        'Editada y reenviada a aprobación',
+      ),
+    );
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuario.id,
+      usuarioEmail: usuario.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_ORDEN_COMPRA,
+      descripcion: `Editó y reenvió a aprobación la orden de compra #${orden.numero}`,
+      entidad: 'OrdenCompra',
+      entidadId: orden.id,
+    });
+
+    return mapearRespuestaOrdenCompra(orden);
+  }
+
+  private validarEsAprobada(solicitud: OrdenCompraModel): void {
+    if (solicitud.estado !== EstadoOC.APROBADO) {
+      throw new ConflictException({
+        error: 'ORDEN_COMPRA_NO_APROBADA',
+        mensaje: 'Solo se puede editar una orden de compra aprobada',
+      });
+    }
+  }
+
   // Pago único: la forma de pago es obligatoria porque la OP se genera con ella
   // al aprobar la OC.
   private validarPagoUnico(dto: CrearOrdenCompraDto): void {
@@ -135,12 +225,12 @@ export class OrdenesCompraService {
   // El PDF adjunto es obligatorio solo si el monto sin IVA, en USD, llega al
   // umbral. Por debajo es opcional.
   private async validarAdjuntoSegunMonto(
-    dto: CrearOrdenCompraDto,
-    adjunto?: Express.Multer.File,
+    datos: DatosCalculoMonto,
+    tieneAdjunto: boolean,
   ): Promise<void> {
-    const montoNetoUsd = await this.calcularMontoNetoUsd(dto);
+    const montoNetoUsd = await this.calcularMontoNetoUsd(datos);
 
-    if (montoNetoUsd >= UMBRAL_PDF_USD && !adjunto) {
+    if (montoNetoUsd >= UMBRAL_PDF_USD && !tieneAdjunto) {
       throw new UnprocessableEntityException({
         error: 'ADJUNTO_REQUERIDO',
         mensaje: `El PDF adjunto es obligatorio para montos de ${UMBRAL_PDF_USD} USD o más (sin IVA)`,
@@ -151,16 +241,20 @@ export class OrdenesCompraService {
   // Monto sin IVA convertido a USD. UYU es la moneda base (valor 1); USD/EUR
   // salen de los tipos de cambio cargados. 422 si falta el tipo de cambio.
   private async calcularMontoNetoUsd(
-    dto: CrearOrdenCompraDto,
+    datos: DatosCalculoMonto,
   ): Promise<number> {
-    const neto = calcularMontoNeto(dto.monto, dto.pagaIva, dto.ivaIncluido);
+    const neto = calcularMontoNeto(
+      datos.monto,
+      datos.pagaIva,
+      datos.ivaIncluido,
+    );
 
-    if (dto.moneda === Moneda.USD) {
+    if (datos.moneda === Moneda.USD) {
       return neto;
     }
 
     const tiposCambio = await this.tiposCambioRepositorio.buscarTodos();
-    const valorMoneda = this.valorEnUyu(dto.moneda, tiposCambio);
+    const valorMoneda = this.valorEnUyu(datos.moneda, tiposCambio);
     const valorUsd = this.valorEnUyu(Moneda.USD, tiposCambio);
 
     if (valorMoneda === null || valorUsd === null) {

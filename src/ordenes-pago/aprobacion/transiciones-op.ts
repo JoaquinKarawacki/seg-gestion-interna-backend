@@ -9,10 +9,12 @@ export const TRANSICIONES_VALIDAS_OP: Record<EstadoOP, EstadoOP[]> = {
     EstadoOP.ANULADO,
   ],
   [EstadoOP.EN_CONSULTA]: [EstadoOP.PENDIENTE, EstadoOP.ANULADO],
+  // PENDIENTE: una OP aprobada puede editarse y volver a aprobación.
   [EstadoOP.APROBADO]: [
     EstadoOP.PAGO_OBSERVADO,
     EstadoOP.PAGADO,
     EstadoOP.ANULADO,
+    EstadoOP.PENDIENTE,
   ],
   [EstadoOP.RECHAZADO]: [],
   [EstadoOP.PAGO_OBSERVADO]: [EstadoOP.APROBADO, EstadoOP.ANULADO],

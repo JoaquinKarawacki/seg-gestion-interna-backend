@@ -136,6 +136,23 @@ export class OrdenesPagoController {
     return { datos, mensaje: 'Orden de compra actualizada correctamente' };
   }
 
+  @Patch(':id/modificar')
+  async modificar(
+    @Param('id') id: string,
+    @Body() dto: ActualizarOrdenPagoDto,
+    @Req() solicitud: SolicitudAutenticada,
+  ): Promise<RespuestaExitosa<RespuestaOrdenPagoDto>> {
+    const datos = await this.ordenesPagoService.modificar(
+      id,
+      dto,
+      solicitud.user,
+    );
+    return {
+      datos,
+      mensaje: 'Orden de pago editada y reenviada a aprobación',
+    };
+  }
+
   @Patch(':id/factura')
   @UseInterceptors(FileInterceptor('factura'))
   async adjuntarFactura(

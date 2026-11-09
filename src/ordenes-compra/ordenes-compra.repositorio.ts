@@ -1,17 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EstadoOC } from '../../generated/prisma/enums';
+import { EstadoOC, EstadoOP } from '../../generated/prisma/enums';
 import {
   HistorialEstadoOCModel,
   OrdenCompraModel,
 } from '../../generated/prisma/models';
 import {
   DatosCrearOrdenCompra,
+  DatosModificarOrdenCompra,
   FiltrosOrdenCompra,
   IOrdenesCompraRepositorio,
   OrdenCompraDetalle,
   OrdenCompraExportable,
   PaginacionOrdenCompra,
+  ResultadoModificarReaprobar,
 } from './interfaces/ordenes-compra-repositorio.interface';
 
 // Estados que NO representan una compra vigente: se excluyen de la exportación.
@@ -191,6 +193,48 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
         proveedor: true,
         sector: true,
       },
+    });
+  }
+
+  async modificarYReaprobar(
+    id: string,
+    datos: DatosModificarOrdenCompra,
+    usuarioId: string,
+  ): Promise<ResultadoModificarReaprobar> {
+    return this.prisma.$transaction(async (tx) => {
+      // Dentro de la transacción para evitar TOCTOU: si entre el chequeo y el
+      // update apareciera una OP, la verían la misma transacción.
+      const ordenesPagoVivas = await tx.ordenPago.count({
+        where: { ordenCompraId: id, estado: { not: EstadoOP.ANULADO } },
+      });
+
+      if (ordenesPagoVivas > 0) {
+        return { estado: 'TIENE_ORDENES_PAGO' };
+      }
+
+      // Compare-and-swap: edita y reenvía a aprobación solo si la OC sigue
+      // APROBADA. Si otra acción la movió, count = 0 y no se toca nada.
+      const resultado = await tx.ordenCompra.updateMany({
+        where: { id, estado: EstadoOC.APROBADO },
+        data: { ...datos, estado: EstadoOC.PENDIENTE },
+      });
+
+      if (resultado.count === 0) {
+        return { estado: 'CONFLICTO_ESTADO' };
+      }
+
+      await tx.historialEstadoOC.create({
+        data: {
+          ordenCompraId: id,
+          estadoAnterior: EstadoOC.APROBADO,
+          estadoNuevo: EstadoOC.PENDIENTE,
+          usuarioId,
+          motivo: 'Editada y reenviada a aprobación',
+        },
+      });
+
+      const orden = await tx.ordenCompra.findUniqueOrThrow({ where: { id } });
+      return { estado: 'OK', orden };
     });
   }
 }

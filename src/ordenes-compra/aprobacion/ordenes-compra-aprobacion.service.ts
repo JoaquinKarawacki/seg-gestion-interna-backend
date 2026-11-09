@@ -13,8 +13,8 @@ import { ACCIONES_AUDITORIA } from '../../auditoria/acciones-auditoria.constante
 import { AuditoriaService } from '../../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../../comun/interfaces/usuario-autenticado.interface';
 import { RespuestaOrdenCompraDto } from '../dtos/respuesta-orden-compra.dto';
+import { construirEventoOrdenCompraEstadoCambiado } from '../eventos/construir-evento-estado-cambiado';
 import { EVENTOS_ORDEN_COMPRA } from '../eventos/eventos.constantes';
-import type { EventoOrdenCompraEstadoCambiado } from '../eventos/orden-compra-estado-cambiado.evento';
 import { ORDENES_COMPRA_REPOSITORIO } from '../interfaces/ordenes-compra-repositorio.interface';
 import type { IOrdenesCompraRepositorio } from '../interfaces/ordenes-compra-repositorio.interface';
 import { mapearRespuestaOrdenCompra } from '../ordenes-compra.mapper';
@@ -204,21 +204,15 @@ export class OrdenesCompraAprobacionService {
     usuarioId: string,
     motivo?: string,
   ): void {
-    const evento: EventoOrdenCompraEstadoCambiado = {
-      ordenCompraId: solicitud.id,
-      numero: solicitud.numero,
-      estadoAnterior,
-      estadoNuevo: solicitud.estado,
-      sectorId: solicitud.sectorId,
-      solicitanteId: solicitud.solicitanteId,
-      usuarioId,
-      motivo: motivo ?? null,
-      monto: solicitud.monto.toString(),
-      moneda: solicitud.moneda,
-      concepto: solicitud.concepto,
-    };
-
-    this.emisorEventos.emit(EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO, evento);
+    this.emisorEventos.emit(
+      EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO,
+      construirEventoOrdenCompraEstadoCambiado(
+        solicitud,
+        estadoAnterior,
+        usuarioId,
+        motivo,
+      ),
+    );
   }
 
   private async registrarAuditoriaTransicion(

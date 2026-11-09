@@ -6,6 +6,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '../../generated/prisma/client';
 import { EstadoOP, EstadoOC, RolUsuario } from '../../generated/prisma/enums';
 import { tieneRol } from '../comun/autorizacion/roles.util';
@@ -30,6 +31,8 @@ import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.inte
 import { ActualizarOrdenPagoDto } from './dtos/actualizar-orden-pago.dto';
 import { CrearOrdenPagoDto } from './dtos/crear-orden-pago.dto';
 import { RespuestaOrdenPagoDto } from './dtos/respuesta-orden-pago.dto';
+import { construirEventoOrdenPagoEstadoCambiado } from './eventos/construir-evento-estado-cambiado-op';
+import { EVENTOS } from './eventos/eventos.constantes';
 import {
   ORDENES_PAGO_REPOSITORIO,
   FiltrosOrdenPago,
@@ -69,6 +72,7 @@ export class OrdenesPagoService {
     private readonly cadenaValidacionOP: CadenaValidacionOP,
     private readonly validarProveedorEslabon: ValidarProveedorCoincideCotizacionEslabon,
     private readonly auditoriaService: AuditoriaService,
+    private readonly emisorEventos: EventEmitter2,
   ) {}
 
   async listar(
@@ -202,6 +206,75 @@ export class OrdenesPagoService {
       usuarioEmail: usuario.email,
       accion: ACCIONES_AUDITORIA.ACTUALIZAR_ORDEN_PAGO,
       descripcion: `Actualizó la orden de compra #${orden.numero}`,
+      entidad: 'OrdenPago',
+      entidadId: orden.id,
+    });
+
+    return mapearRespuestaOrdenPago(orden);
+  }
+
+  // Edita una OP aprobada y la reenvía a aprobación. Solo el solicitante, el
+  // encargado del sector o un admin (validarPertenencia). El aprobador se
+  // re-notifica solo: el evento de paso a PENDIENTE dispara el mail.
+  async modificar(
+    id: string,
+    dto: ActualizarOrdenPagoDto,
+    usuario: UsuarioAutenticado,
+  ): Promise<RespuestaOrdenPagoDto> {
+    const ordenExistente = await this.obtenerOrdenOFallar(id);
+    this.validarPertenencia(ordenExistente, usuario);
+    this.validarEsAprobada(ordenExistente);
+
+    if (dto.proveedorId && ordenExistente.cotizacionId) {
+      await this.validarProveedorEslabon.ejecutarValidacion({
+        proveedorId: dto.proveedorId,
+        cotizacionId: ordenExistente.cotizacionId,
+        monto: ordenExistente.monto,
+      });
+    }
+
+    const orden = await this.ejecutarOMapearReferenciaInvalida(() =>
+      this.ordenesPagoRepositorio.modificarYReaprobar(
+        id,
+        {
+          tipo: dto.tipo,
+          fecha: dto.fecha ? new Date(dto.fecha) : undefined,
+          sectorId: dto.sectorId,
+          proveedorId: dto.proveedorId,
+          moneda: dto.moneda,
+          concepto: dto.concepto,
+          formaPago: dto.formaPago,
+          pagaIva: dto.pagaIva,
+          ivaIncluido: dto.ivaIncluido,
+          observaciones: dto.observaciones,
+        },
+        usuario.id,
+      ),
+    );
+
+    if (!orden) {
+      throw new ConflictException({
+        error: 'TRANSICION_INVALIDA',
+        mensaje:
+          'La orden de pago fue modificada por otra acción mientras tanto — volvé a revisarla antes de reintentar',
+      });
+    }
+
+    this.emisorEventos.emit(
+      EVENTOS.ORDEN_PAGO_ESTADO_CAMBIADO,
+      construirEventoOrdenPagoEstadoCambiado(
+        orden,
+        EstadoOP.APROBADO,
+        usuario.id,
+        'Editada y reenviada a aprobación',
+      ),
+    );
+
+    await this.auditoriaService.registrar({
+      usuarioId: usuario.id,
+      usuarioEmail: usuario.email,
+      accion: ACCIONES_AUDITORIA.ACTUALIZAR_ORDEN_PAGO,
+      descripcion: `Editó y reenvió a aprobación la orden de pago #${orden.numero}`,
       entidad: 'OrdenPago',
       entidadId: orden.id,
     });
@@ -396,9 +469,18 @@ export class OrdenesPagoService {
     }
   }
 
-  private async ejecutarOMapearReferenciaInvalida(
-    operacion: () => Promise<OrdenPagoModel>,
-  ): Promise<OrdenPagoModel> {
+  private validarEsAprobada(orden: OrdenPagoModel): void {
+    if (orden.estado !== EstadoOP.APROBADO) {
+      throw new ConflictException({
+        error: 'ORDEN_PAGO_NO_APROBADA',
+        mensaje: 'Solo se puede editar una orden de pago aprobada',
+      });
+    }
+  }
+
+  private async ejecutarOMapearReferenciaInvalida<T>(
+    operacion: () => Promise<T>,
+  ): Promise<T> {
     try {
       return await operacion();
     } catch (error) {
