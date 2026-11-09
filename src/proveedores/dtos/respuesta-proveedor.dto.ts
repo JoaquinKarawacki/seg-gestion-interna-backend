@@ -8,5 +8,6 @@ export class RespuestaProveedorDto {
   telefono!: string | null;
   banco!: string;
   tipoCuenta!: TipoCuentaBancaria;
-  numeroCuenta!: string;
+  numeroCuentaPesos!: string | null;
+  numeroCuentaDolares!: string | null;
 }

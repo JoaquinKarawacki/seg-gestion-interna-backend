@@ -31,7 +31,12 @@ export class CrearProveedorDto {
   @IsEnum(TipoCuentaBancaria)
   tipoCuenta!: TipoCuentaBancaria;
 
+  // Al menos uno de los dos es obligatorio (lo valida el service).
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  numeroCuenta!: string;
+  numeroCuentaPesos?: string;
+
+  @IsOptional()
+  @IsString()
+  numeroCuentaDolares?: string;
 }

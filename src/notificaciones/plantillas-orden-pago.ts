@@ -100,7 +100,12 @@ export function obtenerPlantilla(
 
   function datosBancariosProveedor(): DatoCorreo[] {
     const banco = op.proveedor.banco?.trim() ?? '';
-    const numeroCuenta = op.proveedor.numeroCuenta?.trim() ?? '';
+    // Por ahora el mail muestra una sola cuenta: pesos si existe, si no dólares.
+    const numeroCuenta = (
+      op.proveedor.numeroCuentaPesos ??
+      op.proveedor.numeroCuentaDolares ??
+      ''
+    ).trim();
     if (!banco || !numeroCuenta) {
       return [
         {

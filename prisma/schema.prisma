@@ -86,9 +86,12 @@ model Proveedor {
   rut           String             @unique
   email         String?
   telefono      String?
-  banco         String
-  tipoCuenta    TipoCuentaBancaria @map("tipo_cuenta")
-  numeroCuenta  String             @map("numero_cuenta")
+  banco               String
+  tipoCuenta          TipoCuentaBancaria @map("tipo_cuenta")
+  // Cuentas por moneda: al menos una (validado en el service). Un proveedor puede
+  // tener cuenta en pesos, en dólares, o ambas.
+  numeroCuentaPesos   String?            @map("numero_cuenta_pesos")
+  numeroCuentaDolares String?            @map("numero_cuenta_dolares")
   cotizaciones  Cotizacion[]
   ordenesPago   OrdenPago[]
   ordenesCompra OrdenCompra[]

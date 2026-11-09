@@ -40,6 +40,11 @@ export class ProveedoresService {
     dto: CrearProveedorDto,
     usuarioActual: UsuarioAutenticado,
   ): Promise<RespuestaProveedorDto> {
+    this.validarAlMenosUnaCuenta(
+      dto.numeroCuentaPesos,
+      dto.numeroCuentaDolares,
+    );
+
     const proveedor = await this.ejecutarOMapearConflicto(() =>
       this.proveedoresRepositorio.crear(dto),
     );
@@ -61,7 +66,19 @@ export class ProveedoresService {
     dto: ActualizarProveedorDto,
     usuarioActual: UsuarioAutenticado,
   ): Promise<RespuestaProveedorDto> {
-    await this.obtenerProveedorOFallar(id);
+    const existente = await this.obtenerProveedorOFallar(id);
+
+    // Valida contra el resultado final (lo que viene en el dto o, si no viene, lo
+    // que ya tenía): no se puede dejar al proveedor sin ninguna cuenta.
+    const pesos =
+      dto.numeroCuentaPesos !== undefined
+        ? dto.numeroCuentaPesos
+        : existente.numeroCuentaPesos;
+    const dolares =
+      dto.numeroCuentaDolares !== undefined
+        ? dto.numeroCuentaDolares
+        : existente.numeroCuentaDolares;
+    this.validarAlMenosUnaCuenta(pesos, dolares);
 
     const proveedor = await this.ejecutarOMapearConflicto(() =>
       this.proveedoresRepositorio.actualizar(id, dto),
@@ -157,7 +174,23 @@ export class ProveedoresService {
       telefono: proveedor.telefono,
       banco: proveedor.banco,
       tipoCuenta: proveedor.tipoCuenta,
-      numeroCuenta: proveedor.numeroCuenta,
+      numeroCuentaPesos: proveedor.numeroCuentaPesos,
+      numeroCuentaDolares: proveedor.numeroCuentaDolares,
     };
+  }
+
+  // Un proveedor debe tener al menos una cuenta (pesos o dólares).
+  private validarAlMenosUnaCuenta(
+    pesos?: string | null,
+    dolares?: string | null,
+  ): void {
+    const tienePesos = Boolean(pesos && pesos.trim());
+    const tieneDolares = Boolean(dolares && dolares.trim());
+    if (!tienePesos && !tieneDolares) {
+      throw new UnprocessableEntityException({
+        error: 'CUENTA_BANCARIA_REQUERIDA',
+        mensaje: 'Indicá al menos un número de cuenta (en pesos o en dólares)',
+      });
+    }
   }
 }
