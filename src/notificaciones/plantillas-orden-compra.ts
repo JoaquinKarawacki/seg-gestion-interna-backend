@@ -1,6 +1,7 @@
 import { EstadoOC } from '../../generated/prisma/enums';
 import type { EventoOrdenCompraEstadoCambiado } from '../ordenes-compra/eventos/orden-compra-estado-cambiado.evento';
 import type { OrdenCompraDetalle } from '../ordenes-compra/interfaces/ordenes-compra-repositorio.interface';
+import { calcularMontoConIva } from '../ordenes-compra/ordenes-compra.constantes';
 import {
   construirBoton,
   construirCuerpo,
@@ -65,6 +66,15 @@ export function obtenerPlantillaSolicitud(
       valor: formatearMontoCorreo(oc.monto.toString(), oc.moneda),
     },
     { etiqueta: '¿Paga IVA?', valor: etiquetaSiNo(oc.pagaIva) },
+    {
+      etiqueta: 'Total con IVA',
+      valor: formatearMontoCorreo(
+        String(
+          calcularMontoConIva(oc.monto.toNumber(), oc.pagaIva, oc.ivaIncluido),
+        ),
+        oc.moneda,
+      ),
+    },
     { etiqueta: 'Concepto', valor: oc.concepto },
     { etiqueta: 'Estado', valor: ETIQUETAS_ESTADO_OC[oc.estado] },
     { etiqueta: 'Solicitante', valor: oc.solicitante.email },

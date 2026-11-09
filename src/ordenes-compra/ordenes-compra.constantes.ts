@@ -29,3 +29,13 @@ export function calcularMontoNeto(
 ): number {
   return pagaIva && ivaIncluido ? monto / (1 + TASA_IVA) : monto;
 }
+
+// Monto total con IVA. Si no paga IVA, o si el monto ya lo incluye, es el monto
+// tal cual; si paga IVA y el monto es neto, se le suma el IVA.
+export function calcularMontoConIva(
+  monto: number,
+  pagaIva: boolean,
+  ivaIncluido: boolean,
+): number {
+  return pagaIva && !ivaIncluido ? monto * (1 + TASA_IVA) : monto;
+}
