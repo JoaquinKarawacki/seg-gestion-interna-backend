@@ -10,8 +10,15 @@ import {
   FiltrosOrdenCompra,
   IOrdenesCompraRepositorio,
   OrdenCompraDetalle,
+  OrdenCompraExportable,
   PaginacionOrdenCompra,
 } from './interfaces/ordenes-compra-repositorio.interface';
+
+// Estados que NO representan una compra vigente: se excluyen de la exportación.
+const ESTADOS_FUERA_DE_EXPORTACION: EstadoOC[] = [
+  EstadoOC.BORRADOR,
+  EstadoOC.ANULADO,
+];
 
 function condicionSector(
   sectorId: FiltrosOrdenCompra['sectorId'],
@@ -171,6 +178,18 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
         estado: filtros.estado,
         sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,
+      },
+    });
+  }
+
+  async buscarParaExportar(): Promise<OrdenCompraExportable[]> {
+    return this.prisma.ordenCompra.findMany({
+      where: { estado: { notIn: ESTADOS_FUERA_DE_EXPORTACION } },
+      orderBy: { numero: 'desc' },
+      include: {
+        proyecto: { include: { cliente: true } },
+        proveedor: true,
+        sector: true,
       },
     });
   }

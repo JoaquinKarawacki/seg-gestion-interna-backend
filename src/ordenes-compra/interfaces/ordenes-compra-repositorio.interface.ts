@@ -24,6 +24,16 @@ export type OrdenCompraDetalle = Prisma.OrdenCompraGetPayload<{
   };
 }>;
 
+// OC con las relaciones que necesita el Excel de exportación. `proyecto` puede
+// venir null (categorías sin proyecto); en ese caso la fila muestra "No asignado".
+export type OrdenCompraExportable = Prisma.OrdenCompraGetPayload<{
+  include: {
+    proyecto: { include: { cliente: true } };
+    proveedor: true;
+    sector: true;
+  };
+}>;
+
 // Datos para crear una OC junto con su Cotización (1:1), en una sola
 // transacción. `proyectoId`/`clienteId` solo vienen en las categorías con
 // proyecto (ESCO); en el resto son null. `archivoPdfRuta` puede faltar (el PDF
@@ -77,4 +87,7 @@ export interface IOrdenesCompraRepositorio {
     paginacion: PaginacionOrdenCompra,
   ): Promise<OrdenCompraModel[]>;
   contarConFiltros(filtros: FiltrosOrdenCompra): Promise<number>;
+  // Todas las OC salvo las que no representan una compra vigente (borradores sin
+  // enviar y anuladas). Trae las relaciones necesarias para el Excel.
+  buscarParaExportar(): Promise<OrdenCompraExportable[]>;
 }
