@@ -56,7 +56,7 @@ export class OrdenesPagoAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    this.validarEncargadoDelSector(orden, usuario);
+    this.validarPuedeAprobarSector(orden, usuario);
     const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOP.APROBADO,
@@ -79,7 +79,7 @@ export class OrdenesPagoAprobacionService {
     motivo: string,
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    this.validarEncargadoDelSector(orden, usuario);
+    this.validarPuedeAprobarSector(orden, usuario);
     const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOP.RECHAZADO,
@@ -253,6 +253,22 @@ export class OrdenesPagoAprobacionService {
     usuario: UsuarioAutenticado,
   ): void {
     if (!usuario.sectoresEncargado.includes(orden.sectorId)) {
+      throw new ForbiddenException({
+        error: 'SIN_PERMISO_SOBRE_SECTOR',
+        mensaje: 'No tenés permiso sobre el sector de esta orden de compra',
+      });
+    }
+  }
+
+  // Puede aprobar/rechazar quien es encargado del sector o su suplente (respaldo).
+  private validarPuedeAprobarSector(
+    orden: OrdenPagoModel,
+    usuario: UsuarioAutenticado,
+  ): void {
+    const puede =
+      usuario.sectoresEncargado.includes(orden.sectorId) ||
+      usuario.sectoresSuplente.includes(orden.sectorId);
+    if (!puede) {
       throw new ForbiddenException({
         error: 'SIN_PERMISO_SOBRE_SECTOR',
         mensaje: 'No tenés permiso sobre el sector de esta orden de compra',

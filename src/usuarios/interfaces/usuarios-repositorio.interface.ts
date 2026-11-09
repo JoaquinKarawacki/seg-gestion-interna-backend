@@ -6,6 +6,7 @@ export const USUARIOS_REPOSITORIO = Symbol('IUsuariosRepositorio');
 
 export type UsuarioConSectoresEncargado = UsuarioModel & {
   sectoresEncargado: { id: string }[];
+  sectoresSuplente: { id: string }[];
 };
 
 export interface DatosCrearUsuario {
@@ -15,6 +16,7 @@ export interface DatosCrearUsuario {
   roles: RolUsuario[];
   sectorId?: string | null;
   sectoresEncargadoIds?: string[];
+  sectoresSuplenteIds?: string[];
 }
 
 export interface DatosActualizarUsuario {
@@ -25,6 +27,7 @@ export interface DatosActualizarUsuario {
   activo?: boolean;
   contrasenaHash?: string;
   sectoresEncargadoIds?: string[];
+  sectoresSuplenteIds?: string[];
 }
 
 export interface IUsuariosRepositorio extends IRepositorioBase<

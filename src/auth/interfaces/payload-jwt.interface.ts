@@ -6,4 +6,5 @@ export interface PayloadJwt {
   roles: RolUsuario[];
   sectorId: string | null;
   sectoresEncargado: string[];
+  sectoresSuplente: string[];
 }

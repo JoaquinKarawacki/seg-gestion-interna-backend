@@ -37,4 +37,9 @@ export class ActualizarUsuarioDto {
   @IsArray()
   @IsUUID('4', { each: true })
   sectoresEncargadoIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  sectoresSuplenteIds?: string[];
 }

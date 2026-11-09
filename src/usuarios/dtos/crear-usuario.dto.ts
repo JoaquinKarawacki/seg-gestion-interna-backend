@@ -34,4 +34,11 @@ export class CrearUsuarioDto {
   @IsArray()
   @IsUUID('4', { each: true })
   sectoresEncargadoIds?: string[];
+
+  // Sectores donde el usuario es aprobador suplente (respaldo). Independiente del
+  // rol: puede aprobar esos sectores sin recibir sus notificaciones.
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  sectoresSuplenteIds?: string[];
 }

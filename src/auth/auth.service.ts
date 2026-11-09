@@ -78,6 +78,7 @@ export class AuthService {
       roles: usuario.roles,
       sectorId: usuario.sectorId,
       sectoresEncargado: usuario.sectoresEncargado.map((s) => s.id),
+      sectoresSuplente: usuario.sectoresSuplente.map((s) => s.id),
     };
 
     return this.jwtService.sign(payload);
