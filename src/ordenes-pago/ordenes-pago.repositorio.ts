@@ -98,6 +98,37 @@ export class OrdenesPagoRepositorio implements IOrdenesPagoRepositorio {
     return resultado._sum.monto ?? new Prisma.Decimal(0);
   }
 
+  async modificarYReaprobar(
+    id: string,
+    datos: DatosActualizarOrdenPago,
+    usuarioId: string,
+  ): Promise<OrdenPagoModel | null> {
+    return this.prisma.$transaction(async (tx) => {
+      // Compare-and-swap: edita y reenvía a aprobación solo si la OP sigue
+      // APROBADA. Si otra acción la movió, count = 0 y no se toca nada.
+      const resultado = await tx.ordenPago.updateMany({
+        where: { id, estado: EstadoOP.APROBADO },
+        data: { ...datos, estado: EstadoOP.PENDIENTE },
+      });
+
+      if (resultado.count === 0) {
+        return null;
+      }
+
+      await tx.historialEstadoOP.create({
+        data: {
+          ordenPagoId: id,
+          estadoAnterior: EstadoOP.APROBADO,
+          estadoNuevo: EstadoOP.PENDIENTE,
+          usuarioId,
+          motivo: 'Editada y reenviada a aprobación',
+        },
+      });
+
+      return tx.ordenPago.findUniqueOrThrow({ where: { id } });
+    });
+  }
+
   async cambiarEstado(
     id: string,
     estadoAnterior: EstadoOP,

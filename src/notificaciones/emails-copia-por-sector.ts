@@ -2,19 +2,16 @@
 // de la orden. Reemplaza al viejo EMAILS_EN_COPIA global (una sola lista para
 // todo). La clave es el nombre del sector normalizado (mayúsculas, sin espacios
 // de más), así que no importa cómo esté escrito el sector en la base.
+//
+// El encargado del sector NO va en estas listas: siempre recibe la notificación
+// por separado. Acá van sólo los destinatarios en copia adicionales.
 
+// Grupo "Gestión": comparten la misma copia. Incluye Administración y Ventas.
 const GESTION = [
-  'albornoz@segingenieria.com',
   'mgonzalez@segingenieria.com',
   'rodriguez@segingenieria.com',
   'marichal@segingenieria.com',
-  'garfinkel@segingenieria.com',
-];
-
-// Administración y Ventas comparten la misma copia.
-const ADMINISTRACION_Y_VENTAS = [
-  'rodriguez@segingenieria.com',
-  'mgonzalez@segingenieria.com',
+  'albornoz@segingenieria.com',
 ];
 
 const EMAILS_COPIA_POR_SECTOR: Record<string, string[]> = {
@@ -26,19 +23,19 @@ const EMAILS_COPIA_POR_SECTOR: Record<string, string[]> = {
   // del sector en la base es sólo "EMOVE".
   'SEG EMOVE': GESTION,
   EMOVE: GESTION,
-  // GreenPower
-  RENOVABLES: [
+  'RENOVABLES - ESCO': GESTION,
+  ADMINISTRACION: GESTION,
+  VENTAS: GESTION,
+  HELIOTEC: [
+    'albornoz@segingenieria.com',
+    'rodriguez@segingenieria.com',
+    'acosta@segingenieria.com',
+  ],
+  'SEG GREEN POWER': [
+    'schaich@segingenieria.com',
     'rodriguez@segingenieria.com',
     'soto@segingenieria.com',
-    'schaich@segingenieria.com',
   ],
-  HELIOTEC: [
-    'garfinkel@segingenieria.com',
-    'acosta@segingenieria.com',
-    'rodriguez@segingenieria.com',
-  ],
-  ADMINISTRACION: ADMINISTRACION_Y_VENTAS,
-  VENTAS: ADMINISTRACION_Y_VENTAS,
 };
 
 function normalizar(nombreSector: string): string {

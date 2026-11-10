@@ -14,7 +14,6 @@ export function mapearRespuestaOrdenPago(
     proveedorId: orden.proveedorId,
     clienteId: orden.clienteId,
     proyectoId: orden.proyectoId,
-    tareaId: orden.tareaId,
     cotizacionId: orden.cotizacionId,
     ordenCompraId: orden.ordenCompraId,
     moneda: orden.moneda,

@@ -37,6 +37,9 @@ export class ActualizarProveedorDto {
 
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  numeroCuenta?: string;
+  numeroCuentaPesos?: string;
+
+  @IsOptional()
+  @IsString()
+  numeroCuentaDolares?: string;
 }

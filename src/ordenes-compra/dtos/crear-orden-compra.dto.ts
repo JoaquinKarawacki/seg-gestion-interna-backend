@@ -8,12 +8,22 @@ import {
   IsPositive,
   IsString,
   IsUUID,
+  ValidateIf,
 } from 'class-validator';
-import { FormaPago, Moneda, TipoOC } from '../../../generated/prisma/enums';
+import {
+  CategoriaOrdenCompra,
+  FormaPago,
+  Moneda,
+  TipoOC,
+} from '../../../generated/prisma/enums';
+import { requiereProyecto } from '../ordenes-compra.constantes';
 
 const aBooleano = (valor: unknown) => valor === true || valor === 'true';
 
 export class CrearOrdenCompraDto {
+  @IsEnum(CategoriaOrdenCompra)
+  categoria!: CategoriaOrdenCompra;
+
   @IsEnum(TipoOC)
   tipo!: TipoOC;
 
@@ -23,19 +33,11 @@ export class CrearOrdenCompraDto {
   @IsUUID()
   proveedorId!: string;
 
+  // El proyecto solo se exige (y se usa) en las categorías con proyecto
+  // (PROYECTOS_ESCO). En las demás no viaja: la OC no tiene proyecto/cliente.
+  @ValidateIf((dto: CrearOrdenCompraDto) => requiereProyecto(dto.categoria))
   @IsUUID()
-  proyectoId!: string;
-
-  // Rubro: se elige uno existente (rubroId) o se crea uno nuevo por nombre
-  // (rubroNombre, caso "Otros"). El service valida que venga al menos uno.
-  @IsOptional()
-  @IsUUID()
-  rubroId?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  rubroNombre?: string;
+  proyectoId?: string;
 
   @IsEnum(Moneda)
   moneda!: Moneda;

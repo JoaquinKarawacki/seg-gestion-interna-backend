@@ -13,8 +13,8 @@ import { ACCIONES_AUDITORIA } from '../../auditoria/acciones-auditoria.constante
 import { AuditoriaService } from '../../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../../comun/interfaces/usuario-autenticado.interface';
 import { RespuestaOrdenCompraDto } from '../dtos/respuesta-orden-compra.dto';
+import { construirEventoOrdenCompraEstadoCambiado } from '../eventos/construir-evento-estado-cambiado';
 import { EVENTOS_ORDEN_COMPRA } from '../eventos/eventos.constantes';
-import type { EventoOrdenCompraEstadoCambiado } from '../eventos/orden-compra-estado-cambiado.evento';
 import { ORDENES_COMPRA_REPOSITORIO } from '../interfaces/ordenes-compra-repositorio.interface';
 import type { IOrdenesCompraRepositorio } from '../interfaces/ordenes-compra-repositorio.interface';
 import { mapearRespuestaOrdenCompra } from '../ordenes-compra.mapper';
@@ -56,7 +56,7 @@ export class OrdenesCompraAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenCompraDto> {
     const solicitud = await this.obtenerSolicitudOFallar(id);
-    this.validarEncargadoDelSector(solicitud, usuario);
+    this.validarPuedeAprobarSector(solicitud, usuario);
     const resultado = await this.ejecutarTransicion(
       solicitud,
       EstadoOC.APROBADO,
@@ -79,7 +79,7 @@ export class OrdenesCompraAprobacionService {
     motivo: string,
   ): Promise<RespuestaOrdenCompraDto> {
     const solicitud = await this.obtenerSolicitudOFallar(id);
-    this.validarEncargadoDelSector(solicitud, usuario);
+    this.validarPuedeAprobarSector(solicitud, usuario);
     const resultado = await this.ejecutarTransicion(
       solicitud,
       EstadoOC.RECHAZADO,
@@ -153,6 +153,22 @@ export class OrdenesCompraAprobacionService {
     }
   }
 
+  // Puede aprobar/rechazar quien es encargado del sector o su suplente (respaldo).
+  private validarPuedeAprobarSector(
+    solicitud: OrdenCompraModel,
+    usuario: UsuarioAutenticado,
+  ): void {
+    const puede =
+      usuario.sectoresEncargado.includes(solicitud.sectorId) ||
+      usuario.sectoresSuplente.includes(solicitud.sectorId);
+    if (!puede) {
+      throw new ForbiddenException({
+        error: 'SIN_PERMISO_SOBRE_SECTOR',
+        mensaje: 'No tenés permiso sobre el sector de esta orden de compra',
+      });
+    }
+  }
+
   private async ejecutarTransicion(
     solicitud: OrdenCompraModel,
     estadoNuevo: EstadoOC,
@@ -204,21 +220,15 @@ export class OrdenesCompraAprobacionService {
     usuarioId: string,
     motivo?: string,
   ): void {
-    const evento: EventoOrdenCompraEstadoCambiado = {
-      ordenCompraId: solicitud.id,
-      numero: solicitud.numero,
-      estadoAnterior,
-      estadoNuevo: solicitud.estado,
-      sectorId: solicitud.sectorId,
-      solicitanteId: solicitud.solicitanteId,
-      usuarioId,
-      motivo: motivo ?? null,
-      monto: solicitud.monto.toString(),
-      moneda: solicitud.moneda,
-      concepto: solicitud.concepto,
-    };
-
-    this.emisorEventos.emit(EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO, evento);
+    this.emisorEventos.emit(
+      EVENTOS_ORDEN_COMPRA.ESTADO_CAMBIADO,
+      construirEventoOrdenCompraEstadoCambiado(
+        solicitud,
+        estadoAnterior,
+        usuarioId,
+        motivo,
+      ),
+    );
   }
 
   private async registrarAuditoriaTransicion(

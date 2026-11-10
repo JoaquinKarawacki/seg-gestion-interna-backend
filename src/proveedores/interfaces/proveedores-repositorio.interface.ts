@@ -11,7 +11,8 @@ export interface DatosCrearProveedor {
   telefono?: string | null;
   banco: string;
   tipoCuenta: TipoCuentaBancaria;
-  numeroCuenta: string;
+  numeroCuentaPesos?: string | null;
+  numeroCuentaDolares?: string | null;
 }
 
 export interface DatosActualizarProveedor {
@@ -21,7 +22,8 @@ export interface DatosActualizarProveedor {
   telefono?: string | null;
   banco?: string;
   tipoCuenta?: TipoCuentaBancaria;
-  numeroCuenta?: string;
+  numeroCuentaPesos?: string | null;
+  numeroCuentaDolares?: string | null;
 }
 
 export interface IProveedoresRepositorio extends IRepositorioBase<

@@ -55,6 +55,7 @@ export class UsuariosService {
         roles: dto.roles,
         sectorId: dto.sectorId ?? null,
         sectoresEncargadoIds: dto.sectoresEncargadoIds,
+        sectoresSuplenteIds: dto.sectoresSuplenteIds,
       }),
     );
 
@@ -185,6 +186,7 @@ export class UsuariosService {
       activo: usuario.activo,
       sectorId: usuario.sectorId,
       sectoresEncargadoIds: usuario.sectoresEncargado.map((s) => s.id),
+      sectoresSuplenteIds: usuario.sectoresSuplente.map((s) => s.id),
     };
   }
 }

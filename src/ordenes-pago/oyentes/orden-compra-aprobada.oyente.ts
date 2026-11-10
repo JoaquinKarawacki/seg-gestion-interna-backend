@@ -120,6 +120,7 @@ export class OrdenCompraAprobadaOyente {
       roles: usuario.roles,
       sectorId: usuario.sectorId,
       sectoresEncargado: [],
+      sectoresSuplente: [],
     };
   }
 }

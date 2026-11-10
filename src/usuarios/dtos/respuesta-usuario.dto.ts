@@ -8,4 +8,5 @@ export class RespuestaUsuarioDto {
   activo!: boolean;
   sectorId!: string | null;
   sectoresEncargadoIds!: string[];
+  sectoresSuplenteIds!: string[];
 }

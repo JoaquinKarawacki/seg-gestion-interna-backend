@@ -16,9 +16,8 @@ import { RespuestaCotizacionBusquedaDto } from './dtos/respuesta-cotizacion-busq
 import { RespuestaCotizacionDto } from './dtos/respuesta-cotizacion.dto';
 
 // Sin prefijo de clase a proposito: las rutas de Cotizacion se reparten entre
-// /cotizaciones, /proyectos/:proyectoId/cotizaciones y
-// /tareas/:tareaId/cotizaciones. La creacion ya NO se expone acá: una
-// cotización solo nace desde el flujo de Orden de Compra.
+// /cotizaciones y /proyectos/:proyectoId/cotizaciones. La creacion ya NO se
+// expone acá: una cotización solo nace desde el flujo de Orden de Compra.
 @Controller()
 @UseGuards(JwtGuardia, RolesGuardia)
 export class CotizacionesController {
@@ -56,21 +55,5 @@ export class CotizacionesController {
   ): Promise<RespuestaLista<RespuestaCotizacionDto>> {
     const datos = await this.cotizacionesService.listarPorProyecto(proyectoId);
     return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
-  }
-
-  @Get('tareas/:tareaId/cotizaciones')
-  async listarPorTarea(
-    @Param('tareaId') tareaId: string,
-  ): Promise<RespuestaLista<RespuestaCotizacionDto>> {
-    const datos = await this.cotizacionesService.listarPorTarea(tareaId);
-    return { datos, total: datos.length, pagina: 1, porPagina: datos.length };
-  }
-
-  @Get('tareas/:tareaId/cotizaciones/activa')
-  async buscarActivaPorTarea(
-    @Param('tareaId') tareaId: string,
-  ): Promise<RespuestaExitosa<RespuestaCotizacionDto>> {
-    const datos = await this.cotizacionesService.buscarActivaPorTarea(tareaId);
-    return { datos, mensaje: 'Cotización activa obtenida correctamente' };
   }
 }

@@ -47,7 +47,6 @@ export interface DatosCrearOrdenPago {
   proveedorId: string;
   clienteId: string | null;
   proyectoId: string | null;
-  tareaId: string | null;
   cotizacionId: string | null;
   ordenCompraId?: string | null;
   moneda: Moneda;
@@ -104,6 +103,14 @@ export interface IOrdenesPagoRepositorio extends IRepositorioBase<
     estadoNuevo: EstadoOP,
     usuarioId: string,
     motivo?: string | null,
+  ): Promise<OrdenPagoModel | null>;
+  // Edita una OP aprobada y la reenvía a aprobación (APROBADO -> PENDIENTE) en una
+  // transacción, con compare-and-swap sobre el estado. null si ya no estaba
+  // APROBADA (otra acción la movió mientras tanto).
+  modificarYReaprobar(
+    id: string,
+    datos: DatosActualizarOrdenPago,
+    usuarioId: string,
   ): Promise<OrdenPagoModel | null>;
   buscarHistorial(ordenPagoId: string): Promise<HistorialEstadoOPModel[]>;
   contarComentariosAsociados(ordenPagoId: string): Promise<number>;

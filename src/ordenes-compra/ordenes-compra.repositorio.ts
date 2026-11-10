@@ -1,17 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EstadoOC } from '../../generated/prisma/enums';
+import { EstadoOC, EstadoOP } from '../../generated/prisma/enums';
 import {
   HistorialEstadoOCModel,
   OrdenCompraModel,
 } from '../../generated/prisma/models';
 import {
-  DatosCrearSolicitudConCotizacion,
+  DatosCrearOrdenCompra,
+  DatosModificarOrdenCompra,
   FiltrosOrdenCompra,
   IOrdenesCompraRepositorio,
   OrdenCompraDetalle,
+  OrdenCompraExportable,
   PaginacionOrdenCompra,
+  ResultadoModificarReaprobar,
 } from './interfaces/ordenes-compra-repositorio.interface';
+
+// Estados que NO representan una compra vigente: se excluyen de la exportación.
+const ESTADOS_FUERA_DE_EXPORTACION: EstadoOC[] = [
+  EstadoOC.BORRADOR,
+  EstadoOC.ANULADO,
+];
 
 function condicionSector(
   sectorId: FiltrosOrdenCompra['sectorId'],
@@ -31,41 +40,30 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
   }
 
   // OC con relaciones para el mail de notificación (proyecto + cliente, proveedor,
-  // rubro, sector y solicitante).
+  // sector y solicitante). `proyecto` viene null en las categorías sin proyecto.
   async buscarDetalle(id: string): Promise<OrdenCompraDetalle | null> {
     return this.prisma.ordenCompra.findUnique({
       where: { id },
       include: {
         proyecto: { include: { cliente: true } },
         proveedor: true,
-        rubro: true,
         sector: true,
         solicitante: true,
       },
     });
   }
 
-  // Crea, en una sola transacción, la Tarea del rubro (reutilizándola si ya
-  // existe en el proyecto), la Cotización independiente (1:1 con la OC) y la
-  // Orden de Compra que las enlaza. El PDF ya se guardó fuera de la tx.
-  async crearConCotizacionYTarea(
-    datos: DatosCrearSolicitudConCotizacion,
+  // Crea, en una sola transacción, la Cotización (1:1 con la OC) y la Orden de
+  // Compra que la enlaza. Sin Tarea intermedia. `proyectoId`/`clienteId` vienen
+  // null en las categorías sin proyecto; `archivoPdfRuta` null si no hubo PDF.
+  // El PDF, si vino, ya se guardó fuera de la tx.
+  async crearConCotizacion(
+    datos: DatosCrearOrdenCompra,
   ): Promise<OrdenCompraModel> {
     return this.prisma.$transaction(async (tx) => {
-      const tareaExistente = await tx.tarea.findFirst({
-        where: { proyectoId: datos.proyectoId, nombre: datos.rubroNombre },
-      });
-
-      const tarea =
-        tareaExistente ??
-        (await tx.tarea.create({
-          data: { proyectoId: datos.proyectoId, nombre: datos.rubroNombre },
-        }));
-
       const cotizacion = await tx.cotizacion.create({
         data: {
           proyectoId: datos.proyectoId,
-          tareaId: tarea.id,
           proveedorId: datos.proveedorId,
           montoTotal: datos.monto,
           moneda: datos.moneda,
@@ -76,14 +74,13 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
 
       return tx.ordenCompra.create({
         data: {
+          categoria: datos.categoria,
           tipo: datos.tipo,
           solicitanteId: datos.solicitanteId,
           sectorId: datos.sectorId,
           proveedorId: datos.proveedorId,
           clienteId: datos.clienteId,
           proyectoId: datos.proyectoId,
-          rubroId: datos.rubroId,
-          tareaId: tarea.id,
           cotizacionId: cotizacion.id,
           moneda: datos.moneda,
           monto: datos.monto,
@@ -141,9 +138,9 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
     });
   }
 
-  // Al borrar una OC en BORRADOR se borra también su Cotización (1:1, creada
-  // por esta OC y aún sin Órdenes de Pago). La Tarea se conserva porque se
-  // comparte entre OCs del mismo rubro.
+  // Al borrar una OC en BORRADOR se borra también su Cotización, si tiene (1:1,
+  // creada por esta OC y aún sin Órdenes de Pago). Las OC sin proyecto no tienen
+  // cotización. La Tarea se conserva porque se comparte entre OCs del proyecto.
   async eliminar(id: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       const solicitud = await tx.ordenCompra.findUniqueOrThrow({
@@ -152,7 +149,10 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
       });
 
       await tx.ordenCompra.delete({ where: { id } });
-      await tx.cotizacion.delete({ where: { id: solicitud.cotizacionId } });
+
+      if (solicitud.cotizacionId) {
+        await tx.cotizacion.delete({ where: { id: solicitud.cotizacionId } });
+      }
     });
   }
 
@@ -181,6 +181,60 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
         sectorId: condicionSector(filtros.sectorId),
         solicitanteId: filtros.solicitanteId,
       },
+    });
+  }
+
+  async buscarParaExportar(): Promise<OrdenCompraExportable[]> {
+    return this.prisma.ordenCompra.findMany({
+      where: { estado: { notIn: ESTADOS_FUERA_DE_EXPORTACION } },
+      orderBy: { numero: 'desc' },
+      include: {
+        proyecto: { include: { cliente: true } },
+        proveedor: true,
+        sector: true,
+      },
+    });
+  }
+
+  async modificarYReaprobar(
+    id: string,
+    datos: DatosModificarOrdenCompra,
+    usuarioId: string,
+  ): Promise<ResultadoModificarReaprobar> {
+    return this.prisma.$transaction(async (tx) => {
+      // Dentro de la transacción para evitar TOCTOU: si entre el chequeo y el
+      // update apareciera una OP, la verían la misma transacción.
+      const ordenesPagoVivas = await tx.ordenPago.count({
+        where: { ordenCompraId: id, estado: { not: EstadoOP.ANULADO } },
+      });
+
+      if (ordenesPagoVivas > 0) {
+        return { estado: 'TIENE_ORDENES_PAGO' };
+      }
+
+      // Compare-and-swap: edita y reenvía a aprobación solo si la OC sigue
+      // APROBADA. Si otra acción la movió, count = 0 y no se toca nada.
+      const resultado = await tx.ordenCompra.updateMany({
+        where: { id, estado: EstadoOC.APROBADO },
+        data: { ...datos, estado: EstadoOC.PENDIENTE },
+      });
+
+      if (resultado.count === 0) {
+        return { estado: 'CONFLICTO_ESTADO' };
+      }
+
+      await tx.historialEstadoOC.create({
+        data: {
+          ordenCompraId: id,
+          estadoAnterior: EstadoOC.APROBADO,
+          estadoNuevo: EstadoOC.PENDIENTE,
+          usuarioId,
+          motivo: 'Editada y reenviada a aprobación',
+        },
+      });
+
+      const orden = await tx.ordenCompra.findUniqueOrThrow({ where: { id } });
+      return { estado: 'OK', orden };
     });
   }
 }

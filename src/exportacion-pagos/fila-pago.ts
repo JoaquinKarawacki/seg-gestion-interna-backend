@@ -50,7 +50,12 @@ function aprobadorEncargado(orden: OrdenPagoParaPago): string {
 
 export function mapearFilaPago(orden: OrdenPagoParaPago): FilaPago {
   const banco = orden.proveedor.banco?.trim() ?? '';
-  const numeroCuenta = orden.proveedor.numeroCuenta?.trim() ?? '';
+  // Por ahora el Excel muestra una sola cuenta: pesos si existe, si no dólares.
+  const numeroCuenta = (
+    orden.proveedor.numeroCuentaPesos ??
+    orden.proveedor.numeroCuentaDolares ??
+    ''
+  ).trim();
 
   return {
     numero: orden.numero,

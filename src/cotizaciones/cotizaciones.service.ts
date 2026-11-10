@@ -37,26 +37,6 @@ export class CotizacionesService {
     return cotizaciones.map((cotizacion) => this.mapearRespuesta(cotizacion));
   }
 
-  async listarPorTarea(tareaId: string): Promise<RespuestaCotizacionDto[]> {
-    const cotizaciones =
-      await this.cotizacionesRepositorio.buscarPorTarea(tareaId);
-    return cotizaciones.map((cotizacion) => this.mapearRespuesta(cotizacion));
-  }
-
-  async buscarActivaPorTarea(tareaId: string): Promise<RespuestaCotizacionDto> {
-    const cotizacion =
-      await this.cotizacionesRepositorio.buscarActivaPorTarea(tareaId);
-
-    if (!cotizacion) {
-      throw new NotFoundException({
-        error: 'COTIZACION_ACTIVA_NO_ENCONTRADA',
-        mensaje: 'La tarea no tiene una cotización activa',
-      });
-    }
-
-    return this.mapearRespuesta(cotizacion);
-  }
-
   // Listado global enriquecido para buscar/reutilizar cotizaciones anteriores.
   async listarParaBusqueda(): Promise<RespuestaCotizacionBusquedaDto[]> {
     const cotizaciones =
@@ -95,7 +75,6 @@ export class CotizacionesService {
     return {
       id: cotizacion.id,
       proyectoId: cotizacion.proyectoId,
-      tareaId: cotizacion.tareaId,
       proveedorId: cotizacion.proveedorId,
       montoTotal: cotizacion.montoTotal.toString(),
       moneda: cotizacion.moneda,
@@ -111,11 +90,9 @@ export class CotizacionesService {
     return {
       id: cotizacion.id,
       proyectoId: cotizacion.proyectoId,
-      proyectoNombre: cotizacion.proyecto.nombre,
+      proyectoNombre: cotizacion.proyecto?.nombre ?? null,
       proveedorId: cotizacion.proveedorId,
       proveedorNombre: cotizacion.proveedor.nombre,
-      tareaId: cotizacion.tareaId,
-      rubroNombre: cotizacion.tarea.nombre,
       montoTotal: cotizacion.montoTotal.toString(),
       moneda: cotizacion.moneda,
       ivaIncluido: cotizacion.ivaIncluido,

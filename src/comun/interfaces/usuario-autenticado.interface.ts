@@ -6,4 +6,5 @@ export interface UsuarioAutenticado {
   roles: RolUsuario[];
   sectorId: string | null;
   sectoresEncargado: string[];
+  sectoresSuplente: string[];
 }

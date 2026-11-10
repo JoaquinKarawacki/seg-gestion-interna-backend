@@ -11,6 +11,7 @@ import {
 
 const INCLUIR_SECTORES_ENCARGADO = {
   sectoresEncargado: { select: { id: true } },
+  sectoresSuplente: { select: { id: true } },
 } as const;
 
 @Injectable()
@@ -54,12 +55,15 @@ export class UsuariosRepositorio implements IUsuariosRepositorio {
   }
 
   async crear(datos: DatosCrearUsuario): Promise<UsuarioConSectoresEncargado> {
-    const { sectoresEncargadoIds, ...resto } = datos;
+    const { sectoresEncargadoIds, sectoresSuplenteIds, ...resto } = datos;
     return this.prisma.usuario.create({
       data: {
         ...resto,
         sectoresEncargado: sectoresEncargadoIds
           ? { connect: sectoresEncargadoIds.map((id) => ({ id })) }
+          : undefined,
+        sectoresSuplente: sectoresSuplenteIds
+          ? { connect: sectoresSuplenteIds.map((id) => ({ id })) }
           : undefined,
       },
       include: INCLUIR_SECTORES_ENCARGADO,
@@ -70,13 +74,16 @@ export class UsuariosRepositorio implements IUsuariosRepositorio {
     id: string,
     datos: DatosActualizarUsuario,
   ): Promise<UsuarioConSectoresEncargado> {
-    const { sectoresEncargadoIds, ...resto } = datos;
+    const { sectoresEncargadoIds, sectoresSuplenteIds, ...resto } = datos;
     return this.prisma.usuario.update({
       where: { id },
       data: {
         ...resto,
         sectoresEncargado: sectoresEncargadoIds
           ? { set: sectoresEncargadoIds.map((id) => ({ id })) }
+          : undefined,
+        sectoresSuplente: sectoresSuplenteIds
+          ? { set: sectoresSuplenteIds.map((id) => ({ id })) }
           : undefined,
       },
       include: INCLUIR_SECTORES_ENCARGADO,

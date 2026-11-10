@@ -14,7 +14,7 @@ import { AuditoriaService } from '../../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../../comun/interfaces/usuario-autenticado.interface';
 import { RespuestaOrdenPagoDto } from '../dtos/respuesta-orden-pago.dto';
 import { EVENTOS } from '../eventos/eventos.constantes';
-import type { EventoOrdenPagoEstadoCambiado } from '../eventos/orden-pago-estado-cambiado.evento';
+import { construirEventoOrdenPagoEstadoCambiado } from '../eventos/construir-evento-estado-cambiado-op';
 import { ORDENES_PAGO_REPOSITORIO } from '../interfaces/ordenes-pago-repositorio.interface';
 import type { IOrdenesPagoRepositorio } from '../interfaces/ordenes-pago-repositorio.interface';
 import { mapearRespuestaOrdenPago } from '../ordenes-pago.mapper';
@@ -56,7 +56,7 @@ export class OrdenesPagoAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    this.validarEncargadoDelSector(orden, usuario);
+    this.validarPuedeAprobarSector(orden, usuario);
     const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOP.APROBADO,
@@ -79,7 +79,7 @@ export class OrdenesPagoAprobacionService {
     motivo: string,
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    this.validarEncargadoDelSector(orden, usuario);
+    this.validarPuedeAprobarSector(orden, usuario);
     const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOP.RECHAZADO,
@@ -260,6 +260,22 @@ export class OrdenesPagoAprobacionService {
     }
   }
 
+  // Puede aprobar/rechazar quien es encargado del sector o su suplente (respaldo).
+  private validarPuedeAprobarSector(
+    orden: OrdenPagoModel,
+    usuario: UsuarioAutenticado,
+  ): void {
+    const puede =
+      usuario.sectoresEncargado.includes(orden.sectorId) ||
+      usuario.sectoresSuplente.includes(orden.sectorId);
+    if (!puede) {
+      throw new ForbiddenException({
+        error: 'SIN_PERMISO_SOBRE_SECTOR',
+        mensaje: 'No tenés permiso sobre el sector de esta orden de compra',
+      });
+    }
+  }
+
   private async ejecutarTransicion(
     orden: OrdenPagoModel,
     estadoNuevo: EstadoOP,
@@ -309,21 +325,15 @@ export class OrdenesPagoAprobacionService {
     usuarioId: string,
     motivo?: string,
   ): void {
-    const evento: EventoOrdenPagoEstadoCambiado = {
-      ordenPagoId: orden.id,
-      numero: orden.numero,
-      estadoAnterior,
-      estadoNuevo: orden.estado,
-      sectorId: orden.sectorId,
-      solicitanteId: orden.solicitanteId,
-      usuarioId,
-      motivo: motivo ?? null,
-      monto: orden.monto.toString(),
-      moneda: orden.moneda,
-      concepto: orden.concepto,
-    };
-
-    this.emisorEventos.emit(EVENTOS.ORDEN_PAGO_ESTADO_CAMBIADO, evento);
+    this.emisorEventos.emit(
+      EVENTOS.ORDEN_PAGO_ESTADO_CAMBIADO,
+      construirEventoOrdenPagoEstadoCambiado(
+        orden,
+        estadoAnterior,
+        usuarioId,
+        motivo,
+      ),
+    );
   }
 
   private async registrarAuditoriaTransicion(

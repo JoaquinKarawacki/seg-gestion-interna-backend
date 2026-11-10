@@ -7,7 +7,9 @@ export const TRANSICIONES_VALIDAS_ORDEN_COMPRA: Record<EstadoOC, EstadoOC[]> = {
     EstadoOC.RECHAZADO,
     EstadoOC.ANULADO,
   ],
-  [EstadoOC.APROBADO]: [EstadoOC.ANULADO],
+  // PENDIENTE: una OC aprobada puede editarse y volver a aprobación (siempre que
+  // no tenga órdenes de pago vivas; eso lo valida el service).
+  [EstadoOC.APROBADO]: [EstadoOC.ANULADO, EstadoOC.PENDIENTE],
   [EstadoOC.RECHAZADO]: [],
   [EstadoOC.ANULADO]: [],
 };

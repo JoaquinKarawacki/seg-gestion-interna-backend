@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AlmacenamientoModulo } from '../almacenamiento/almacenamiento.modulo';
 import { ProyectosModulo } from '../proyectos/proyectos.modulo';
-import { RubrosModulo } from '../rubros/rubros.modulo';
+import { TiposCambioModulo } from '../tipos-cambio/tipos-cambio.modulo';
 import { OrdenesCompraAprobacionController } from './aprobacion/ordenes-compra-aprobacion.controller';
 import { OrdenesCompraAprobacionService } from './aprobacion/ordenes-compra-aprobacion.service';
 import { ORDENES_COMPRA_REPOSITORIO } from './interfaces/ordenes-compra-repositorio.interface';
@@ -10,7 +10,7 @@ import { OrdenesCompraRepositorio } from './ordenes-compra.repositorio';
 import { OrdenesCompraService } from './ordenes-compra.service';
 
 @Module({
-  imports: [AlmacenamientoModulo, ProyectosModulo, RubrosModulo],
+  imports: [AlmacenamientoModulo, ProyectosModulo, TiposCambioModulo],
   controllers: [OrdenesCompraController, OrdenesCompraAprobacionController],
   providers: [
     OrdenesCompraService,

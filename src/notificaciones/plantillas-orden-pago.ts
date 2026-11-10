@@ -1,6 +1,7 @@
 import { EstadoOP, FormaPago } from '../../generated/prisma/enums';
 import type { EventoOrdenPagoEstadoCambiado } from '../ordenes-pago/eventos/orden-pago-estado-cambiado.evento';
 import type { OrdenPagoDetalle } from '../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
+import { calcularMontoConIva } from '../ordenes-compra/ordenes-compra.constantes';
 import {
   construirBoton,
   construirCuerpo,
@@ -63,6 +64,15 @@ export function obtenerPlantilla(
     valor: formatearMontoCorreo(op.monto.toString(), op.moneda),
   });
   datos.push({ etiqueta: '¿Paga IVA?', valor: etiquetaSiNo(op.pagaIva) });
+  datos.push({
+    etiqueta: 'Total con IVA',
+    valor: formatearMontoCorreo(
+      String(
+        calcularMontoConIva(op.monto.toNumber(), op.pagaIva, op.ivaIncluido),
+      ),
+      op.moneda,
+    ),
+  });
   datos.push({ etiqueta: 'Concepto', valor: op.concepto });
   if (op.ordenCompra) {
     datos.push({
@@ -90,7 +100,12 @@ export function obtenerPlantilla(
 
   function datosBancariosProveedor(): DatoCorreo[] {
     const banco = op.proveedor.banco?.trim() ?? '';
-    const numeroCuenta = op.proveedor.numeroCuenta?.trim() ?? '';
+    // Por ahora el mail muestra una sola cuenta: pesos si existe, si no dólares.
+    const numeroCuenta = (
+      op.proveedor.numeroCuentaPesos ??
+      op.proveedor.numeroCuentaDolares ??
+      ''
+    ).trim();
     if (!banco || !numeroCuenta) {
       return [
         {

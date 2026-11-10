@@ -7,6 +7,7 @@ export function mapearRespuestaOrdenCompra(
   return {
     id: solicitud.id,
     numero: solicitud.numero,
+    categoria: solicitud.categoria,
     tipo: solicitud.tipo,
     fecha: solicitud.fecha,
     solicitanteId: solicitud.solicitanteId,
@@ -14,8 +15,6 @@ export function mapearRespuestaOrdenCompra(
     proveedorId: solicitud.proveedorId,
     clienteId: solicitud.clienteId,
     proyectoId: solicitud.proyectoId,
-    rubroId: solicitud.rubroId,
-    tareaId: solicitud.tareaId,
     cotizacionId: solicitud.cotizacionId,
     moneda: solicitud.moneda,
     monto: solicitud.monto.toString(),
