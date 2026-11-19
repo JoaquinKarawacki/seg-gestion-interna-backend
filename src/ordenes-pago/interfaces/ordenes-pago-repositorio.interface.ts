@@ -39,6 +39,18 @@ export type OrdenPagoParaPago = Prisma.OrdenPagoGetPayload<{
   };
 }>;
 
+// OP con lo que necesita el Excel del listado general de órdenes de pago
+// (todas las vigentes, no solo las aprobadas para pagar).
+export type OrdenPagoExportable = Prisma.OrdenPagoGetPayload<{
+  include: {
+    proveedor: true;
+    sector: true;
+    solicitante: true;
+    proyecto: { include: { cliente: true } };
+    ordenCompra: true;
+  };
+}>;
+
 export interface DatosCrearOrdenPago {
   tipo: TipoOC;
   fecha: Date;
@@ -96,6 +108,8 @@ export interface IOrdenesPagoRepositorio extends IRepositorioBase<
 > {
   buscarDetalle(id: string): Promise<OrdenPagoDetalle | null>;
   buscarAprobadasParaPago(): Promise<OrdenPagoParaPago[]>;
+  // OPs vigentes (sin borradores ni anuladas) para el Excel del listado.
+  buscarParaExportar(): Promise<OrdenPagoExportable[]>;
   sumarMontoPorCotizacion(cotizacionId: string): Promise<Prisma.Decimal>;
   cambiarEstado(
     id: string,

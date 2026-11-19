@@ -12,9 +12,16 @@ import {
   FiltrosOrdenPago,
   IOrdenesPagoRepositorio,
   OrdenPagoDetalle,
+  OrdenPagoExportable,
   OrdenPagoParaPago,
   PaginacionOrdenPago,
 } from './interfaces/ordenes-pago-repositorio.interface';
+
+// Estados que NO representan una OP vigente: se excluyen del Excel del listado.
+const ESTADOS_FUERA_DE_EXPORTACION: EstadoOP[] = [
+  EstadoOP.BORRADOR,
+  EstadoOP.ANULADO,
+];
 
 function condicionSector(
   sectorId: FiltrosOrdenPago['sectorId'],
@@ -67,6 +74,23 @@ export class OrdenesPagoRepositorio implements IOrdenesPagoRepositorio {
         proyecto: { include: { cliente: true } },
         ordenCompra: true,
         historialEstados: { include: { usuario: true } },
+      },
+    });
+  }
+
+  // OPs vigentes para el Excel del listado general, con sus relaciones en una
+  // sola query. Mismo criterio que la exportación de OC: sin borradores ni
+  // anuladas, de la más nueva a la más vieja.
+  async buscarParaExportar(): Promise<OrdenPagoExportable[]> {
+    return this.prisma.ordenPago.findMany({
+      where: { estado: { notIn: ESTADOS_FUERA_DE_EXPORTACION } },
+      orderBy: { numero: 'desc' },
+      include: {
+        proveedor: true,
+        sector: true,
+        solicitante: true,
+        proyecto: { include: { cliente: true } },
+        ordenCompra: true,
       },
     });
   }
