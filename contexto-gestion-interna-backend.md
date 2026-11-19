@@ -3,6 +3,8 @@
 
 Documento de referencia obligatorio para Claude Code. Leer completo antes de escribir cualquier línea de código.
 
+> **Para el estado más reciente (al 2026-11-19), ir directo a la sección "Multi-rol, código PI, categorías de OC, exportaciones Excel y ajustes (2026-10-27 → 2026-11-19)"** al final del documento. Las secciones están en orden cronológico; cuando dos se contradicen, gana la más nueva. Ojo: `Tarea`, `Rubro` y `Proyecto.numero` (#N) ya no existen.
+
 ---
 
 ## Visión general del sistema
@@ -1064,6 +1066,121 @@ El eslabón `ValidarMontoNoExcedeCotizacion` pasó de bloqueo duro a **bloqueo c
 ### Deploy: las migraciones ahora corren solas vía el CMD del Dockerfile (commits `2060f99`/`8bf81cb`)
 
 **Cambió el procedimiento de migraciones en Railway** (supersede la sección "Comandos de Railway" que decía "aplicar a mano"): se **removió** el `startCommand` de `railway.json` y el `Dockerfile` ahora tiene `CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]`. Correr la cadena `&&` desde el CMD del Dockerfile (con `sh -c`) **sí funciona** — el síntoma histórico de "el proceso muere después del `&&`" era específico del `startCommand` de Railway, no del CMD del contenedor. Con esto **cada deploy aplica las migraciones pendientes automáticamente**; ya no hace falta el rodeo de `railway ssh --service backend` + `migrate deploy` salvo para tapar un gap puntual. Si un deploy futuro volviera a fallar por esto, el fallback sigue siendo el método ssh documentado más arriba.
+
+---
+
+## Multi-rol, código PI, categorías de OC, exportaciones Excel y ajustes (2026-10-27 → 2026-11-19)
+
+Continuación de la sección anterior. Documenta **todo lo posterior al 2026-10-27**. Todo está mergeado a `main` y deployado en Railway (último deploy: 2026-11-19, back `c5f45c0`). **Cuando haya conflicto con secciones anteriores, esta sección gana.** Lo que queda superado:
+- **`Tarea` y `Rubro` ya no existen** (modelos, tablas, módulos, endpoints, acciones de auditoría, seed). Todo lo que se diga más arriba sobre tareas, rubros, `RUBROS_BASE` o "Tarea auto-creada" es historia.
+- **`Proyecto.numero` (#N) ya no existe**: lo reemplazó `codigoInversion` (PI).
+- **`Usuario.rol` pasó a `Usuario.roles: RolUsuario[]`**.
+- **`EMAILS_EN_COPIA` global ya no se usa**: la copia de los mails es por sector.
+
+### Multi-rol (commits `7495afe`/`1992ce1`, migración `20261027120000_usuario_roles_multiples`)
+
+- Motivo: el sector ADMINISTRACION no tenía ENCARGADO (sus usuarios eran todos PAGOS), así que nadie recibía los mails ni podía aprobar. Hacía falta que una persona fuera ENCARGADO **y** PAGOS a la vez.
+- Schema: `Usuario.roles RolUsuario[]`. La migración, escrita a mano, agrega `roles`, hace backfill `roles = [rol]` y borra `rol`.
+- Helpers `tieneRol` / `tieneAlgunRol` en `src/comun/autorizacion/roles.util.ts`. `RolesGuardia` autoriza por **intersección**: alcanza con tener uno de los roles pedidos.
+- `roles` viaja en el JWT. La estrategia acepta tokens viejos (con `rol` suelto lo convierte a `[rol]`).
+
+### Código de inversión (PI) en Proyecto (commit `c93f613`, migración `20261028120000_agregar_codigo_inversion_proyecto`)
+
+- `Proyecto.codigoInversion String @unique @map("codigo_inversion")`, **obligatorio**. Se **eliminó `numero`**. Es el único identificador visible del proyecto: lo usan los mails de OC/OP, los Excel y los selectores.
+- Viene del "Generador de códigos", la otra app del usuario (PI = `{OPC}PI{NN}`, ej. `26002PI01`). Por ahora se carga **a mano**.
+- El DTO de alta valida `^\d{5}PI\d{2}$` y normaliza a mayúsculas. **No se puede editar después de crear**: no está en `ActualizarProyectoDto`. El service mapea P2002 a 409 `CODIGO_INVERSION_DUPLICADO`.
+- El import histórico osmosis/bombas de calor asigna códigos sintéticos `99999PIxx`.
+- `b754e89` borró una copia duplicada de esta migración que había quedado con otro timestamp.
+
+### Categoría de OC y baja de Tarea/Rubro (commit `59157f9`, migración `20261105120000_agregar_categoria_orden_compra`, DESTRUCTIVA)
+
+- Enum `CategoriaOrdenCompra` + campo obligatorio `OrdenCompra.categoria`. Valores actuales: `PROYECTOS_ESCO`, `PRODUCTOS_STOCK`, `INTERNO_SEG`, `OTROS`, `SEG_GREENPOWER`, `SEG_HELIOTEC`. Ver más abajo la baja de `PRODUCTOS_REPOSICION`.
+- `src/ordenes-compra/ordenes-compra.constantes.ts`:
+  - `CATEGORIAS_CON_PROYECTO`: hoy solo `PROYECTOS_ESCO`. Para que otra categoría lleve proyecto alcanza con sumarla ahí. Solo las categorías de esa lista llevan proyecto y cliente; en el resto, `proyectoId`/`clienteId` quedan en null.
+  - `UMBRAL_PDF_USD = 1000`.
+  - `TASA_IVA = 0.22` y `calcularMontoNeto`.
+- **PDF adjunto obligatorio solo si el monto neto (sin IVA), convertido a USD, es ≥ 1000.** Para convertir usa `tipos-cambio`; si falta el tipo de cambio devuelve 422. Por debajo del umbral el PDF es opcional.
+- **La Cotización cuelga directo de la OC (1:1) y del proyecto**, sin nivel intermedio, y se crea siempre junto con la OC. `Cotizacion.proyectoId`, `OrdenCompra.proyectoId` y `OrdenCompra.archivoPdfRuta` pasaron a ser nullable.
+- La migración **borra** las tablas `rubros` y `tareas` y las columnas `tarea_id` (cotizaciones, ordenes_pago, ordenes_compra) y `rubro_id`. Se pierde el vínculo histórico a la tarea; se aceptó porque no estaba en uso.
+
+### Baja de la categoría "Productos - Reposición" (2026-11-19, commit `e8b396a`, migración `20261119120000_quitar_categoria_productos_reposicion`)
+
+- Las OC que tenían `PRODUCTOS_REPOSICION` pasan a `PRODUCTOS_STOCK`. Después se **recrea el enum** `categoria_orden_compra` sin ese valor, porque Postgres no permite borrar un valor de un enum: rename a `_old`, create, `ALTER COLUMN ... TYPE ... USING categoria::text::...`, y drop del viejo.
+- Verificado en prod: crear una OC con esa categoría da 400 `DATOS_INVALIDOS`.
+
+### Editar una orden aprobada y reenviarla a aprobación (commit `348a68d`)
+
+- Transición nueva **APROBADO → PENDIENTE** en OC y en OP.
+- **OC**: `PATCH /ordenes-compra/:id` (`ModificarOrdenCompraDto`; no permite cambiar categoría, proyecto ni sector).
+  - Devuelve **409 si la OC ya tiene OP no anuladas**. Las de pago único no se pueden editar porque ya tienen su OP automática.
+  - Re-valida el adjunto según el monto nuevo.
+- **OP**: `PATCH /ordenes-pago/:id/modificar`. El monto **no** se edita. Si cambia el proveedor, lo re-valida contra la cotización.
+- Pueden editar: el solicitante, el encargado del sector o un ADMIN.
+- Edición y reaprobación van en **una transacción con compare-and-swap** sobre el estado (`updateMany where estado = APROBADO`) y registran el historial. Al volver a PENDIENTE se dispara el evento de siempre, así que el aprobador recibe la notificación otra vez.
+
+### Aprobador suplente de sector (commit `1f48f67`, migración `20261109120000_agregar_sectores_suplente`)
+
+- Relación N-N `Usuario.sectoresSuplente ↔ Sector`.
+- Para **aprobar o rechazar** OC y OP alcanza con ser **encargado O suplente** del sector (`validarPuedeAprobarSector`). **Anular** sigue siendo solo del encargado.
+- El suplente **no recibe notificaciones**: los destinatarios siguen siendo los encargados. Es un respaldo, por ejemplo si el encargado está de licencia, y aprueba desde la lista de pendientes.
+- `sectoresSuplente` viaja en el JWT (acepta tokens viejos). El ABM de usuarios maneja `sectoresSuplenteIds`.
+
+### Tipo de orden "Otros" (commit `ae8ad76`, migración `20261109130000_agregar_tipo_oc_otros`)
+
+`TipoOC` suma `OTROS` (`ALTER TYPE ... ADD VALUE`). Aplica a OC y OP, que comparten el enum.
+
+### Proveedor con cuentas en pesos y en dólares (commit `b1e3a8e`, migración `20261109140000_proveedor_cuentas_por_moneda`)
+
+- `numeroCuenta` se reemplazó por `numeroCuentaPesos` y `numeroCuentaDolares`. Las dos son opcionales, pero el service exige **al menos una**. `banco` y `tipoCuenta` siguen siendo compartidos.
+- La migración pasó la cuenta existente a pesos.
+- El mail de OP y el Excel de pagos usan por ahora **una cuenta por defecto**: pesos si existe, si no dólares. Todavía no eligen según la moneda de la OP.
+
+### Notificaciones (mails)
+
+- **Copia por sector** (commits `990f067`, `b4bef06`, `9bf6dc8`): `src/notificaciones/emails-copia-por-sector.ts` define `obtenerEmailsEnCopiaPorSector(nombreSector)`.
+  - Busca por nombre de sector normalizado (trim + mayúsculas) y tiene tres grupos: "Gestión" (AE, ECR, ISO, CONSULTING, SEG EMOVE/EMOVE, RENOVABLES - ESCO, ADMINISTRACION, VENTAS), HELIOTEC y SEG GREEN POWER.
+  - Si el sector no tiene lista (por ejemplo INDICADORES), el mail sale sin copia. El encargado no está en estas listas porque se le notifica aparte.
+- **Datos bancarios del proveedor en el mail de OP para PAGOS** (commit `2b73b4b`): cuando la forma de pago es transferencia, el mail de la OP aprobada incluye banco, tipo y número de cuenta. Si faltan, agrega un aviso para completarlos.
+- **Total con IVA en el mail de OC y OP** (commit `db309a0`): helper `calcularMontoConIva`. Suma el IVA solo si la orden paga IVA y el monto es neto.
+
+### Exportaciones a Excel (todas con `exceljs`; devuelven `StreamableFile`, sin el envelope `{datos, mensaje}`)
+
+Hay cuatro módulos con el mismo patrón: `fila-*.ts` (mapeo puro, sin exceljs, se puede testear aparte) + `construir-excel-*.ts` (encabezado gris en negrita y fijo, autofiltro, formato de número) + service + controller + módulo que importa el módulo dueño del repositorio. Todos son **de solo lectura**: no cambian estados ni mandan mails.
+
+| Endpoint | Quién | Qué trae | Commit |
+|---|---|---|---|
+| `GET /exportacion-pagos` | solo `PAGOS` | OP en `APROBADO` listas para pagar, con datos bancarios (en rojo "FALTAN DATOS" si no están) y quién la aprobó (del historial PENDIENTE→APROBADO) | `78d10b4` |
+| `GET /exportacion-compras` | cualquier autenticado | OC vigentes (sin BORRADOR/ANULADO) | `d73eabe` |
+| `GET /exportacion-ordenes-pago` | cualquier autenticado | OP vigentes (sin BORRADOR/ANULADO): estado, proveedor, concepto, monto, paga IVA, forma de pago, tipo, proyecto (PI - nombre), cliente, sector, solicitante, OC de origen | `3fca3e4` (2026-11-19) |
+| `GET /exportacion-cotizaciones` | cualquier autenticado | todas las cotizaciones: OC de origen + su estado y categoría, proyecto, cliente, proveedor, sector, monto total, IVA incluido, **comprometido en OP** (suma de las OP no anuladas, igual criterio que `sumarMontoPorCotizacion`), **saldo** (en rojo si es negativo) | `3fca3e4` (2026-11-19) |
+
+- Repositorios: `buscarAprobadasParaPago()` y `buscarParaExportar()` en OP; `buscarParaExportar()` en OC y en Cotizaciones. Cada uno trae todas las relaciones en una sola query.
+- Deuda menor aceptada: el builder y `fechaArchivo()` están copiados en los cuatro módulos. Si aparece un quinto, conviene sacarlos a un helper común.
+
+### Datos: reorganización de sectores Green Power / Renovables - ESCO (commit `f2ed372`, migración `20261110120000_reorg_sectores_green_power`)
+
+- Es una migración **de datos**, idempotente: busca todo por nombre o email y no depende de los UUID locales.
+  - Renombra RENOVABLES a "Renovables - ESCO".
+  - Crea "SEG Green Power".
+  - Crea `mgonzalez` como ADMIN si no existe.
+  - Reasigna las pertenencias y los encargados: piedracueva queda como encargado de Green Power y mgonzalez como único encargado de Renovables - ESCO.
+- Patrón a seguir para cambios de datos que tienen que quedar iguales en local y en prod. En local, si se aplicó a mano, se marca con `migrate resolve --applied`.
+
+### Migraciones: estado y gotchas (al 2026-11-19)
+
+- Hay 26 migraciones. **Todas las posteriores al 2026-10-07 están escritas a mano**, porque **`prisma migrate dev` está roto**: la migración `20261007120000_agregar_numero_proyecto` hace `setval(seq, COALESCE(MAX,0))` y en la shadow DB vacía falla con `22003` (setval 0).
+  - Workaround: escribir el SQL a mano (o generarlo con `prisma migrate diff --from-schema/--to-schema`) y dejarlo como `prisma/migrations/<timestamp>_<nombre>/migration.sql`.
+  - Fix posible, todavía no aplicado: `setval(seq, COALESCE(MAX,1), (SELECT COUNT(*) FROM proyectos) > 0)` y reconciliar el checksum.
+- **En prod** se aplican solas con `migrate deploy` en cada deploy (CMD del Dockerfile).
+- **En local** `migrate deploy` también suele fallar por el historial inconsistente de la base local. Se corre el SQL directo contra el contenedor `seg-gestion-interna-postgres` (postgres:16) y después `npx prisma migrate resolve --applied <nombre>`. Ojo: hay otro contenedor `seg-postgres` (postgres:18) que no es el de este proyecto.
+
+### Pendientes y deuda conocidos (al 2026-11-19)
+
+- **Tests ≈ 0**: hay un solo `.spec.ts`, el default de Nest. `test:e2e` no arranca (problema de `ts-jest` con los imports `.js` del client de Prisma bajo `nodenext`). Toda la verificación se hace contra la API. Lo prioritario para cubrir: transiciones de estado de OC/OP y permisos (encargado, suplente, multi-rol).
+- **Condición de carrera en `ValidarMontoNoExcedeCotizacionEslabon`**: hace check-then-act sin lock, así que dos OP creadas a la vez podrían superar juntas la cotización. Es poco probable. Además, su mensaje dice "orden de compra" cuando debería decir "orden de pago".
+- El mail de OP y el Excel de pagos todavía no eligen la cuenta del proveedor según la moneda.
+- `prisma/datos-reales/*.json` tiene RUTs y datos bancarios reales trackeados en git. Está bien mientras el repo sea privado.
+- La base de prod no tiene OC, OP ni cotizaciones al 2026-11-19 (todavía no está en uso). Los Excel se verificaron en prod solo con la base vacía; el cálculo de las filas se verificó estáticamente.
 
 ---
 
