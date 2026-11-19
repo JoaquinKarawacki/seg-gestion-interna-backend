@@ -9,6 +9,8 @@ import { ClientesModulo } from './clientes/clientes.modulo';
 import { ComentariosModulo } from './comentarios/comentarios.modulo';
 import { CotizacionesModulo } from './cotizaciones/cotizaciones.modulo';
 import { ExportacionComprasModulo } from './exportacion-compras/exportacion-compras.modulo';
+import { ExportacionCotizacionesModulo } from './exportacion-cotizaciones/exportacion-cotizaciones.modulo';
+import { ExportacionOrdenesPagoModulo } from './exportacion-ordenes-pago/exportacion-ordenes-pago.modulo';
 import { ExportacionPagosModulo } from './exportacion-pagos/exportacion-pagos.modulo';
 import { NotificacionesModulo } from './notificaciones/notificaciones.modulo';
 import { OrdenesPagoModulo } from './ordenes-pago/ordenes-pago.modulo';
@@ -36,6 +38,8 @@ import { TiposCambioModulo } from './tipos-cambio/tipos-cambio.modulo';
     OrdenesCompraModulo,
     OrdenesPagoModulo,
     ExportacionComprasModulo,
+    ExportacionOrdenesPagoModulo,
+    ExportacionCotizacionesModulo,
     ExportacionPagosModulo,
     ComentariosModulo,
     NotificacionesModulo,
