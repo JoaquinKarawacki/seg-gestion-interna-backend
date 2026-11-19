@@ -18,7 +18,6 @@ export const ETIQUETAS_TIPO: Record<TipoOC, string> = {
 export const ETIQUETAS_CATEGORIA: Record<CategoriaOrdenCompra, string> = {
   PROYECTOS_ESCO: 'Proyectos ESCO',
   PRODUCTOS_STOCK: 'Productos - Stock',
-  PRODUCTOS_REPOSICION: 'Productos - Reposición',
   INTERNO_SEG: 'Interno SEG',
   OTROS: 'Otros',
   SEG_GREENPOWER: 'SEG Greenpower',
