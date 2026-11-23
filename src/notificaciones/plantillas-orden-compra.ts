@@ -107,9 +107,13 @@ export function obtenerPlantillaSolicitud(
         'Tenés una orden de compra pendiente de tu aprobación.',
       );
     case EstadoOC.APROBADO:
+      // Pago único: la OP se genera sola y ya aprobada (OrdenCompraAprobadaOyente),
+      // así que no hay que invitar a generarla a mano.
       return armar(
         ['SOLICITANTE'],
-        'La orden de compra fue aprobada. Ya podés generar la orden de pago correspondiente.',
+        oc.esPagoUnico
+          ? 'La orden de compra fue aprobada. Como es pago único, la orden de pago se genera automáticamente ya aprobada, lista para pago. No hace falta generarla.'
+          : 'La orden de compra fue aprobada. Ya podés generar la orden de pago correspondiente.',
       );
     case EstadoOC.RECHAZADO:
       return armar(
