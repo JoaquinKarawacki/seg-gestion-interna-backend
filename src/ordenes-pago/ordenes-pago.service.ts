@@ -39,6 +39,7 @@ import {
   PaginacionOrdenPago,
 } from './interfaces/ordenes-pago-repositorio.interface';
 import type { IOrdenesPagoRepositorio } from './interfaces/ordenes-pago-repositorio.interface';
+import { AprobadorOrdenPagoService } from './aprobacion/aprobador-orden-pago.service';
 import { mapearRespuestaOrdenPago } from './ordenes-pago.mapper';
 import { CadenaValidacionOP } from './validaciones/cadena-validacion-op';
 import { ValidarProveedorCoincideCotizacionEslabon } from './validaciones/validar-proveedor-coincide-cotizacion.eslabon';
@@ -73,6 +74,7 @@ export class OrdenesPagoService {
     private readonly validarProveedorEslabon: ValidarProveedorCoincideCotizacionEslabon,
     private readonly auditoriaService: AuditoriaService,
     private readonly emisorEventos: EventEmitter2,
+    private readonly aprobadorOrdenPagoService: AprobadorOrdenPagoService,
   ) {}
 
   async listar(
@@ -92,7 +94,9 @@ export class OrdenesPagoService {
 
   async buscarPorId(id: string): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    return mapearRespuestaOrdenPago(orden);
+    const aprobadorAsignadoId =
+      await this.aprobadorOrdenPagoService.resolverAprobadorAsignadoId(orden);
+    return { ...mapearRespuestaOrdenPago(orden), aprobadorAsignadoId };
   }
 
   async crear(

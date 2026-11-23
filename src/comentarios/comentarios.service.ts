@@ -8,6 +8,7 @@ import type {
 import { ACCIONES_AUDITORIA } from '../auditoria/acciones-auditoria.constantes';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { UsuarioAutenticado } from '../comun/interfaces/usuario-autenticado.interface';
+import { AprobadorOrdenPagoService } from '../ordenes-pago/aprobacion/aprobador-orden-pago.service';
 import { OrdenesPagoAprobacionService } from '../ordenes-pago/aprobacion/ordenes-pago-aprobacion.service';
 import { ORDENES_PAGO_REPOSITORIO } from '../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
 import type { IOrdenesPagoRepositorio } from '../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
@@ -24,6 +25,7 @@ export class ComentariosService {
     @Inject(ORDENES_PAGO_REPOSITORIO)
     private readonly ordenesPagoRepositorio: IOrdenesPagoRepositorio,
     private readonly ordenesPagoAprobacionService: OrdenesPagoAprobacionService,
+    private readonly aprobadorOrdenPagoService: AprobadorOrdenPagoService,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -66,12 +68,15 @@ export class ComentariosService {
     orden: OrdenPagoModel,
     usuario: UsuarioAutenticado,
   ): Promise<void> {
-    const esEncargadoDelSector =
-      tieneRol(usuario, RolUsuario.ENCARGADO) &&
-      usuario.sectoresEncargado.includes(orden.sectorId);
     const esElSolicitante = usuario.id === orden.solicitanteId;
 
-    if (orden.estado === EstadoOP.PENDIENTE && esEncargadoDelSector) {
+    // Pone la OP "en consulta" solo quien podría aprobarla (quien aprobó la OC o
+    // un suplente del sector): otro encargado del sector comenta sin frenarla.
+    if (
+      orden.estado === EstadoOP.PENDIENTE &&
+      tieneRol(usuario, RolUsuario.ENCARGADO) &&
+      (await this.aprobadorOrdenPagoService.puedeAprobar(orden, usuario))
+    ) {
       await this.ordenesPagoAprobacionService.marcarEnConsulta(
         orden.id,
         usuario,

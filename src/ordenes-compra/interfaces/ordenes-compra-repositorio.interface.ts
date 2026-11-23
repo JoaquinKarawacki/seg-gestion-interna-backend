@@ -70,6 +70,15 @@ export interface DatosModificarOrdenCompra {
   observaciones: string | null;
 }
 
+// Quien aprobó una OC (último paso a APROBADO del historial), con lo necesario
+// para saber si sigue teniendo permiso sobre el sector.
+export interface AprobadorOrdenCompra {
+  id: string;
+  activo: boolean;
+  sectoresEncargado: { id: string }[];
+  sectoresSuplente: { id: string }[];
+}
+
 // Resultado de editar y reenviar a aprobación. El repositorio no lanza
 // excepciones HTTP: comunica el motivo y el service decide el código.
 export type ResultadoModificarReaprobar =
@@ -101,6 +110,9 @@ export interface IOrdenesCompraRepositorio {
     motivo?: string | null,
   ): Promise<OrdenCompraModel | null>;
   buscarHistorial(ordenCompraId: string): Promise<HistorialEstadoOCModel[]>;
+  buscarUltimoAprobador(
+    ordenCompraId: string,
+  ): Promise<AprobadorOrdenCompra | null>;
   eliminar(id: string): Promise<void>;
   buscarConFiltros(
     filtros: FiltrosOrdenCompra,

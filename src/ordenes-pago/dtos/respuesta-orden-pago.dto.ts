@@ -26,4 +26,7 @@ export class RespuestaOrdenPagoDto {
   observaciones!: string | null;
   facturaPdfRuta!: string | null;
   estado!: EstadoOP;
+  // Solo en el detalle (GET /ordenes-pago/:id): quien aprobó la OC de origen y la
+  // aprueba (null = regla del sector). Ver AprobadorOrdenPagoService.
+  aprobadorAsignadoId?: string | null;
 }

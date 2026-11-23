@@ -1037,7 +1037,7 @@ Cambió el modelo de creación de la Orden de Pago: **toda OP nace de una OC APR
 
 Caso SEG eMove: una OC que se paga de una sola vez, sin armar la OP a mano.
 - `OrdenCompra` gana `esPagoUnico: Boolean @default(false)` y `pagoUnicoFormaPago: FormaPago?`. `CrearOrdenCompraDto` los acepta; el service exige la forma de pago cuando `esPagoUnico` (422 `FORMA_PAGO_REQUERIDA_PAGO_UNICO`).
-- **Auto-generación por evento** — `OrdenCompraAprobadaOyente` (`src/ordenes-pago/oyentes/orden-compra-aprobada.oyente.ts`): al pasar la OC a `APROBADO`, si es pago único, crea sola la OP por el total con `pagoUnicoFormaPago` y la deja **APROBADA** (desde 2026-11-23, rama `pago-unico-auto-aprobar`; antes quedaba en PENDIENTE y el encargado tenía que aprobar dos veces). Recorrido: BORRADOR → PENDIENTE **sin mail** (`enviar(..., { notificar: false })`) → APROBADO a nombre de quien aprobó la OC (`evento.usuarioId`, cargado de DB con sus sectores encargado/suplente; pasa por la misma `validarPuedeAprobarSector`) → sale el mail normal a PAGOS con datos bancarios. Si el aprobador ya no es encargado/suplente del sector, la OP queda PENDIENTE **con** el mail normal al encargado. Idempotencia: solo cuentan OPs **no anuladas** (si se anula la OP, se edita la OC y se re-aprueba, se genera una nueva). Patrón Observer sobre el evento de transición de la OC (igual que las notificaciones).
+- **Auto-generación por evento** — `OrdenCompraAprobadaOyente` (`src/ordenes-pago/oyentes/orden-compra-aprobada.oyente.ts`): al pasar la OC a `APROBADO`, si es pago único, crea sola la OP por el total con `pagoUnicoFormaPago` y la deja **APROBADA** (desde 2026-11-23, rama `pago-unico-auto-aprobar`; antes quedaba en PENDIENTE y el encargado tenía que aprobar dos veces). Recorrido: BORRADOR → PENDIENTE **sin mail** (`enviar(..., { notificar: false })`) → APROBADO a nombre de quien aprobó la OC (`evento.usuarioId`, cargado de DB con sus sectores encargado/suplente; pasa por la misma validación que la aprobación manual) → sale el mail normal a PAGOS con datos bancarios. Si el aprobador ya no es encargado/suplente del sector, la OP queda PENDIENTE **con** el mail normal al encargado. Idempotencia: solo cuentan OPs **no anuladas** (si se anula la OP, se edita la OC y se re-aprueba, se genera una nueva). Patrón Observer sobre el evento de transición de la OC (igual que las notificaciones).
   - **Fail-soft**: todo en try/catch que loguea y no relanza (el `emit()` es síncrono, una excepción tumbaría el proceso). Si falla, queda el fallback del botón manual "Crear Orden de Pago" de la OC aprobada.
   - **Idempotente**: antes de crear, cuenta OP existentes por `ordenCompraId`; si ya hay, no genera otra (protege contra reproceso del evento).
   - El **autor** de la OP generada es el solicitante de la OC.
@@ -1124,6 +1124,15 @@ Continuación de la sección anterior. Documenta **todo lo posterior al 2026-10-
 - Para **aprobar o rechazar** OC y OP alcanza con ser **encargado O suplente** del sector (`validarPuedeAprobarSector`). **Anular** sigue siendo solo del encargado.
 - El suplente **no recibe notificaciones**: los destinatarios siguen siendo los encargados. Es un respaldo, por ejemplo si el encargado está de licencia, y aprueba desde la lista de pendientes.
 - `sectoresSuplente` viaja en el JWT (acepta tokens viejos). El ABM de usuarios maneja `sectoresSuplenteIds`.
+
+### La OP la aprueba quien aprobó la OC (2026-11-23, rama `op-aprueba-quien-aprobo-oc`)
+
+- Regla nueva para **aprobar/rechazar una OP**, centralizada en `AprobadorOrdenPagoService` (`src/ordenes-pago/aprobacion/aprobador-orden-pago.service.ts`, con tests unitarios en el `.spec.ts` de al lado): puede **quien aprobó la OC de origen** o **un suplente del sector**. Otros encargados del sector, no (403 `NO_ES_APROBADOR_DE_LA_ORDEN`). La OC sigue con la regla de antes (encargado o suplente).
+- "Quien aprobó la OC" = el último paso a APROBADO de `historial_estado_oc` (`IOrdenesCompraRepositorio.buscarUltimoAprobador`); si la OC se editó y se re-aprobó, cuenta el más reciente. No hay columna nueva ni migración.
+- **Vuelve a la regla del sector** (cualquier encargado o suplente) si no hay aprobador asignado: OP sin OC (históricas), o quien aprobó la OC está inactivo o ya no es encargado/suplente de ese sector.
+- El mail de **PENDIENTE** va solo al aprobador asignado (si no hay, a todos los encargados del sector, como antes). Los otros mails a `ENCARGADO_SECTOR` (pagado, anulado, observado) no cambiaron.
+- Comentar una OP PENDIENTE la pasa a EN_CONSULTA solo si quien comenta tiene rol ENCARGADO **y** puede aprobarla con esta regla.
+- `GET /ordenes-pago/:id` devuelve `aprobadorAsignadoId` (solo el detalle, no el listado).
 
 ### Tipo de orden "Otros" (commit `ae8ad76`, migración `20261109130000_agregar_tipo_oc_otros`)
 

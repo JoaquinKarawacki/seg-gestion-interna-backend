@@ -19,6 +19,7 @@ import { ORDENES_PAGO_REPOSITORIO } from '../interfaces/ordenes-pago-repositorio
 import type { IOrdenesPagoRepositorio } from '../interfaces/ordenes-pago-repositorio.interface';
 import { mapearRespuestaOrdenPago } from '../ordenes-pago.mapper';
 import { RespuestaHistorialEstadoOPDto } from './dtos/respuesta-historial-estado-op.dto';
+import { AprobadorOrdenPagoService } from './aprobador-orden-pago.service';
 import { TRANSICIONES_VALIDAS_OP } from './transiciones-op';
 
 export interface OpcionesTransicion {
@@ -33,6 +34,7 @@ export class OrdenesPagoAprobacionService {
     private readonly ordenesPagoRepositorio: IOrdenesPagoRepositorio,
     private readonly emisorEventos: EventEmitter2,
     private readonly auditoriaService: AuditoriaService,
+    private readonly aprobadorOrdenPagoService: AprobadorOrdenPagoService,
   ) {}
 
   // `notificar: false` registra la transición (historial + auditoría) sin emitir
@@ -67,7 +69,7 @@ export class OrdenesPagoAprobacionService {
     usuario: UsuarioAutenticado,
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    this.validarPuedeAprobarSector(orden, usuario);
+    await this.validarPuedeAprobar(orden, usuario);
     const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOP.APROBADO,
@@ -90,7 +92,7 @@ export class OrdenesPagoAprobacionService {
     motivo: string,
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
-    this.validarPuedeAprobarSector(orden, usuario);
+    await this.validarPuedeAprobar(orden, usuario);
     const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOP.RECHAZADO,
@@ -271,18 +273,21 @@ export class OrdenesPagoAprobacionService {
     }
   }
 
-  // Puede aprobar/rechazar quien es encargado del sector o su suplente (respaldo).
-  private validarPuedeAprobarSector(
+  // Aprueba/rechaza quien aprobó la OC de origen o un suplente del sector (ver
+  // AprobadorOrdenPagoService para la regla completa y los casos de respaldo).
+  private async validarPuedeAprobar(
     orden: OrdenPagoModel,
     usuario: UsuarioAutenticado,
-  ): void {
-    const puede =
-      usuario.sectoresEncargado.includes(orden.sectorId) ||
-      usuario.sectoresSuplente.includes(orden.sectorId);
+  ): Promise<void> {
+    const puede = await this.aprobadorOrdenPagoService.puedeAprobar(
+      orden,
+      usuario,
+    );
     if (!puede) {
       throw new ForbiddenException({
-        error: 'SIN_PERMISO_SOBRE_SECTOR',
-        mensaje: 'No tenés permiso sobre el sector de esta orden de compra',
+        error: 'NO_ES_APROBADOR_DE_LA_ORDEN',
+        mensaje:
+          'Esta orden de pago la aprueba quien aprobó su orden de compra o un suplente del sector',
       });
     }
   }

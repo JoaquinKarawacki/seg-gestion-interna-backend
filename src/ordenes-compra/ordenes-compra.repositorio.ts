@@ -6,6 +6,7 @@ import {
   OrdenCompraModel,
 } from '../../generated/prisma/models';
 import {
+  AprobadorOrdenCompra,
   DatosCrearOrdenCompra,
   DatosModificarOrdenCompra,
   FiltrosOrdenCompra,
@@ -136,6 +137,29 @@ export class OrdenesCompraRepositorio implements IOrdenesCompraRepositorio {
       where: { ordenCompraId },
       orderBy: { creadoEn: 'asc' },
     });
+  }
+
+  // El último paso a APROBADO: si la OC se editó y se re-aprobó, cuenta el
+  // aprobador más reciente.
+  async buscarUltimoAprobador(
+    ordenCompraId: string,
+  ): Promise<AprobadorOrdenCompra | null> {
+    const entrada = await this.prisma.historialEstadoOC.findFirst({
+      where: { ordenCompraId, estadoNuevo: EstadoOC.APROBADO },
+      orderBy: { creadoEn: 'desc' },
+      select: {
+        usuario: {
+          select: {
+            id: true,
+            activo: true,
+            sectoresEncargado: { select: { id: true } },
+            sectoresSuplente: { select: { id: true } },
+          },
+        },
+      },
+    });
+
+    return entrada?.usuario ?? null;
   }
 
   // Al borrar una OC en BORRADOR se borra también su Cotización, si tiene (1:1,
