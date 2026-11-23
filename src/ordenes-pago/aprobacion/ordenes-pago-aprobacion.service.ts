@@ -21,6 +21,11 @@ import { mapearRespuestaOrdenPago } from '../ordenes-pago.mapper';
 import { RespuestaHistorialEstadoOPDto } from './dtos/respuesta-historial-estado-op.dto';
 import { TRANSICIONES_VALIDAS_OP } from './transiciones-op';
 
+export interface OpcionesTransicion {
+  // false: no emite el evento de cambio de estado (no salen mails). Default true.
+  notificar?: boolean;
+}
+
 @Injectable()
 export class OrdenesPagoAprobacionService {
   constructor(
@@ -30,15 +35,21 @@ export class OrdenesPagoAprobacionService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  // `notificar: false` registra la transición (historial + auditoría) sin emitir
+  // el evento, así no sale el mail "pendiente de tu aprobación". Lo usa el pago
+  // único, que pasa la OP por PENDIENTE y la aprueba en el acto.
   async enviar(
     id: string,
     usuario: UsuarioAutenticado,
+    opciones: OpcionesTransicion = {},
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
     const resultado = await this.ejecutarTransicion(
       orden,
       EstadoOP.PENDIENTE,
       usuario,
+      undefined,
+      opciones,
     );
 
     await this.registrarAuditoriaTransicion(
@@ -281,6 +292,7 @@ export class OrdenesPagoAprobacionService {
     estadoNuevo: EstadoOP,
     usuario: UsuarioAutenticado,
     motivo?: string,
+    opciones: OpcionesTransicion = {},
   ): Promise<RespuestaOrdenPagoDto> {
     const transicionesPermitidas = TRANSICIONES_VALIDAS_OP[orden.estado];
 
@@ -309,12 +321,14 @@ export class OrdenesPagoAprobacionService {
       });
     }
 
-    this.emitirCambioDeEstado(
-      ordenActualizada,
-      estadoAnterior,
-      usuario.id,
-      motivo,
-    );
+    if (opciones.notificar !== false) {
+      this.emitirCambioDeEstado(
+        ordenActualizada,
+        estadoAnterior,
+        usuario.id,
+        motivo,
+      );
+    }
 
     return mapearRespuestaOrdenPago(ordenActualizada);
   }
