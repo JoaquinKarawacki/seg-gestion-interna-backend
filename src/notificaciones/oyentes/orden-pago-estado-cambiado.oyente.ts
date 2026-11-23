@@ -1,8 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
-import { RolUsuario } from '../../../generated/prisma/enums';
+import { EstadoOP, RolUsuario } from '../../../generated/prisma/enums';
 import type { UsuarioModel } from '../../../generated/prisma/models';
+import { AprobadorOrdenPagoService } from '../../ordenes-pago/aprobacion/aprobador-orden-pago.service';
+import type { OrdenPagoParaAprobar } from '../../ordenes-pago/aprobacion/aprobador-orden-pago.service';
 import { EVENTOS } from '../../ordenes-pago/eventos/eventos.constantes';
 import type { EventoOrdenPagoEstadoCambiado } from '../../ordenes-pago/eventos/orden-pago-estado-cambiado.evento';
 import { ORDENES_PAGO_REPOSITORIO } from '../../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
@@ -24,6 +26,7 @@ export class OrdenPagoEstadoCambiadoOyente {
     private readonly ordenesPagoRepositorio: IOrdenesPagoRepositorio,
     private readonly correoService: CorreoService,
     private readonly configService: ConfigService,
+    private readonly aprobadorOrdenPagoService: AprobadorOrdenPagoService,
   ) {}
 
   @OnEvent(EVENTOS.ORDEN_PAGO_ESTADO_CAMBIADO)
@@ -59,6 +62,7 @@ export class OrdenPagoEstadoCambiadoOyente {
       const destinatarios = await this.resolverEmails(
         plantilla.destinatarios,
         evento,
+        op,
       );
       const emailsEnCopia = obtenerEmailsEnCopiaPorSector(op.sector.nombre);
       const destinatariosFinales = [
@@ -81,11 +85,12 @@ export class OrdenPagoEstadoCambiadoOyente {
   private async resolverEmails(
     tipos: TipoDestinatario[],
     evento: EventoOrdenPagoEstadoCambiado,
+    op: OrdenPagoParaAprobar,
   ): Promise<string[]> {
     const emails = new Set<string>();
 
     for (const tipo of tipos) {
-      const usuarios = await this.buscarUsuariosPorTipo(tipo, evento);
+      const usuarios = await this.buscarUsuariosPorTipo(tipo, evento, op);
       usuarios.forEach((usuario) => emails.add(usuario.email));
     }
 
@@ -95,6 +100,7 @@ export class OrdenPagoEstadoCambiadoOyente {
   private async buscarUsuariosPorTipo(
     tipo: TipoDestinatario,
     evento: EventoOrdenPagoEstadoCambiado,
+    op: OrdenPagoParaAprobar,
   ): Promise<UsuarioModel[]> {
     if (tipo === 'SOLICITANTE') {
       const solicitante = await this.usuariosRepositorio.buscarPorId(
@@ -104,6 +110,20 @@ export class OrdenPagoEstadoCambiadoOyente {
     }
 
     if (tipo === 'ENCARGADO_SECTOR') {
+      // "Pendiente de tu aprobación": va solo a quien aprobó la OC de origen, que
+      // es quien la aprueba. Sin aprobador asignado (OP histórica, o ya no está en
+      // el sector), a todos los encargados del sector como antes.
+      if (evento.estadoNuevo === EstadoOP.PENDIENTE) {
+        const aprobadorId =
+          await this.aprobadorOrdenPagoService.resolverAprobadorAsignadoId(op);
+        const aprobador = aprobadorId
+          ? await this.usuariosRepositorio.buscarPorId(aprobadorId)
+          : null;
+        if (aprobador) {
+          return [aprobador];
+        }
+      }
+
       return this.usuariosRepositorio.buscarActivosPorRol(
         RolUsuario.ENCARGADO,
         evento.sectorId,

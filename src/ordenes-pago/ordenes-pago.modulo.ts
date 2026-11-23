@@ -5,6 +5,7 @@ import { ProyectosModulo } from '../proyectos/proyectos.modulo';
 import { OrdenesCompraModulo } from '../ordenes-compra/ordenes-compra.modulo';
 import { UsuariosModulo } from '../usuarios/usuarios.modulo';
 import { OrdenesPagoAprobacionController } from './aprobacion/ordenes-pago-aprobacion.controller';
+import { AprobadorOrdenPagoService } from './aprobacion/aprobador-orden-pago.service';
 import { OrdenesPagoAprobacionService } from './aprobacion/ordenes-pago-aprobacion.service';
 import { ORDENES_PAGO_REPOSITORIO } from './interfaces/ordenes-pago-repositorio.interface';
 import { OrdenesPagoController } from './ordenes-pago.controller';
@@ -27,6 +28,7 @@ import { ValidarProveedorCoincideCotizacionEslabon } from './validaciones/valida
   providers: [
     OrdenesPagoService,
     OrdenesPagoAprobacionService,
+    AprobadorOrdenPagoService,
     OrdenCompraAprobadaOyente,
     {
       provide: ORDENES_PAGO_REPOSITORIO,
@@ -36,6 +38,10 @@ import { ValidarProveedorCoincideCotizacionEslabon } from './validaciones/valida
     ValidarMontoNoExcedeCotizacionEslabon,
     CadenaValidacionOP,
   ],
-  exports: [ORDENES_PAGO_REPOSITORIO, OrdenesPagoAprobacionService],
+  exports: [
+    ORDENES_PAGO_REPOSITORIO,
+    OrdenesPagoAprobacionService,
+    AprobadorOrdenPagoService,
+  ],
 })
 export class OrdenesPagoModulo {}
