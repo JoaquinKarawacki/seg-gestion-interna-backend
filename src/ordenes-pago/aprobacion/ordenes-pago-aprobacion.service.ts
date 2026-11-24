@@ -184,7 +184,9 @@ export class OrdenesPagoAprobacionService {
   ): Promise<RespuestaOrdenPagoDto> {
     const orden = await this.obtenerOrdenOFallar(id);
 
-    if (tieneRol(usuario, RolUsuario.ENCARGADO)) {
+    // ADMIN anula en cualquier sector, aunque además sea ENCARGADO (multi-rol):
+    // el chequeo de sector aplica solo a quien anula únicamente como encargado.
+    if (!tieneRol(usuario, RolUsuario.ADMIN)) {
       this.validarEncargadoDelSector(orden, usuario);
     }
 
