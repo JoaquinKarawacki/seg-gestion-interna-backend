@@ -16,6 +16,7 @@ import {
   etiquetaSiNo,
   formatearFechaCorreo,
 } from './etiquetas-correo';
+import { cuentaSegunMoneda } from '../proveedores/cuenta-segun-moneda';
 
 export type TipoDestinatario = 'SOLICITANTE' | 'ENCARGADO_SECTOR' | 'ROL_PAGOS';
 
@@ -100,18 +101,16 @@ export function obtenerPlantilla(
 
   function datosBancariosProveedor(): DatoCorreo[] {
     const banco = op.proveedor.banco?.trim() ?? '';
-    // Por ahora el mail muestra una sola cuenta: pesos si existe, si no dólares.
-    const numeroCuenta = (
-      op.proveedor.numeroCuentaPesos ??
-      op.proveedor.numeroCuentaDolares ??
-      ''
-    ).trim();
+    // La cuenta que se muestra depende de la moneda de la OP: pesos o dólares.
+    const { numeroCuenta, monedaCuenta } = cuentaSegunMoneda(
+      op.proveedor,
+      op.moneda,
+    );
     if (!banco || !numeroCuenta) {
       return [
         {
           etiqueta: 'Datos bancarios',
-          valor:
-            'Faltan los datos bancarios de este proveedor. Completalos en la sección Proveedores.',
+          valor: `Faltan los datos bancarios de este proveedor (banco o cuenta en ${monedaCuenta}). Completalos en la sección Proveedores.`,
         },
       ];
     }
@@ -121,7 +120,7 @@ export function obtenerPlantilla(
         etiqueta: 'Tipo de cuenta',
         valor: ETIQUETAS_TIPO_CUENTA[op.proveedor.tipoCuenta],
       },
-      { etiqueta: 'Número de cuenta', valor: numeroCuenta },
+      { etiqueta: `Número de cuenta (${monedaCuenta})`, valor: numeroCuenta },
     ];
   }
 
