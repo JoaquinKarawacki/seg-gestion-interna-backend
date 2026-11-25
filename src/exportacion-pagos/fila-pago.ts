@@ -4,6 +4,7 @@ import {
   ETIQUETAS_TIPO,
   ETIQUETAS_TIPO_CUENTA,
 } from '../notificaciones/etiquetas-correo';
+import { cuentaSegunMoneda } from '../proveedores/cuenta-segun-moneda';
 import type { OrdenPagoParaPago } from '../ordenes-pago/interfaces/ordenes-pago-repositorio.interface';
 
 // Una fila del Excel de pagos, ya con los valores listos para mostrar (etiquetas
@@ -50,12 +51,8 @@ function aprobadorEncargado(orden: OrdenPagoParaPago): string {
 
 export function mapearFilaPago(orden: OrdenPagoParaPago): FilaPago {
   const banco = orden.proveedor.banco?.trim() ?? '';
-  // Por ahora el Excel muestra una sola cuenta: pesos si existe, si no dólares.
-  const numeroCuenta = (
-    orden.proveedor.numeroCuentaPesos ??
-    orden.proveedor.numeroCuentaDolares ??
-    ''
-  ).trim();
+  // La cuenta depende de la moneda de la OP: pesos o dólares.
+  const { numeroCuenta } = cuentaSegunMoneda(orden.proveedor, orden.moneda);
 
   return {
     numero: orden.numero,
